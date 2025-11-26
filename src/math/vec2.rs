@@ -3,8 +3,8 @@ use wasm_bindgen::prelude::*;
 #[wasm_bindgen]
 #[derive(Debug, Copy, Clone, PartialEq, Default)]
 pub struct Vec2 {
-    x: f64,
-    y: f64,
+    pub x: f64,
+    pub y: f64,
 }
 
 #[wasm_bindgen]
@@ -14,14 +14,7 @@ impl Vec2 {
         Self { x, y }
     }
 
-    pub fn x(&self) -> f64 {
-        self.x
-    }
-
-    pub fn y(&self) -> f64 {
-        self.y
-    }
-
+    #[wasm_bindgen(getter)]
     pub fn length(&self) -> f64 {
         (self.x * self.x + self.y * self.y).sqrt()
     }
@@ -104,6 +97,17 @@ impl std::ops::Mul for Vec2 {
     }
 }
 
+impl std::ops::Mul<f64> for Vec2 {
+    type Output = Self;
+
+    fn mul(self, other: f64) -> Self {
+        Self {
+            x: self.x * other,
+            y: self.y * other,
+        }
+    }
+}
+
 impl std::ops::Div for Vec2 {
     type Output = Self;
 
@@ -122,15 +126,15 @@ mod tests {
     #[test]
     fn test_new() {
         let v = Vec2::new(3.0, 4.0);
-        assert_eq!(v.x(), 3.0);
-        assert_eq!(v.y(), 4.0);
+        assert_eq!(v.x, 3.0);
+        assert_eq!(v.y, 4.0);
     }
 
     #[test]
     fn test_default() {
         let v = Vec2::default();
-        assert_eq!(v.x(), 0.0);
-        assert_eq!(v.y(), 0.0);
+        assert_eq!(v.x, 0.0);
+        assert_eq!(v.y, 0.0);
     }
 
     #[test]
@@ -149,14 +153,14 @@ mod tests {
     fn test_normalize() {
         let v = Vec2::new(3.0, 4.0);
         let normalized = v.normalize();
-        assert_eq!(normalized.x(), 0.6);
-        assert_eq!(normalized.y(), 0.8);
+        assert_eq!(normalized.x, 0.6);
+        assert_eq!(normalized.y, 0.8);
         assert!((normalized.length() - 1.0).abs() < 1e-10);
 
         let v2 = Vec2::new(5.0, 0.0);
         let normalized2 = v2.normalize();
-        assert_eq!(normalized2.x(), 1.0);
-        assert_eq!(normalized2.y(), 0.0);
+        assert_eq!(normalized2.x, 1.0);
+        assert_eq!(normalized2.y, 0.0);
     }
 
     #[test]
@@ -164,8 +168,8 @@ mod tests {
         let v1 = Vec2::new(1.0, 2.0);
         let v2 = Vec2::new(3.0, 4.0);
         let result = v1.add(&v2);
-        assert_eq!(result.x(), 4.0);
-        assert_eq!(result.y(), 6.0);
+        assert_eq!(result.x, 4.0);
+        assert_eq!(result.y, 6.0);
     }
 
     #[test]
@@ -173,8 +177,8 @@ mod tests {
         let v1 = Vec2::new(5.0, 7.0);
         let v2 = Vec2::new(2.0, 3.0);
         let result = v1.sub(&v2);
-        assert_eq!(result.x(), 3.0);
-        assert_eq!(result.y(), 4.0);
+        assert_eq!(result.x, 3.0);
+        assert_eq!(result.y, 4.0);
     }
 
     #[test]
@@ -182,8 +186,11 @@ mod tests {
         let v1 = Vec2::new(2.0, 3.0);
         let v2 = Vec2::new(4.0, 5.0);
         let result = v1.mul(&v2);
-        assert_eq!(result.x(), 8.0);
-        assert_eq!(result.y(), 15.0);
+        assert_eq!(result.x, 8.0);
+        assert_eq!(result.y, 15.0);
+        let result2 = v1 * 2.0;
+        assert_eq!(result2.x, 4.0);
+        assert_eq!(result2.y, 6.0);
     }
 
     #[test]
@@ -191,8 +198,8 @@ mod tests {
         let v1 = Vec2::new(8.0, 15.0);
         let v2 = Vec2::new(2.0, 3.0);
         let result = v1.div(&v2);
-        assert_eq!(result.x(), 4.0);
-        assert_eq!(result.y(), 5.0);
+        assert_eq!(result.x, 4.0);
+        assert_eq!(result.y, 5.0);
     }
 
     #[test]
@@ -226,8 +233,8 @@ mod tests {
         let v1 = Vec2::new(1.0, 2.0);
         let v2 = Vec2::new(3.0, 4.0);
         let result = v1 + v2;
-        assert_eq!(result.x(), 4.0);
-        assert_eq!(result.y(), 6.0);
+        assert_eq!(result.x, 4.0);
+        assert_eq!(result.y, 6.0);
     }
 
     #[test]
@@ -235,8 +242,8 @@ mod tests {
         let v1 = Vec2::new(5.0, 7.0);
         let v2 = Vec2::new(2.0, 3.0);
         let result = v1 - v2;
-        assert_eq!(result.x(), 3.0);
-        assert_eq!(result.y(), 4.0);
+        assert_eq!(result.x, 3.0);
+        assert_eq!(result.y, 4.0);
     }
 
     #[test]
@@ -244,8 +251,8 @@ mod tests {
         let v1 = Vec2::new(2.0, 3.0);
         let v2 = Vec2::new(4.0, 5.0);
         let result = v1 * v2;
-        assert_eq!(result.x(), 8.0);
-        assert_eq!(result.y(), 15.0);
+        assert_eq!(result.x, 8.0);
+        assert_eq!(result.y, 15.0);
     }
 
     #[test]
@@ -253,8 +260,8 @@ mod tests {
         let v1 = Vec2::new(8.0, 15.0);
         let v2 = Vec2::new(2.0, 3.0);
         let result = v1 / v2;
-        assert_eq!(result.x(), 4.0);
-        assert_eq!(result.y(), 5.0);
+        assert_eq!(result.x, 4.0);
+        assert_eq!(result.y, 5.0);
     }
 
     #[test]
@@ -271,7 +278,7 @@ mod tests {
         let v1 = Vec2::new(-1.0, -2.0);
         let v2 = Vec2::new(1.0, 2.0);
         let result = v1.add(&v2);
-        assert_eq!(result.x(), 0.0);
-        assert_eq!(result.y(), 0.0);
+        assert_eq!(result.x, 0.0);
+        assert_eq!(result.y, 0.0);
     }
 }

@@ -2,7 +2,7 @@ mod utils;
 
 use wasm_bindgen::prelude::*;
 
-use crate::math::vec2::Vec2;
+use crate::{math::vec2::Vec2, models::road::Road};
 
 pub mod models;
 pub mod math;
@@ -12,11 +12,8 @@ extern "C" {
     fn alert(s: &str);
 }
 
-fn main() {
-    let vec2 = Vec2::default();
-    let vec2_2 = Vec2::new(1.0, 2.0);
-    let vec2_3 = vec2 + vec2_2;
-    print!("{:?}", vec2_3);
-    print!("{:?}", vec2_2);
-    print!("{:?}", vec2);
+#[wasm_bindgen]
+pub fn parse_opendrive(opendrive: &str) {
+    // todo: parse opendrive
+    println!("parse_opendrive: {}", opendrive);
 }

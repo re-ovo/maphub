@@ -1,25 +1,21 @@
 use wasm_bindgen::prelude::*;
 
-use crate::models::geometry::RoadGeometry;
+use crate::models::road::{road_geometry::RoadGeometry, road_type::RoadType, traffic_rule::TrafficRule};
 
-type PlanView = Vec<RoadGeometry>;
-
-#[wasm_bindgen]
-#[derive(Copy, Clone, Debug)]
-pub enum TrafficRule {
-    LHT,
-    RHT,
-}
+pub mod road_type;
+pub mod traffic_rule;
+pub mod road_geometry;
 
 #[wasm_bindgen]
 #[derive(Clone, Debug)]
 pub struct Road {
     id: String,
-    name: String,
-    length: f64,
     junction: String,
-    plan_view: PlanView,
+    length: f64,
+    name: Option<String>,
     traffic_rule: TrafficRule,
+    road_types: Vec<RoadType>,
+    plan_view: Vec<RoadGeometry>,
 }
 
 #[wasm_bindgen]
@@ -31,14 +27,17 @@ impl Road {
         junction: String,
         name: Option<String>,
         traffic_rule: Option<TrafficRule>,
+        road_types: Option<Vec<RoadType>>,
+        plan_view: Option<Vec<RoadGeometry>>,
     ) -> Self {
         Self {
             id,
             length,
             junction,
-            name: name.unwrap_or_default(),
+            name: name,
             traffic_rule: traffic_rule.unwrap_or_default(),
-            plan_view: Vec::new(),
+            plan_view: plan_view.unwrap_or_default(),
+            road_types: road_types.unwrap_or_default(),
         }
     }
 
@@ -46,7 +45,7 @@ impl Road {
         self.id.clone()
     }
 
-    pub fn name(&self) -> String {
+    pub fn name(&self) -> Option<String> {
         self.name.clone()
     }
 
@@ -58,17 +57,15 @@ impl Road {
         self.junction.clone()
     }
 
-    pub fn plan_view(&self) -> PlanView {
+    pub fn plan_view(&self) -> Vec<RoadGeometry> {
         self.plan_view.clone()
     }
 
     pub fn traffic_rule(&self) -> TrafficRule {
         self.traffic_rule
     }
-}
 
-impl Default for TrafficRule {
-    fn default() -> Self {
-        TrafficRule::RHT
+    pub fn road_types(&self) -> Vec<RoadType> {
+        self.road_types.clone()
     }
 }

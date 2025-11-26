@@ -1,7 +1,7 @@
 use crate::models::header::Header;
 use anyhow::{Context, Result};
-use quick_xml::events::Event;
 use quick_xml::Reader;
+use quick_xml::events::Event;
 
 /// 从 XML 元素解析 Header
 pub fn parse_header(
@@ -86,13 +86,13 @@ pub fn parse_header(
                                     break;
                                 }
                                 Ok(Event::Eof) => {
-                                    return Err(anyhow::anyhow!("Unexpected EOF in geoReference"))
+                                    return Err(anyhow::anyhow!("Unexpected EOF in geoReference"));
                                 }
                                 Err(e) => {
                                     return Err(anyhow::anyhow!(
                                         "Error parsing geoReference: {:?}",
                                         e
-                                    ))
+                                    ));
                                 }
                                 _ => {}
                             }
@@ -290,13 +290,16 @@ mod tests {
         loop {
             match reader.read_event_into(&mut buf) {
                 Ok(Event::Start(e)) => {
-                     if e.name().as_ref() == b"header" {
+                    if e.name().as_ref() == b"header" {
                         let result = parse_header(&mut reader, &e, false);
                         assert!(result.is_ok());
                         let header = result.unwrap();
-                        assert_eq!(header.geo_reference, Some("+proj=tmerc +lat_0=30 +lon_0=120".to_string()));
+                        assert_eq!(
+                            header.geo_reference,
+                            Some("+proj=tmerc +lat_0=30 +lon_0=120".to_string())
+                        );
                         break;
-                     }
+                    }
                 }
                 Ok(Event::Eof) => panic!("Did not find header"),
                 _ => {}

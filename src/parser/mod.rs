@@ -18,9 +18,15 @@ fn parse_opendrive_internal(xml: &str) -> Result<OpenDrive> {
 
     loop {
         match reader.read_event_into(&mut buf) {
-            Ok(Event::Start(ref e)) | Ok(Event::Empty(ref e)) => match e.name().as_ref() {
+            Ok(Event::Start(ref e)) => match e.name().as_ref() {
                 b"header" => {
-                    header_opt = Some(header::parse_header(&e)?);
+                    header_opt = Some(header::parse_header(&mut reader, e, false)?);
+                }
+                _ => {}
+            },
+            Ok(Event::Empty(ref e)) => match e.name().as_ref() {
+                b"header" => {
+                    header_opt = Some(header::parse_header(&mut reader, e, true)?);
                 }
                 _ => {}
             },

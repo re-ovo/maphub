@@ -75,16 +75,21 @@ impl std::ops::Add for Vec2 {
     type Output = Self;
 
     fn add(self, other: Self) -> Self {
-        Self { x: self.x + other.x, y: self.y + other.y }
+        Self {
+            x: self.x + other.x,
+            y: self.y + other.y,
+        }
     }
 }
-
 
 impl std::ops::Sub for Vec2 {
     type Output = Self;
 
     fn sub(self, other: Self) -> Self {
-        Self { x: self.x - other.x, y: self.y - other.y }
+        Self {
+            x: self.x - other.x,
+            y: self.y - other.y,
+        }
     }
 }
 
@@ -92,7 +97,10 @@ impl std::ops::Mul for Vec2 {
     type Output = Self;
 
     fn mul(self, other: Self) -> Self {
-        Self { x: self.x * other.x, y: self.y * other.y }
+        Self {
+            x: self.x * other.x,
+            y: self.y * other.y,
+        }
     }
 }
 
@@ -100,7 +108,10 @@ impl std::ops::Div for Vec2 {
     type Output = Self;
 
     fn div(self, other: Self) -> Self {
-        Self { x: self.x / other.x, y: self.y / other.y }
+        Self {
+            x: self.x / other.x,
+            y: self.y / other.y,
+        }
     }
 }
 
@@ -126,10 +137,10 @@ mod tests {
     fn test_length() {
         let v = Vec2::new(3.0, 4.0);
         assert_eq!(v.length(), 5.0);
-        
+
         let v2 = Vec2::new(0.0, 0.0);
         assert_eq!(v2.length(), 0.0);
-        
+
         let v3 = Vec2::new(1.0, 1.0);
         assert!((v3.length() - 1.4142135623730951).abs() < 1e-10);
     }
@@ -141,7 +152,7 @@ mod tests {
         assert_eq!(normalized.x(), 0.6);
         assert_eq!(normalized.y(), 0.8);
         assert!((normalized.length() - 1.0).abs() < 1e-10);
-        
+
         let v2 = Vec2::new(5.0, 0.0);
         let normalized2 = v2.normalize();
         assert_eq!(normalized2.x(), 1.0);
@@ -190,7 +201,7 @@ mod tests {
         let v2 = Vec2::new(3.0, 4.0);
         let result = v1.dot(&v2);
         assert_eq!(result, 11.0); // 1*3 + 2*4 = 11
-        
+
         // 测试垂直向量（点积为0）
         let v3 = Vec2::new(1.0, 0.0);
         let v4 = Vec2::new(0.0, 1.0);
@@ -203,7 +214,7 @@ mod tests {
         let v2 = Vec2::new(3.0, 4.0);
         let result = v1.cross(&v2);
         assert_eq!(result, -2.0); // 1*4 - 2*3 = -2
-        
+
         // 测试平行向量（叉积为0）
         let v3 = Vec2::new(2.0, 4.0);
         let v4 = Vec2::new(1.0, 2.0);

@@ -2,8 +2,8 @@ mod utils;
 
 use wasm_bindgen::prelude::*;
 
-pub mod models;
 pub mod math;
+pub mod models;
 pub mod parser;
 
 #[wasm_bindgen]

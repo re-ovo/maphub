@@ -45,27 +45,105 @@ pub enum ParamPoly3PRange {
 }
 
 impl RoadGeometry {
-    pub fn new(s: f64, x: f64, y: f64, hdg: f64, length: f64, geometry_type: RoadGeometryType) -> Self {
-        Self { s, x, y, hdg, length, geometry_type }
+    pub fn new(
+        s: f64,
+        x: f64,
+        y: f64,
+        hdg: f64,
+        length: f64,
+        geometry_type: RoadGeometryType,
+    ) -> Self {
+        Self {
+            s,
+            x,
+            y,
+            hdg,
+            length,
+            geometry_type,
+        }
     }
 }
 
 #[wasm_bindgen]
 impl RoadGeometry {
     pub fn create_line(s: f64, x: f64, y: f64, hdg: f64, length: f64) -> Self {
-        Self { s, x, y, hdg, length, geometry_type: RoadGeometryType::Line }
+        Self {
+            s,
+            x,
+            y,
+            hdg,
+            length,
+            geometry_type: RoadGeometryType::Line,
+        }
     }
 
-    pub fn create_spiral(s: f64, x: f64, y: f64, hdg: f64, length: f64, curv_start: f64, curv_end: f64) -> Self {
-        Self { s, x, y, hdg, length, geometry_type: RoadGeometryType::Spiral { curv_start, curv_end } }
+    pub fn create_spiral(
+        s: f64,
+        x: f64,
+        y: f64,
+        hdg: f64,
+        length: f64,
+        curv_start: f64,
+        curv_end: f64,
+    ) -> Self {
+        Self {
+            s,
+            x,
+            y,
+            hdg,
+            length,
+            geometry_type: RoadGeometryType::Spiral {
+                curv_start,
+                curv_end,
+            },
+        }
     }
 
     pub fn create_arc(s: f64, x: f64, y: f64, hdg: f64, length: f64, curvature: f64) -> Self {
-        Self { s, x, y, hdg, length, geometry_type: RoadGeometryType::Arc { curvature } }
+        Self {
+            s,
+            x,
+            y,
+            hdg,
+            length,
+            geometry_type: RoadGeometryType::Arc { curvature },
+        }
     }
 
-    pub fn create_param_poly3(s: f64, x: f64, y: f64, hdg: f64, length: f64, a_u: f64, a_v: f64, b_u: f64, b_v: f64, c_u: f64, c_v: f64, d_u: f64, d_v: f64, p_range: ParamPoly3PRange) -> Self {
-        Self { s, x, y, hdg, length, geometry_type: RoadGeometryType::ParamPoly3 { a_u, a_v, b_u, b_v, c_u, c_v, d_u, d_v, p_range } }
+    pub fn create_param_poly3(
+        s: f64,
+        x: f64,
+        y: f64,
+        hdg: f64,
+        length: f64,
+        a_u: f64,
+        a_v: f64,
+        b_u: f64,
+        b_v: f64,
+        c_u: f64,
+        c_v: f64,
+        d_u: f64,
+        d_v: f64,
+        p_range: ParamPoly3PRange,
+    ) -> Self {
+        Self {
+            s,
+            x,
+            y,
+            hdg,
+            length,
+            geometry_type: RoadGeometryType::ParamPoly3 {
+                a_u,
+                a_v,
+                b_u,
+                b_v,
+                c_u,
+                c_v,
+                d_u,
+                d_v,
+                p_range,
+            },
+        }
     }
 
     pub fn get_xy(&self, s: f64) -> Vec2 {

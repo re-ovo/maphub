@@ -1,8 +1,8 @@
 mod header;
 
 use anyhow::{Result, anyhow};
-use quick_xml::events::Event;
 use quick_xml::Reader;
+use quick_xml::events::Event;
 use wasm_bindgen::prelude::*;
 
 use crate::models::opendrive::OpenDrive;
@@ -18,14 +18,12 @@ fn parse_opendrive_internal(xml: &str) -> Result<OpenDrive> {
 
     loop {
         match reader.read_event_into(&mut buf) {
-            Ok(Event::Start(ref e)) | Ok(Event::Empty(ref e)) => {
-                match e.name().as_ref() {
-                    b"header" => {
-                        header_opt = Some(header::parse_header(&e)?);
-                    }
-                    _ => {}
+            Ok(Event::Start(ref e)) | Ok(Event::Empty(ref e)) => match e.name().as_ref() {
+                b"header" => {
+                    header_opt = Some(header::parse_header(&e)?);
                 }
-            }
+                _ => {}
+            },
             Ok(Event::Eof) => break,
             Err(e) => return Err(anyhow!("XML 解析错误: {:?}", e)),
             _ => {}

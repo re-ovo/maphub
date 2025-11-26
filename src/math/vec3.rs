@@ -89,7 +89,11 @@ impl std::ops::Add for Vec3 {
     type Output = Self;
 
     fn add(self, other: Self) -> Self {
-        Self { x: self.x + other.x, y: self.y + other.y, z: self.z + other.z }
+        Self {
+            x: self.x + other.x,
+            y: self.y + other.y,
+            z: self.z + other.z,
+        }
     }
 }
 
@@ -97,7 +101,11 @@ impl std::ops::Sub for Vec3 {
     type Output = Self;
 
     fn sub(self, other: Self) -> Self {
-        Self { x: self.x - other.x, y: self.y - other.y, z: self.z - other.z }
+        Self {
+            x: self.x - other.x,
+            y: self.y - other.y,
+            z: self.z - other.z,
+        }
     }
 }
 
@@ -105,7 +113,11 @@ impl std::ops::Mul for Vec3 {
     type Output = Self;
 
     fn mul(self, other: Self) -> Self {
-        Self { x: self.x * other.x, y: self.y * other.y, z: self.z * other.z }
+        Self {
+            x: self.x * other.x,
+            y: self.y * other.y,
+            z: self.z * other.z,
+        }
     }
 }
 
@@ -113,7 +125,11 @@ impl std::ops::Div for Vec3 {
     type Output = Self;
 
     fn div(self, other: Self) -> Self {
-        Self { x: self.x / other.x, y: self.y / other.y, z: self.z / other.z }
+        Self {
+            x: self.x / other.x,
+            y: self.y / other.y,
+            z: self.z / other.z,
+        }
     }
 }
 
@@ -141,10 +157,10 @@ mod tests {
     fn test_length() {
         let v = Vec3::new(2.0, 3.0, 6.0);
         assert_eq!(v.length(), 7.0); // sqrt(4 + 9 + 36) = 7
-        
+
         let v2 = Vec3::new(0.0, 0.0, 0.0);
         assert_eq!(v2.length(), 0.0);
-        
+
         let v3 = Vec3::new(1.0, 1.0, 1.0);
         assert!((v3.length() - 1.7320508075688772).abs() < 1e-10);
     }
@@ -153,11 +169,11 @@ mod tests {
     fn test_normalize() {
         let v = Vec3::new(2.0, 3.0, 6.0);
         let normalized = v.normalize();
-        assert!((normalized.x() - 2.0/7.0).abs() < 1e-10);
-        assert!((normalized.y() - 3.0/7.0).abs() < 1e-10);
-        assert!((normalized.z() - 6.0/7.0).abs() < 1e-10);
+        assert!((normalized.x() - 2.0 / 7.0).abs() < 1e-10);
+        assert!((normalized.y() - 3.0 / 7.0).abs() < 1e-10);
+        assert!((normalized.z() - 6.0 / 7.0).abs() < 1e-10);
         assert!((normalized.length() - 1.0).abs() < 1e-10);
-        
+
         let v2 = Vec3::new(5.0, 0.0, 0.0);
         let normalized2 = v2.normalize();
         assert_eq!(normalized2.x(), 1.0);
@@ -211,7 +227,7 @@ mod tests {
         let v2 = Vec3::new(4.0, 5.0, 6.0);
         let result = v1.dot(&v2);
         assert_eq!(result, 32.0); // 1*4 + 2*5 + 3*6 = 32
-        
+
         // 测试垂直向量（点积为0）
         let v3 = Vec3::new(1.0, 0.0, 0.0);
         let v4 = Vec3::new(0.0, 1.0, 0.0);
@@ -227,15 +243,15 @@ mod tests {
         assert_eq!(result.x(), 0.0);
         assert_eq!(result.y(), 0.0);
         assert_eq!(result.z(), 1.0);
-        
+
         // 测试一般向量
         let v3 = Vec3::new(1.0, 2.0, 3.0);
         let v4 = Vec3::new(4.0, 5.0, 6.0);
         let result2 = v3.cross(&v4);
-        assert_eq!(result2.x(), -3.0);  // 2*6 - 3*5 = -3
-        assert_eq!(result2.y(), 6.0);   // 3*4 - 1*6 = 6
-        assert_eq!(result2.z(), -3.0);  // 1*5 - 2*4 = -3
-        
+        assert_eq!(result2.x(), -3.0); // 2*6 - 3*5 = -3
+        assert_eq!(result2.y(), 6.0); // 3*4 - 1*6 = 6
+        assert_eq!(result2.z(), -3.0); // 1*5 - 2*4 = -3
+
         // 测试平行向量（叉积为零向量）
         let v5 = Vec3::new(2.0, 4.0, 6.0);
         let v6 = Vec3::new(1.0, 2.0, 3.0);
@@ -308,12 +324,12 @@ mod tests {
     fn test_cross_product_properties() {
         let v1 = Vec3::new(1.0, 2.0, 3.0);
         let v2 = Vec3::new(4.0, 5.0, 6.0);
-        
+
         // 叉积结果与两个输入向量都垂直
         let cross_result = v1.cross(&v2);
         assert!((v1.dot(&cross_result)).abs() < 1e-10);
         assert!((v2.dot(&cross_result)).abs() < 1e-10);
-        
+
         // 反交换律：v1 × v2 = -(v2 × v1)
         let cross_reverse = v2.cross(&v1);
         assert_eq!(cross_result.x(), -cross_reverse.x());

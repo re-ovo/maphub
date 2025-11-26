@@ -12,6 +12,7 @@ pub fn parse_header(element: &quick_xml::events::BytesStart) -> Result<Header> {
     let mut south = 0.0f64;
     let mut east = 0.0f64;
     let mut west = 0.0f64;
+    let mut vendor = String::new();
 
     for attr in element.attributes() {
         let attr = attr.context("读取属性错误")?;
@@ -46,12 +47,15 @@ pub fn parse_header(element: &quick_xml::events::BytesStart) -> Result<Header> {
             b"west" => {
                 west = value.parse().context("解析 west 错误")?;
             }
+            b"vendor" => {
+                vendor = value.to_string();
+            }
             _ => {}
         }
     }
 
     Ok(Header::new(
-        rev_major, rev_minor, name, version, date, north, south, east, west,
+        rev_major, rev_minor, name, version, date, north, south, east, west, vendor,
     ))
 }
 
@@ -97,6 +101,73 @@ mod tests {
             let header = result.unwrap();
             assert_eq!(header.rev_major(), 1);
             assert_eq!(header.rev_minor(), 4);
+        } else {
+            panic!("无法解析 XML 事件");
+        }
+    }
+
+    #[test]
+    fn test_parse_header_with_vendor() {
+        let xml = r#"<header revMajor="1" revMinor="8" name="TestRoad" vendor="TestVendor"/>"#;
+        let mut reader = quick_xml::Reader::from_str(xml);
+        let mut buf = Vec::new();
+
+        if let Ok(quick_xml::events::Event::Empty(e)) = reader.read_event_into(&mut buf) {
+            let result = parse_header(&e);
+            assert!(result.is_ok());
+
+            let header = result.unwrap();
+            assert_eq!(header.rev_major(), 1);
+            assert_eq!(header.rev_minor(), 8);
+            assert_eq!(header.name(), "TestRoad");
+            assert_eq!(header.vendor(), "TestVendor");
+        } else {
+            panic!("无法解析 XML 事件");
+        }
+    }
+
+    #[test]
+    fn test_parse_header_with_start_end_tags() {
+        let xml = r#"<header revMajor="1" revMinor="8" name="TestRoad" version="1.00" date="2024-01-01"></header>"#;
+        let mut reader = quick_xml::Reader::from_str(xml);
+        let mut buf = Vec::new();
+
+        if let Ok(quick_xml::events::Event::Start(e)) = reader.read_event_into(&mut buf) {
+            let result = parse_header(&e);
+            assert!(result.is_ok());
+
+            let header = result.unwrap();
+            assert_eq!(header.rev_major(), 1);
+            assert_eq!(header.rev_minor(), 8);
+            assert_eq!(header.name(), "TestRoad");
+            assert_eq!(header.version(), "1.00");
+            assert_eq!(header.date(), "2024-01-01");
+        } else {
+            panic!("无法解析 XML 事件");
+        }
+    }
+
+    #[test]
+    fn test_parse_header_with_start_end_tags_and_all_attributes() {
+        let xml = r#"<header revMajor="1" revMinor="8" name="TestRoad" version="1.00" date="2024-01-01" north="100.0" south="-100.0" east="200.0" west="-200.0" vendor="TestVendor"></header>"#;
+        let mut reader = quick_xml::Reader::from_str(xml);
+        let mut buf = Vec::new();
+
+        if let Ok(quick_xml::events::Event::Start(e)) = reader.read_event_into(&mut buf) {
+            let result = parse_header(&e);
+            assert!(result.is_ok());
+
+            let header = result.unwrap();
+            assert_eq!(header.rev_major(), 1);
+            assert_eq!(header.rev_minor(), 8);
+            assert_eq!(header.name(), "TestRoad");
+            assert_eq!(header.version(), "1.00");
+            assert_eq!(header.date(), "2024-01-01");
+            assert_eq!(header.north(), 100.0);
+            assert_eq!(header.south(), -100.0);
+            assert_eq!(header.east(), 200.0);
+            assert_eq!(header.west(), -200.0);
+            assert_eq!(header.vendor(), "TestVendor");
         } else {
             panic!("无法解析 XML 事件");
         }

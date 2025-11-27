@@ -9,6 +9,7 @@ import ViewportPanel from './panels/viewport-panel'
 import SceneTreePanel from './panels/scene-tree-panel'
 import PropertiesPanel from './panels/properties-panel'
 import { useStore } from '@/store'
+import { DEFAULT_MOSAIC_LAYOUT } from '@/store/pref-slice'
 
 export type ViewId = 'viewport' | 'sceneTree' | 'properties'
 
@@ -99,20 +100,7 @@ function Tile({
 export default function Viewer() {
   const { mosaicLayout, setMosaicLayout } = useStore()
 
-  // Default layout configuration
-  const defaultLayout: MosaicNode<ViewId> = {
-    direction: 'row',
-    first: {
-      direction: 'column',
-      first: 'sceneTree',
-      second: 'properties',
-      splitPercentage: 50,
-    },
-    second: 'viewport',
-    splitPercentage: 20,
-  }
-
-  const currentLayout = mosaicLayout || defaultLayout
+  const currentLayout = mosaicLayout || DEFAULT_MOSAIC_LAYOUT
 
   return (
     <div className="w-full h-full">
@@ -122,7 +110,7 @@ export default function Viewer() {
             id={id}
             path={path}
             currentLayout={currentLayout}
-            defaultLayout={defaultLayout}
+            defaultLayout={DEFAULT_MOSAIC_LAYOUT}
             onLayoutChange={setMosaicLayout}
           />
         )}

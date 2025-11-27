@@ -1,5 +1,5 @@
 [package]
-name = "opendrive-core"
+name = "maphub-core"
 version = "0.1.0"
 authors = ["RE <re_dev@qq.com>"]
 edition = "2024"

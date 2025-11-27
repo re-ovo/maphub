@@ -5,9 +5,9 @@ use quick_xml::Reader;
 use quick_xml::events::Event;
 use wasm_bindgen::prelude::*;
 
-use crate::models::opendrive::OpenDrive;
-
 pub use header::parse_header;
+
+use crate::odr::models::opendrive::OpenDrive;
 
 /// 解析 OpenDrive XML 字符串（内部实现）
 fn parse_opendrive_internal(xml: &str) -> Result<OpenDrive> {

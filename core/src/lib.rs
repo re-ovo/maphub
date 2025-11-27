@@ -3,8 +3,7 @@ mod utils;
 use wasm_bindgen::prelude::*;
 
 pub mod math;
-pub mod models;
-pub mod parser;
+pub mod odr;
 
 #[wasm_bindgen]
 extern "C" {

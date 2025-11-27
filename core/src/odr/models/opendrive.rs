@@ -1,6 +1,6 @@
 use wasm_bindgen::prelude::*;
 
-use crate::models::{header::Header, road::Road};
+use crate::odr::models::{header::Header, road::Road};
 
 #[wasm_bindgen]
 #[derive(Clone)]

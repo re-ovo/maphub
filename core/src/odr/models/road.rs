@@ -1,6 +1,6 @@
 use wasm_bindgen::prelude::*;
 
-use crate::models::road::{road_geometry::RoadGeometry, road_type::RoadType, traffic_rule::TrafficRule};
+use crate::odr::models::road::{road_geometry::RoadGeometry, road_type::RoadType, traffic_rule::TrafficRule};
 
 pub mod road_type;
 pub mod traffic_rule;

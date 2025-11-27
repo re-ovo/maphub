@@ -16,7 +16,7 @@ export function MenuBar() {
     <div className="flex items-center border-b px-4 py-1 bg-background gap-2">
       {/* 左侧标题 */}
       <div className="font-bold text-sm">
-        OpenDrive Viewer
+        MapHub
       </div>
 
       {/* 左侧菜单 */}

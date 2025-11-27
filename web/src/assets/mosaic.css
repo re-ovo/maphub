@@ -19,7 +19,7 @@
   height: auto;
   z-index: 1;
   background: var(--card);
-  border-radius: var(--radius);
+  border-radius: var(--radius-sm);
   box-shadow: 0 0 0 1px var(--border);
 }
 
@@ -133,7 +133,7 @@
   opacity: 0;
   z-index: 5;
   transition: opacity 100ms;
-  border-radius: var(--radius);
+  border-radius: var(--radius-sm);
 }
 
 .mosaic-drop-target .drop-target-container .drop-target.left {
@@ -179,7 +179,7 @@
   flex-direction: column;
   overflow: hidden;
   box-shadow: 0 0 0 1px var(--border);
-  border-radius: var(--radius);
+  border-radius: var(--radius-sm);
 }
 
 .mosaic-window .mosaic-window-toolbar,
@@ -192,8 +192,8 @@
   height: 30px;
   background: var(--card);
   box-shadow: 0 1px 1px color-mix(in oklch, var(--foreground) 15%, transparent);
-  border-top-right-radius: var(--radius);
-  border-top-left-radius: var(--radius);
+  border-top-right-radius: var(--radius-sm);
+  border-top-left-radius: var(--radius-sm);
 }
 
 .mosaic-window .mosaic-window-toolbar.draggable,
@@ -242,8 +242,8 @@
   background: var(--background);
   z-index: 1;
   overflow: hidden;
-  border-bottom-right-radius: var(--radius);
-  border-bottom-left-radius: var(--radius);
+  border-bottom-right-radius: var(--radius-sm);
+  border-bottom-left-radius: var(--radius-sm);
 }
 
 .mosaic-window .mosaic-window-additional-actions-bar,

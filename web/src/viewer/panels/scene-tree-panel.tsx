@@ -149,7 +149,7 @@ export default function SceneTreePanel() {
 
   return (
     <div className="w-full h-full flex flex-col">
-      <CardHeader className="py-3 px-4">
+      <CardHeader>
         <CardTitle className="text-sm">场景树</CardTitle>
       </CardHeader>
       <CardContent className="flex-1 p-0 overflow-hidden">

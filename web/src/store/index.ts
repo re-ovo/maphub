@@ -16,9 +16,7 @@ export const useStore = create<StoreState>()(
       storage: createJSONStorage(() => localStorage),
       // Only persist preference slice
       partialize: (state) => ({
-        theme: state.theme,
         mosaicLayout: state.mosaicLayout,
-        panelVisibility: state.panelVisibility,
         showGrid: state.showGrid,
         showAxis: state.showAxis,
       }),

@@ -6,7 +6,7 @@ use wasm_bindgen::prelude::*;
 /// country: 国家代码
 #[wasm_bindgen]
 #[derive(Clone, Debug)]
-pub struct RoadType {
+pub struct OdrRoadType {
     #[wasm_bindgen(js_name = "s")]
     pub s: f64,
     #[wasm_bindgen(js_name = "roadType", getter_with_clone)]
@@ -16,7 +16,7 @@ pub struct RoadType {
 }
 
 #[wasm_bindgen]
-impl RoadType {
+impl OdrRoadType {
     #[wasm_bindgen(constructor)]
     pub fn new(s: f64, road_type: String, country: Option<String>) -> Self {
         Self {

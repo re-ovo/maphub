@@ -9,3 +9,10 @@ pub mod odr;
 extern "C" {
     fn alert(s: &str);
 }
+
+#[wasm_bindgen]
+#[derive(Clone, Debug)]
+pub enum MapType {
+    OpenDrive,
+    Apollo,
+}

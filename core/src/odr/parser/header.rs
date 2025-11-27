@@ -2,14 +2,14 @@ use anyhow::{Context, Result};
 use quick_xml::Reader;
 use quick_xml::events::Event;
 
-use crate::odr::models::header::Header;
+use crate::odr::models::header::OdrHeader;
 
 /// 从 XML 元素解析 Header
 pub fn parse_header(
     reader: &mut Reader<&[u8]>,
     element: &quick_xml::events::BytesStart,
     is_empty: bool,
-) -> Result<Header> {
+) -> Result<OdrHeader> {
     let mut rev_major = 1i32;
     let mut rev_minor = 8i32;
     let mut name: Option<String> = None;
@@ -120,7 +120,7 @@ pub fn parse_header(
         }
     }
 
-    Ok(Header::new(
+    Ok(OdrHeader::new(
         rev_major,
         rev_minor,
         name,

@@ -4,7 +4,7 @@ use wasm_bindgen::prelude::*;
 
 #[wasm_bindgen]
 #[derive(Clone, Debug)]
-pub struct Header {
+pub struct OdrHeader {
     #[wasm_bindgen(js_name = "revMajor")]
     pub rev_major: i32,
     #[wasm_bindgen(js_name = "revMinor")]
@@ -30,7 +30,7 @@ pub struct Header {
 }
 
 #[wasm_bindgen]
-impl Header {
+impl OdrHeader {
     #[wasm_bindgen(constructor)]
     pub fn new(
         rev_major: i32,
@@ -61,7 +61,7 @@ impl Header {
     }
 }
 
-impl Display for Header {
+impl Display for OdrHeader {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(
             f,

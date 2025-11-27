@@ -5,13 +5,13 @@ use wasm_bindgen::prelude::*;
 /// RHT: 右行交通规则
 #[wasm_bindgen]
 #[derive(Copy, Clone, Debug)]
-pub enum TrafficRule {
+pub enum OdrTrafficRule {
     LHT,
     RHT,
 }
 
-impl Default for TrafficRule {
+impl Default for OdrTrafficRule {
     fn default() -> Self {
-        TrafficRule::RHT
+        OdrTrafficRule::RHT
     }
 }

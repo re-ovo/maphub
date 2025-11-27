@@ -1,34 +1,36 @@
 use wasm_bindgen::prelude::*;
 
-use crate::odr::models::road::{road_geometry::RoadGeometry, road_type::RoadType, traffic_rule::TrafficRule};
+use crate::odr::models::road::{
+    road_geometry::OdrRoadGeometry, road_type::OdrRoadType, traffic_rule::OdrTrafficRule,
+};
 
+pub mod road_geometry;
 pub mod road_type;
 pub mod traffic_rule;
-pub mod road_geometry;
 
 #[wasm_bindgen]
 #[derive(Clone, Debug)]
-pub struct Road {
+pub struct OdrRoad {
     id: String,
     junction: String,
     length: f64,
     name: Option<String>,
-    traffic_rule: TrafficRule,
-    road_types: Vec<RoadType>,
-    plan_view: Vec<RoadGeometry>,
+    traffic_rule: OdrTrafficRule,
+    road_types: Vec<OdrRoadType>,
+    plan_view: Vec<OdrRoadGeometry>,
 }
 
 #[wasm_bindgen]
-impl Road {
+impl OdrRoad {
     #[wasm_bindgen(constructor)]
     pub fn new(
         id: String,
         length: f64,
         junction: String,
         name: Option<String>,
-        traffic_rule: Option<TrafficRule>,
-        road_types: Option<Vec<RoadType>>,
-        plan_view: Option<Vec<RoadGeometry>>,
+        traffic_rule: Option<OdrTrafficRule>,
+        road_types: Option<Vec<OdrRoadType>>,
+        plan_view: Option<Vec<OdrRoadGeometry>>,
     ) -> Self {
         Self {
             id,
@@ -57,15 +59,15 @@ impl Road {
         self.junction.clone()
     }
 
-    pub fn plan_view(&self) -> Vec<RoadGeometry> {
+    pub fn plan_view(&self) -> Vec<OdrRoadGeometry> {
         self.plan_view.clone()
     }
 
-    pub fn traffic_rule(&self) -> TrafficRule {
+    pub fn traffic_rule(&self) -> OdrTrafficRule {
         self.traffic_rule
     }
 
-    pub fn road_types(&self) -> Vec<RoadType> {
+    pub fn road_types(&self) -> Vec<OdrRoadType> {
         self.road_types.clone()
     }
 }

@@ -4,17 +4,17 @@ use crate::math::vec2::Vec2;
 
 #[wasm_bindgen]
 #[derive(Clone, Debug)]
-pub struct RoadGeometry {
+pub struct OdrRoadGeometry {
     s: f64,
     x: f64,
     y: f64,
     hdg: f64,
     length: f64,
-    geometry_type: RoadGeometryType,
+    geometry_type: OdrRoadGeometryType,
 }
 
 #[derive(Clone, Debug)]
-pub enum RoadGeometryType {
+pub enum OdrRoadGeometryType {
     Line,
     Spiral {
         curv_start: f64,
@@ -32,26 +32,26 @@ pub enum RoadGeometryType {
         c_v: f64,
         d_u: f64,
         d_v: f64,
-        p_range: ParamPoly3PRange,
+        p_range: OdrParamPoly3PRange,
     },
 }
 
 /// Enumerations of the paramPoly3 pRange attribute
 #[wasm_bindgen]
 #[derive(Clone, Debug)]
-pub enum ParamPoly3PRange {
+pub enum OdrParamPoly3PRange {
     ArcLength,
     Normalized,
 }
 
-impl RoadGeometry {
+impl OdrRoadGeometry {
     pub fn new(
         s: f64,
         x: f64,
         y: f64,
         hdg: f64,
         length: f64,
-        geometry_type: RoadGeometryType,
+        geometry_type: OdrRoadGeometryType,
     ) -> Self {
         Self {
             s,
@@ -65,7 +65,7 @@ impl RoadGeometry {
 }
 
 #[wasm_bindgen]
-impl RoadGeometry {
+impl OdrRoadGeometry {
     pub fn create_line(s: f64, x: f64, y: f64, hdg: f64, length: f64) -> Self {
         Self {
             s,
@@ -73,7 +73,7 @@ impl RoadGeometry {
             y,
             hdg,
             length,
-            geometry_type: RoadGeometryType::Line,
+            geometry_type: OdrRoadGeometryType::Line,
         }
     }
 
@@ -92,7 +92,7 @@ impl RoadGeometry {
             y,
             hdg,
             length,
-            geometry_type: RoadGeometryType::Spiral {
+            geometry_type: OdrRoadGeometryType::Spiral {
                 curv_start,
                 curv_end,
             },
@@ -106,7 +106,7 @@ impl RoadGeometry {
             y,
             hdg,
             length,
-            geometry_type: RoadGeometryType::Arc { curvature },
+            geometry_type: OdrRoadGeometryType::Arc { curvature },
         }
     }
 
@@ -124,7 +124,7 @@ impl RoadGeometry {
         c_v: f64,
         d_u: f64,
         d_v: f64,
-        p_range: ParamPoly3PRange,
+        p_range: OdrParamPoly3PRange,
     ) -> Self {
         Self {
             s,
@@ -132,7 +132,7 @@ impl RoadGeometry {
             y,
             hdg,
             length,
-            geometry_type: RoadGeometryType::ParamPoly3 {
+            geometry_type: OdrRoadGeometryType::ParamPoly3 {
                 a_u,
                 a_v,
                 b_u,

@@ -9,9 +9,14 @@ pub use header::parse_header;
 
 use crate::odr::models::opendrive::OpenDrive;
 
-/// 解析 OpenDrive XML 字符串（内部实现）
-fn parse_opendrive_internal(xml: &str) -> Result<OpenDrive> {
-    let mut reader = Reader::from_str(xml);
+/// 解析 OpenDrive XML
+#[wasm_bindgen(js_name = parseOpendrive)]
+pub fn parse_opendrive(xml: &[u8]) -> Result<OpenDrive, String> {
+    parse_opendrive_internal(xml).map_err(|e| e.to_string())
+}
+
+fn parse_opendrive_internal(xml: &[u8]) -> Result<OpenDrive> {
+    let mut reader = Reader::from_reader(xml);
 
     let mut header_opt = None;
     let mut buf = Vec::new();
@@ -43,8 +48,3 @@ fn parse_opendrive_internal(xml: &str) -> Result<OpenDrive> {
     Ok(OpenDrive::new(header, roads))
 }
 
-/// 解析 OpenDrive XML 字符串
-#[wasm_bindgen]
-pub fn parse_opendrive(xml: &str) -> Result<OpenDrive, String> {
-    parse_opendrive_internal(xml).map_err(|e| e.to_string())
-}

@@ -13,7 +13,7 @@ import PropertiesPanel from "./panels/properties-panel";
 import { useStore } from "@/store";
 import { DEFAULT_MOSAIC_LAYOUT } from "@/store/pref-slice";
 import { FileDropZone } from "@/components/file-drop-zone";
-import { parseOpendrive, OpenDrive } from "opendrive-core";
+import { parseOpendrive, OpenDrive } from "core";
 
 export type ViewId = "viewport" | "sceneTree" | "properties";
 

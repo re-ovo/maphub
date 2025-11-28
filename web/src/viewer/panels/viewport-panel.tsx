@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react'
-import { Engine, Scene, ArcRotateCamera, HemisphericLight, Vector3, MeshBuilder } from '@babylonjs/core'
+import { Engine, Scene, UniversalCamera, HemisphericLight, Vector3, MeshBuilder, ArcRotateCamera } from '@babylonjs/core'
 import { GridMaterial } from '@babylonjs/materials'
 import { useStore } from '@/store'
 
@@ -25,23 +25,30 @@ export default function ViewportPanel() {
     // Create camera
     const camera = new ArcRotateCamera(
       'camera',
-      -Math.PI / 2,
-      Math.PI / 3,
-      100,
+      Math.PI / 2,
+      Math.PI / 4,
+      10,
       Vector3.Zero(),
       newScene
     )
     camera.attachControl(canvasRef.current, true)
-    camera.wheelPrecision = 50
+    camera.wheelDeltaPercentage = 0.1
     camera.minZ = 0.1
+    camera.panningSensibility = 500
 
     // Create light
     const light = new HemisphericLight('light', new Vector3(0, 1, 0), newScene)
     light.intensity = 0.7
 
+    // create cube
+    const cube = MeshBuilder.CreateBox('cube', { size: 1 }, newScene)
+    cube.position.y = 1
+
     // Create ground grid
     const ground = MeshBuilder.CreateGround('ground', { width: 1000, height: 1000 }, newScene)
     const gridMaterial = new GridMaterial('gridMaterial', newScene)
+    gridMaterial.mainColor.set(0.3, 0.3, 0.3)
+    gridMaterial.lineColor.set(0.1, 0.1, 0.1)
     gridMaterial.gridRatio = 1
     gridMaterial.majorUnitFrequency = 10
     gridMaterial.minorUnitVisibility = 0.45

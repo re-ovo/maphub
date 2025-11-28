@@ -1,13 +1,14 @@
 use wasm_bindgen::prelude::*;
 
 use crate::odr::models::road::{
-    road_geometry::OdrRoadGeometry, road_link::OdrRoadLink, road_type::OdrRoadType, traffic_rule::OdrTrafficRule
+    road_geometry::OdrRoadGeometry, road_link::OdrRoadLink, road_type::OdrRoadType,
+    traffic_rule::OdrTrafficRule,
 };
 
 pub mod road_geometry;
+pub mod road_link;
 pub mod road_type;
 pub mod traffic_rule;
-pub mod road_link;
 
 #[wasm_bindgen]
 #[derive(Clone, Debug)]

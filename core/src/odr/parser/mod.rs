@@ -1,4 +1,5 @@
 mod header;
+mod road;
 
 use anyhow::{Result, anyhow};
 use quick_xml::Reader;
@@ -6,6 +7,7 @@ use quick_xml::events::Event;
 use wasm_bindgen::prelude::*;
 
 pub use header::parse_header;
+pub use road::parse_road;
 
 use crate::odr::models::opendrive::OpenDrive;
 
@@ -19,6 +21,7 @@ fn parse_opendrive_internal(xml: &[u8]) -> Result<OpenDrive> {
     let mut reader = Reader::from_reader(xml);
 
     let mut header_opt = None;
+    let mut roads = Vec::new();
     let mut buf = Vec::new();
 
     loop {
@@ -27,11 +30,19 @@ fn parse_opendrive_internal(xml: &[u8]) -> Result<OpenDrive> {
                 b"header" => {
                     header_opt = Some(header::parse_header(&mut reader, e, false)?);
                 }
+                b"road" => {
+                    let road = road::parse_road(&mut reader, e, false)?;
+                    roads.push(road);
+                }
                 _ => {}
             },
             Ok(Event::Empty(ref e)) => match e.name().as_ref() {
                 b"header" => {
                     header_opt = Some(header::parse_header(&mut reader, e, true)?);
+                }
+                b"road" => {
+                    let road = road::parse_road(&mut reader, e, true)?;
+                    roads.push(road);
                 }
                 _ => {}
             },
@@ -43,7 +54,6 @@ fn parse_opendrive_internal(xml: &[u8]) -> Result<OpenDrive> {
     }
 
     let header = header_opt.ok_or_else(|| anyhow!("未找到 header 元素"))?;
-    let roads = Vec::new(); // 暂时不解析 roads
 
     Ok(OpenDrive::new(header, roads))
 }

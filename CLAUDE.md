@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## 项目概述
 
-这是一个 OpenDrive 文件的 Web 查看器项目，使用 Rust + WASM 进行文件解析，React + BabylonJS 进行 3D 渲染和交互。
+这是一个支持多种地图文件的 Web 查看器项目，使用 Rust + WASM 进行文件解析，React + BabylonJS 进行 3D 渲染和交互。
 
 ## 项目结构
 
@@ -15,6 +15,7 @@ opendrive-core/
 │       ├── odr/        # OpenDrive 格式相关
 │       │   ├── models/ # OpenDrive 数据模型（header, road, object 等）
 │       │   └── parser/ # XML 解析器（使用 quick-xml）
+│       ├── apollo/     # Apollo 格式相关
 │       └── math/       # 数学工具（vec2, vec3）
 └── web/                # React Web 前端
     └── src/
@@ -81,12 +82,12 @@ cd web && bun run preview
   - viewport: 3D 渲染视口（BabylonJS）
   - sceneTree: 场景树（对象层级）
   - properties: 属性面板
-- **主题**: 支持明暗主题切换（next-themes）
+- **主题**: 支持明暗主题切换
 - **WASM 集成**: 通过 `vite-plugin-wasm` 加载 core/pkg 中的 WASM 模块
 
 ### 模块依赖
 
-- web 依赖 core 构建的 WASM 包：`"opendrive-core": "file:../core/pkg"`
+- web 依赖 core 构建的 WASM 包：`"core": "file:../core/pkg"`
 - 在修改 core 后需要重新构建 WASM 并重启 web 开发服务器
 
 ### 状态持久化

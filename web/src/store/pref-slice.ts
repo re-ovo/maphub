@@ -1,18 +1,24 @@
 import type { StateCreator } from 'zustand'
-import type { MosaicNode } from 'react-mosaic-component'
+import type { MosaicNode } from '@lonli-lokli/react-mosaic-component';
 import type { ViewId } from '@/viewer/viewer'
 
 // Default mosaic layout configuration
 export const DEFAULT_MOSAIC_LAYOUT: MosaicNode<ViewId> = {
+  type: 'split',
   direction: 'row',
-  first: {
-    direction: 'column',
-    first: 'sceneTree',
-    second: 'properties',
-    splitPercentage: 50,
-  },
-  second: 'viewport',
-  splitPercentage: 20,
+  children: [
+    {
+      type: 'split',
+      direction: 'column',
+      children: [
+        'sceneTree',
+        'properties',
+      ],
+      splitPercentages: [50, 50],
+    },
+    'viewport',
+  ],
+  splitPercentages: [20, 80],
 }
 
 export interface PrefSlice {

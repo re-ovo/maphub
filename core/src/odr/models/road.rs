@@ -11,13 +11,25 @@ pub mod traffic_rule;
 #[wasm_bindgen]
 #[derive(Clone, Debug)]
 pub struct OdrRoad {
-    id: String,
-    junction: String,
-    length: f64,
-    name: Option<String>,
-    traffic_rule: OdrTrafficRule,
-    road_types: Vec<OdrRoadType>,
-    plan_view: Vec<OdrRoadGeometry>,
+    #[wasm_bindgen(getter_with_clone)]
+    pub id: String,
+
+    #[wasm_bindgen(getter_with_clone)]
+    pub junction: String,
+
+    pub length: f64,
+
+    #[wasm_bindgen(getter_with_clone)]
+    pub name: Option<String>,
+
+    #[wasm_bindgen(getter_with_clone, js_name = "trafficRule")]
+    pub traffic_rule: OdrTrafficRule,
+
+    #[wasm_bindgen(getter_with_clone, js_name = "roadTypes")]
+    pub road_types: Vec<OdrRoadType>,
+
+    #[wasm_bindgen(getter_with_clone, js_name = "planView")]
+    pub plan_view: Vec<OdrRoadGeometry>,
 }
 
 #[wasm_bindgen]
@@ -41,33 +53,5 @@ impl OdrRoad {
             plan_view: plan_view.unwrap_or_default(),
             road_types: road_types.unwrap_or_default(),
         }
-    }
-
-    pub fn id(&self) -> String {
-        self.id.clone()
-    }
-
-    pub fn name(&self) -> Option<String> {
-        self.name.clone()
-    }
-
-    pub fn length(&self) -> f64 {
-        self.length
-    }
-
-    pub fn junction(&self) -> String {
-        self.junction.clone()
-    }
-
-    pub fn plan_view(&self) -> Vec<OdrRoadGeometry> {
-        self.plan_view.clone()
-    }
-
-    pub fn traffic_rule(&self) -> OdrTrafficRule {
-        self.traffic_rule
-    }
-
-    pub fn road_types(&self) -> Vec<OdrRoadType> {
-        self.road_types.clone()
     }
 }

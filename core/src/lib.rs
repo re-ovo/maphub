@@ -2,9 +2,9 @@ mod utils;
 
 use wasm_bindgen::prelude::*;
 
+pub mod apollo;
 pub mod math;
 pub mod odr;
-pub mod apollo;
 
 #[wasm_bindgen]
 extern "C" {

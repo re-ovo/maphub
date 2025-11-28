@@ -47,4 +47,3 @@ fn parse_opendrive_internal(xml: &[u8]) -> Result<OpenDrive> {
 
     Ok(OpenDrive::new(header, roads))
 }
-

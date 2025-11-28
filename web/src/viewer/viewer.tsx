@@ -1,3 +1,4 @@
+import React from 'react'
 import {
   Mosaic,
   MosaicWindow,
@@ -10,6 +11,8 @@ import SceneTreePanel from './panels/scene-tree-panel'
 import PropertiesPanel from './panels/properties-panel'
 import { useStore } from '@/store'
 import { DEFAULT_MOSAIC_LAYOUT } from '@/store/pref-slice'
+import { FileDropZone } from '@/components/file-drop-zone'
+import { parseOpendrive } from 'opendrive-core'
 
 export type ViewId = 'viewport' | 'sceneTree' | 'properties'
 
@@ -102,8 +105,23 @@ export default function Viewer() {
 
   const currentLayout = mosaicLayout || DEFAULT_MOSAIC_LAYOUT
 
+  const handleFilesDropped = async (files: File[]) => {
+    const file = files[0]
+    if (file) {
+      const content = new Uint8Array(await file.arrayBuffer())
+      const start = performance.now()
+      const odr = parseOpendrive(content)
+      const end = performance.now()
+      console.log('parse time = ', end - start)
+      console.log('odr = ', odr)
+    }
+  }
+
   return (
-    <div className="w-full h-full">
+    <FileDropZone
+      onFilesDropped={handleFilesDropped}
+      className="w-full h-full"
+    >
       <Mosaic<ViewId>
         renderTile={(id, path) => (
           <Tile
@@ -117,6 +135,6 @@ export default function Viewer() {
         value={currentLayout}
         onChange={setMosaicLayout}
       />
-    </div>
+    </FileDropZone>
   )
 }

@@ -8,6 +8,7 @@ use crate::odr::models::road::road_elevation::OdrRoadElevation;
 use crate::odr::models::road::road_geometry::{OdrParamPoly3PRange, OdrRoadGeometry};
 use crate::odr::models::road::road_link::{OdrRoadLink, OdrRoadLinkElementType};
 use crate::odr::models::road::road_type::OdrRoadType;
+use crate::odr::models::road::superelevation::OdrSuperelevation;
 use crate::odr::models::road::traffic_rule::OdrTrafficRule;
 
 /// 解析 Road 元素
@@ -57,6 +58,7 @@ pub fn parse_road(
     let mut road_types: Vec<OdrRoadType> = Vec::new();
     let mut plan_view: Vec<OdrRoadGeometry> = Vec::new();
     let mut elevations: Vec<OdrRoadElevation> = Vec::new();
+    let mut superelevations: Vec<OdrSuperelevation> = Vec::new();
     let mut lane_sections = Vec::new();
     let mut lane_offsets = Vec::new();
 
@@ -79,6 +81,9 @@ pub fn parse_road(
                     }
                     b"elevationProfile" => {
                         elevations = parse_elevation_profile(reader)?;
+                    }
+                    b"lateralProfile" => {
+                        superelevations = parse_lateral_profile(reader)?;
                     }
                     b"lanes" => {
                         let (sections, offsets) = super::lane::parse_lanes(reader)?;
@@ -119,6 +124,7 @@ pub fn parse_road(
         Some(road_types),
         Some(plan_view),
         Some(elevations),
+        Some(superelevations),
         predecessor,
         successor,
         lane_sections,
@@ -545,4 +551,66 @@ fn parse_elevation(element: &quick_xml::events::BytesStart) -> Result<OdrRoadEle
     }
 
     Ok(OdrRoadElevation::new(s, a, b, c, d))
+}
+
+/// 解析 lateralProfile 元素
+fn parse_lateral_profile(reader: &mut Reader<&[u8]>) -> Result<Vec<OdrSuperelevation>> {
+    let mut superelevations = Vec::new();
+    let mut buf = Vec::new();
+
+    loop {
+        match reader.read_event_into(&mut buf) {
+            Ok(Event::Empty(ref e)) => {
+                if e.name().as_ref() == b"superelevation" {
+                    let superelevation = parse_superelevation(e)?;
+                    superelevations.push(superelevation);
+                }
+            }
+            Ok(Event::End(ref e)) if e.name().as_ref() == b"lateralProfile" => {
+                break;
+            }
+            Ok(Event::Eof) => return Err(anyhow::anyhow!("Unexpected EOF in lateralProfile")),
+            Err(e) => return Err(anyhow::anyhow!("Error parsing lateralProfile: {:?}", e)),
+            _ => {}
+        }
+        buf.clear();
+    }
+
+    Ok(superelevations)
+}
+
+/// 解析 superelevation 元素
+fn parse_superelevation(element: &quick_xml::events::BytesStart) -> Result<OdrSuperelevation> {
+    let mut s = 0.0_f64;
+    let mut a = 0.0_f64;
+    let mut b = 0.0_f64;
+    let mut c = 0.0_f64;
+    let mut d = 0.0_f64;
+
+    for attr in element.attributes() {
+        let attr = attr.context("读取属性错误")?;
+        let key = attr.key.as_ref();
+        let value = attr.unescape_value().context("解析属性值错误")?;
+
+        match key {
+            b"s" => {
+                s = value.parse().context("解析 s 错误")?;
+            }
+            b"a" => {
+                a = value.parse().context("解析 a 错误")?;
+            }
+            b"b" => {
+                b = value.parse().context("解析 b 错误")?;
+            }
+            b"c" => {
+                c = value.parse().context("解析 c 错误")?;
+            }
+            b"d" => {
+                d = value.parse().context("解析 d 错误")?;
+            }
+            _ => {}
+        }
+    }
+
+    Ok(OdrSuperelevation::new(s, a, b, c, d))
 }

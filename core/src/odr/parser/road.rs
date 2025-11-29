@@ -4,6 +4,7 @@ use quick_xml::events::Event;
 
 use crate::odr::models::enums::{OdrContactPoint, OdrElementDir};
 use crate::odr::models::road::OdrRoad;
+use crate::odr::models::road::road_elevation::OdrRoadElevation;
 use crate::odr::models::road::road_geometry::{OdrParamPoly3PRange, OdrRoadGeometry};
 use crate::odr::models::road::road_link::{OdrRoadLink, OdrRoadLinkElementType};
 use crate::odr::models::road::road_type::OdrRoadType;
@@ -55,6 +56,7 @@ pub fn parse_road(
     let mut successor: Option<OdrRoadLink> = None;
     let mut road_types: Vec<OdrRoadType> = Vec::new();
     let mut plan_view: Vec<OdrRoadGeometry> = Vec::new();
+    let mut elevations: Vec<OdrRoadElevation> = Vec::new();
 
     if !is_empty {
         let mut buf = Vec::new();
@@ -72,6 +74,9 @@ pub fn parse_road(
                     }
                     b"planView" => {
                         plan_view = parse_plan_view(reader)?;
+                    }
+                    b"elevationProfile" => {
+                        elevations = parse_elevation_profile(reader)?;
                     }
                     _ => {
                         // 忽略其他子元素
@@ -106,6 +111,7 @@ pub fn parse_road(
         Some(traffic_rule),
         Some(road_types),
         Some(plan_view),
+        Some(elevations),
         predecessor,
         successor,
     ))
@@ -469,3 +475,66 @@ fn parse_param_poly3(
         s, x, y, hdg, length, a_u, a_v, b_u, b_v, c_u, c_v, d_u, d_v, p_range,
     ))
 }
+
+/// 解析 elevationProfile 元素
+fn parse_elevation_profile(reader: &mut Reader<&[u8]>) -> Result<Vec<OdrRoadElevation>> {
+    let mut elevations = Vec::new();
+    let mut buf = Vec::new();
+
+    loop {
+        match reader.read_event_into(&mut buf) {
+            Ok(Event::Empty(ref e)) => {
+                if e.name().as_ref() == b"elevation" {
+                    let elevation = parse_elevation(e)?;
+                    elevations.push(elevation);
+                }
+            }
+            Ok(Event::End(ref e)) if e.name().as_ref() == b"elevationProfile" => {
+                break;
+            }
+            Ok(Event::Eof) => return Err(anyhow::anyhow!("Unexpected EOF in elevationProfile")),
+            Err(e) => return Err(anyhow::anyhow!("Error parsing elevationProfile: {:?}", e)),
+            _ => {}
+        }
+        buf.clear();
+    }
+
+    Ok(elevations)
+}
+
+/// 解析 elevation 元素
+fn parse_elevation(element: &quick_xml::events::BytesStart) -> Result<OdrRoadElevation> {
+    let mut s = 0.0_f64;
+    let mut a = 0.0_f64;
+    let mut b = 0.0_f64;
+    let mut c = 0.0_f64;
+    let mut d = 0.0_f64;
+
+    for attr in element.attributes() {
+        let attr = attr.context("读取属性错误")?;
+        let key = attr.key.as_ref();
+        let value = attr.unescape_value().context("解析属性值错误")?;
+
+        match key {
+            b"s" => {
+                s = value.parse().context("解析 s 错误")?;
+            }
+            b"a" => {
+                a = value.parse().context("解析 a 错误")?;
+            }
+            b"b" => {
+                b = value.parse().context("解析 b 错误")?;
+            }
+            b"c" => {
+                c = value.parse().context("解析 c 错误")?;
+            }
+            b"d" => {
+                d = value.parse().context("解析 d 错误")?;
+            }
+            _ => {}
+        }
+    }
+
+    Ok(OdrRoadElevation::new(s, a, b, c, d))
+}
+

@@ -319,7 +319,7 @@ export default function SceneTreePanel() {
       <CardHeader className="py-2 px-3">
         <CardTitle className="text-sm">场景树</CardTitle>
       </CardHeader>
-      <ScrollArea className="flex-1">
+      <ScrollArea className="flex-1 min-h-0">
         <div className="p-1">
           {treeNodes.length === 0 ? (
             <div className="text-sm text-muted-foreground text-center py-8">

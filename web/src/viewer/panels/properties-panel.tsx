@@ -172,7 +172,7 @@ export default function PropertiesPanel() {
           <p className="text-xs text-muted-foreground">{subtitle}</p>
         )}
       </CardHeader>
-      <ScrollArea className="flex-1">
+      <ScrollArea className="flex-1 min-h-0">
         <div>
           {groups.map((group) => (
             <PropertyGroupView key={group.id} group={group} />

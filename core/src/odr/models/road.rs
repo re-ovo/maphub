@@ -1,13 +1,14 @@
 use wasm_bindgen::prelude::*;
 
-use crate::odr::models::road::{
-    road_elevation::OdrRoadElevation, road_geometry::OdrRoadGeometry, road_link::OdrRoadLink, road_type::OdrRoadType, traffic_rule::OdrTrafficRule
-};
+use crate::odr::models::{lane::{lane_offset::OdrLaneOffset, lane_section::OdrLaneSection}, road::{
+    road_elevation::OdrRoadElevation, road_geometry::OdrRoadGeometry, road_link::OdrRoadLink,
+    road_type::OdrRoadType, traffic_rule::OdrTrafficRule,
+}};
 
+pub mod road_elevation;
 pub mod road_geometry;
 pub mod road_link;
 pub mod road_type;
-pub mod road_elevation;
 pub mod traffic_rule;
 
 #[wasm_bindgen]
@@ -41,6 +42,12 @@ pub struct OdrRoad {
 
     #[wasm_bindgen(getter_with_clone, js_name = "elevations")]
     pub elevations: Vec<OdrRoadElevation>,
+
+    #[wasm_bindgen(getter_with_clone)]
+    pub lanes: Vec<OdrLaneSection>,
+
+    #[wasm_bindgen(getter_with_clone)]
+    pub lane_offsets: Vec<OdrLaneOffset>,
 }
 
 #[wasm_bindgen]
@@ -57,6 +64,8 @@ impl OdrRoad {
         elevations: Option<Vec<OdrRoadElevation>>,
         predecessor: Option<OdrRoadLink>,
         successor: Option<OdrRoadLink>,
+        lanes: Vec<OdrLaneSection>,
+        lane_offsets: Vec<OdrLaneOffset>,
     ) -> Self {
         Self {
             id,
@@ -69,6 +78,8 @@ impl OdrRoad {
             elevations: elevations.unwrap_or_default(),
             predecessor: predecessor,
             successor: successor,
+            lanes: lanes,
+            lane_offsets: lane_offsets,
         }
     }
 }

@@ -29,7 +29,13 @@ pub struct OdrLaneWidth {
 impl OdrLaneWidth {
     #[wasm_bindgen(constructor)]
     pub fn new(s_offset: f64, a: f64, b: f64, c: f64, d: f64) -> Self {
-        Self { s_offset, a, b, c, d }
+        Self {
+            s_offset,
+            a,
+            b,
+            c,
+            d,
+        }
     }
 }
 
@@ -65,7 +71,13 @@ pub struct OdrLaneBorder {
 impl OdrLaneBorder {
     #[wasm_bindgen(constructor)]
     pub fn new(s_offset: f64, a: f64, b: f64, c: f64, d: f64) -> Self {
-        Self { s_offset, a, b, c, d }
+        Self {
+            s_offset,
+            a,
+            b,
+            c,
+            d,
+        }
     }
 }
 
@@ -92,6 +104,10 @@ pub struct OdrLaneHeight {
 impl OdrLaneHeight {
     #[wasm_bindgen(constructor)]
     pub fn new(s_offset: f64, inner: f64, outer: f64) -> Self {
-        Self { s_offset, inner, outer }
+        Self {
+            s_offset,
+            inner,
+            outer,
+        }
     }
 }

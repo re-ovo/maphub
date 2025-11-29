@@ -537,4 +537,3 @@ fn parse_elevation(element: &quick_xml::events::BytesStart) -> Result<OdrRoadEle
 
     Ok(OdrRoadElevation::new(s, a, b, c, d))
 }
-

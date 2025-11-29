@@ -43,7 +43,19 @@ impl OdrLaneSection {
     /// * `center` - 中心车道
     /// * `single_side` - 是否为单侧车道分段
     #[wasm_bindgen(constructor)]
-    pub fn new(s: f64, left: Vec<OdrLane>, right: Vec<OdrLane>, center: OdrLane, single_side: Option<bool>) -> Self {
-        Self { s, left, right, center, single_side }
+    pub fn new(
+        s: f64,
+        left: Vec<OdrLane>,
+        right: Vec<OdrLane>,
+        center: OdrLane,
+        single_side: Option<bool>,
+    ) -> Self {
+        Self {
+            s,
+            left,
+            right,
+            center,
+            single_side,
+        }
     }
 }

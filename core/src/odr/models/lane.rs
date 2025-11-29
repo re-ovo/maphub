@@ -5,6 +5,7 @@ use crate::odr::models::lane::{
     lane_geometry::{OdrLaneBorder, OdrLaneHeight, OdrLaneWidth},
     lane_link::OdrLaneLink,
     lane_material::OdrLaneMaterial,
+    lane_road_mark::OdrRoadMark,
     lane_rule::OdrLaneRule,
     lane_speed::OdrLaneSpeed,
 };
@@ -66,6 +67,10 @@ pub struct OdrLane {
     /// Lane Material - 路面材质
     #[wasm_bindgen(getter_with_clone)]
     pub material: Vec<OdrLaneMaterial>,
+
+    /// Lane Road Marks - 车道标线（定义车道外边界的标线样式）
+    #[wasm_bindgen(getter_with_clone, js_name = "roadMarks")]
+    pub road_marks: Vec<OdrRoadMark>,
 }
 
 #[wasm_bindgen]
@@ -84,6 +89,7 @@ impl OdrLane {
         access: Vec<OdrLaneAccess>,
         rule: Vec<OdrLaneRule>,
         material: Vec<OdrLaneMaterial>,
+        road_marks: Vec<OdrRoadMark>,
     ) -> Self {
         Self {
             id,
@@ -98,6 +104,7 @@ impl OdrLane {
             access,
             rule,
             material,
+            road_marks,
         }
     }
 }

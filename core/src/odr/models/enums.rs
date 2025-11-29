@@ -14,3 +14,14 @@ pub enum OdrElementDir {
     Positive,
     Negative,
 }
+
+#[wasm_bindgen]
+#[derive(Clone, Debug)]
+pub enum OdrSpeedUnit {
+    /// km/h
+    KMH,
+    /// m/s
+    MPS,
+    /// mph
+    MPH,
+}

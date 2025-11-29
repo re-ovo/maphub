@@ -1,9 +1,12 @@
 use wasm_bindgen::prelude::*;
 
-use crate::odr::models::{lane::{lane_offset::OdrLaneOffset, lane_section::OdrLaneSection}, road::{
-    road_elevation::OdrRoadElevation, road_geometry::OdrRoadGeometry, road_link::OdrRoadLink,
-    road_type::OdrRoadType, traffic_rule::OdrTrafficRule,
-}};
+use crate::odr::models::{
+    lane::{lane_offset::OdrLaneOffset, lane_section::OdrLaneSection},
+    road::{
+        road_elevation::OdrRoadElevation, road_geometry::OdrRoadGeometry, road_link::OdrRoadLink,
+        road_type::OdrRoadType, traffic_rule::OdrTrafficRule,
+    },
+};
 
 pub mod road_elevation;
 pub mod road_geometry;

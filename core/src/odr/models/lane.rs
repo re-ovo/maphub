@@ -1,14 +1,22 @@
 use wasm_bindgen::prelude::wasm_bindgen;
 
 use crate::odr::models::lane::{
+    lane_access::OdrLaneAccess,
     lane_geometry::{OdrLaneBorder, OdrLaneHeight, OdrLaneWidth},
     lane_link::OdrLaneLink,
+    lane_material::OdrLaneMaterial,
+    lane_rule::OdrLaneRule,
+    lane_speed::OdrLaneSpeed,
 };
 
+pub mod lane_access;
 pub mod lane_geometry;
 pub mod lane_link;
+pub mod lane_material;
 pub mod lane_offset;
+pub mod lane_rule;
 pub mod lane_section;
+pub mod lane_speed;
 
 #[wasm_bindgen]
 #[derive(Clone, Debug)]
@@ -41,6 +49,22 @@ pub struct OdrLane {
     /// Lane Height
     #[wasm_bindgen(getter_with_clone)]
     pub height: Vec<OdrLaneHeight>,
+
+    /// Lane Speed - 速度限制
+    #[wasm_bindgen(getter_with_clone)]
+    pub speed: Vec<OdrLaneSpeed>,
+
+    /// Lane Access - 通行规则
+    #[wasm_bindgen(getter_with_clone)]
+    pub access: Vec<OdrLaneAccess>,
+
+    /// Lane Rule - 车道规则（如禁止超车）
+    #[wasm_bindgen(getter_with_clone)]
+    pub rule: Vec<OdrLaneRule>,
+
+    /// Lane Material - 路面材质
+    #[wasm_bindgen(getter_with_clone)]
+    pub material: Vec<OdrLaneMaterial>,
 }
 
 #[wasm_bindgen]
@@ -55,6 +79,10 @@ impl OdrLane {
         width: Vec<OdrLaneWidth>,
         border: Vec<OdrLaneBorder>,
         height: Vec<OdrLaneHeight>,
+        speed: Vec<OdrLaneSpeed>,
+        access: Vec<OdrLaneAccess>,
+        rule: Vec<OdrLaneRule>,
+        material: Vec<OdrLaneMaterial>,
     ) -> Self {
         Self {
             id,
@@ -65,6 +93,10 @@ impl OdrLane {
             width,
             border,
             height,
+            speed,
+            access,
+            rule,
+            material,
         }
     }
 }

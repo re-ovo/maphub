@@ -57,6 +57,8 @@ pub fn parse_road(
     let mut road_types: Vec<OdrRoadType> = Vec::new();
     let mut plan_view: Vec<OdrRoadGeometry> = Vec::new();
     let mut elevations: Vec<OdrRoadElevation> = Vec::new();
+    let mut lane_sections = Vec::new();
+    let mut lane_offsets = Vec::new();
 
     if !is_empty {
         let mut buf = Vec::new();
@@ -77,6 +79,11 @@ pub fn parse_road(
                     }
                     b"elevationProfile" => {
                         elevations = parse_elevation_profile(reader)?;
+                    }
+                    b"lanes" => {
+                        let (sections, offsets) = super::lane::parse_lanes(reader)?;
+                        lane_sections = sections;
+                        lane_offsets = offsets;
                     }
                     _ => {
                         // 忽略其他子元素
@@ -114,6 +121,8 @@ pub fn parse_road(
         Some(elevations),
         predecessor,
         successor,
+        lane_sections,
+        lane_offsets,
     ))
 }
 

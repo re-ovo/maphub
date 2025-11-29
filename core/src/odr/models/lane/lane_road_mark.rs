@@ -8,7 +8,8 @@ pub enum OdrRoadMarkColor {
     Green,
     Orange,
     Red,
-    Standard, /// equivalent to white
+    Standard,
+    /// equivalent to white
     Violet,
     White,
     Yellow,

@@ -15,10 +15,10 @@ pub mod lane_geometry;
 pub mod lane_link;
 pub mod lane_material;
 pub mod lane_offset;
+pub mod lane_road_mark;
 pub mod lane_rule;
 pub mod lane_section;
 pub mod lane_speed;
-pub mod lane_road_mark;
 
 #[wasm_bindgen]
 #[derive(Clone, Debug)]

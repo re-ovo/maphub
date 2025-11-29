@@ -1,4 +1,5 @@
 mod header;
+mod lane;
 mod road;
 
 use anyhow::{Result, anyhow};
@@ -7,6 +8,7 @@ use quick_xml::events::Event;
 use wasm_bindgen::prelude::*;
 
 pub use header::parse_header;
+pub use lane::parse_lanes;
 pub use road::parse_road;
 
 use crate::odr::models::opendrive::OpenDrive;

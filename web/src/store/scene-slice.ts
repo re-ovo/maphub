@@ -1,5 +1,5 @@
 import type { StateCreator } from 'zustand'
-import type { Scene, TransformNode } from '@babylonjs/core'
+import type { Scene } from '@babylonjs/core'
 
 export interface SceneSlice {
   // Babylon.js scene

@@ -1,4 +1,4 @@
-import React, { useContext } from "react";
+import React, { useContext, useCallback } from "react";
 import {
   Mosaic,
   MosaicContext,
@@ -13,7 +13,8 @@ import PropertiesPanel from "./panels/properties-panel";
 import { useStore } from "@/store";
 import { DEFAULT_MOSAIC_LAYOUT } from "@/store/pref-slice";
 import { FileDropZone } from "@/components/file-drop-zone";
-import { parseOpendrive, OpenDrive } from "core";
+import { formatRegistry } from "./formats";
+import type { MapDocument } from "./types";
 
 export type ViewId = "viewport" | "sceneTree" | "properties";
 
@@ -87,38 +88,91 @@ function Tile({
   );
 }
 
+/** 生成唯一的文档 ID */
+function generateDocumentId(): string {
+  return `doc_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
+}
+
 export default function Viewer() {
-  const { mosaicLayout, setMosaicLayout } = useStore();
+  const { mosaicLayout, setMosaicLayout, scene, addDocument } = useStore();
 
   const currentLayout = mosaicLayout || DEFAULT_MOSAIC_LAYOUT;
 
-  const handleFilesDropped = async (files: File[]) => {
-    const file = files[0];
-    if (file) {
-      const content = new Uint8Array(await file.arrayBuffer());
-      const start = performance.now();
-      const odr = parseOpendrive(content);
-      const end = performance.now();
-      console.log("parse time = ", end - start);
-      console.log("odr = ", odr, odr instanceof OpenDrive);
-    }
-  };
+  const handleFilesDropped = useCallback(
+    async (files: File[]) => {
+      if (!scene) {
+        console.warn("Scene not ready");
+        return;
+      }
+
+      for (const file of files) {
+        try {
+          const content = new Uint8Array(await file.arrayBuffer());
+
+          // 检测文件格式
+          const format = formatRegistry.detectFormat(content, file.name);
+          if (!format) {
+            console.warn(`Unsupported file format: ${file.name}`);
+            continue;
+          }
+
+          console.log(`Loading ${file.name} as ${format.name}...`);
+          const start = performance.now();
+
+          // 解析数据
+          const data = await format.parse(content);
+          const parseTime = performance.now() - start;
+          console.log(`Parse time: ${parseTime.toFixed(2)}ms`);
+
+          // 创建文档
+          const documentId = generateDocumentId();
+          const renderer = format.createRenderer(scene, data, documentId);
+          const treeProvider = format.createTreeProvider(data, documentId);
+          const propertyProvider = format.createPropertyProvider(data);
+          const hoverProvider = format.createHoverProvider(data);
+
+          const doc: MapDocument = {
+            id: documentId,
+            filename: file.name,
+            formatId: format.id,
+            data,
+            renderer,
+            treeProvider,
+            propertyProvider,
+            hoverProvider,
+            visible: true,
+          };
+
+          // 渲染
+          renderer.render();
+
+          // 添加到 store
+          addDocument(doc);
+
+          console.log(`Loaded ${file.name} (${documentId})`);
+        } catch (error) {
+          console.error(`Failed to load ${file.name}:`, error);
+        }
+      }
+    },
+    [scene, addDocument]
+  );
 
   return (
     <FileDropZone onFilesDropped={handleFilesDropped} className="w-full h-full">
-        <Mosaic<ViewId>
-          renderTile={(id, path) => (
-            <Tile
-              id={id}
-              path={path}
-              currentLayout={currentLayout}
-              defaultLayout={DEFAULT_MOSAIC_LAYOUT}
-              onLayoutChange={setMosaicLayout}
-            />
-          )}
-          value={currentLayout}
-          onChange={setMosaicLayout}
-        />
+      <Mosaic<ViewId>
+        renderTile={(id, path) => (
+          <Tile
+            id={id}
+            path={path}
+            currentLayout={currentLayout}
+            defaultLayout={DEFAULT_MOSAIC_LAYOUT}
+            onLayoutChange={setMosaicLayout}
+          />
+        )}
+        value={currentLayout}
+        onChange={setMosaicLayout}
+      />
     </FileDropZone>
   );
 }

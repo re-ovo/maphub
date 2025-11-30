@@ -8,6 +8,7 @@ use crate::odr::models::road::road_elevation::OdrRoadElevation;
 use crate::odr::models::road::road_geometry::{OdrParamPoly3PRange, OdrRoadGeometry};
 use crate::odr::models::road::road_link::{OdrRoadLink, OdrRoadLinkElementType};
 use crate::odr::models::road::road_type::OdrRoadType;
+use crate::odr::models::road::shape::OdrShape;
 use crate::odr::models::road::superelevation::OdrSuperelevation;
 use crate::odr::models::road::traffic_rule::OdrTrafficRule;
 
@@ -59,6 +60,7 @@ pub fn parse_road(
     let mut plan_view: Vec<OdrRoadGeometry> = Vec::new();
     let mut elevations: Vec<OdrRoadElevation> = Vec::new();
     let mut superelevations: Vec<OdrSuperelevation> = Vec::new();
+    let mut shapes: Vec<OdrShape> = Vec::new();
     let mut lane_sections = Vec::new();
     let mut lane_offsets = Vec::new();
 
@@ -83,7 +85,9 @@ pub fn parse_road(
                         elevations = parse_elevation_profile(reader)?;
                     }
                     b"lateralProfile" => {
-                        superelevations = parse_lateral_profile(reader)?;
+                        let (supers, shps) = parse_lateral_profile(reader)?;
+                        superelevations = supers;
+                        shapes = shps;
                     }
                     b"lanes" => {
                         let (sections, offsets) = super::lane::parse_lanes(reader)?;
@@ -125,6 +129,7 @@ pub fn parse_road(
         Some(plan_view),
         Some(elevations),
         Some(superelevations),
+        Some(shapes),
         predecessor,
         successor,
         lane_sections,
@@ -554,16 +559,24 @@ fn parse_elevation(element: &quick_xml::events::BytesStart) -> Result<OdrRoadEle
 }
 
 /// 解析 lateralProfile 元素
-fn parse_lateral_profile(reader: &mut Reader<&[u8]>) -> Result<Vec<OdrSuperelevation>> {
+fn parse_lateral_profile(reader: &mut Reader<&[u8]>) -> Result<(Vec<OdrSuperelevation>, Vec<OdrShape>)> {
     let mut superelevations = Vec::new();
+    let mut shapes = Vec::new();
     let mut buf = Vec::new();
 
     loop {
         match reader.read_event_into(&mut buf) {
             Ok(Event::Empty(ref e)) => {
-                if e.name().as_ref() == b"superelevation" {
-                    let superelevation = parse_superelevation(e)?;
-                    superelevations.push(superelevation);
+                match e.name().as_ref() {
+                    b"superelevation" => {
+                        let superelevation = parse_superelevation(e)?;
+                        superelevations.push(superelevation);
+                    }
+                    b"shape" => {
+                        let shape = parse_shape(e)?;
+                        shapes.push(shape);
+                    }
+                    _ => {}
                 }
             }
             Ok(Event::End(ref e)) if e.name().as_ref() == b"lateralProfile" => {
@@ -576,7 +589,7 @@ fn parse_lateral_profile(reader: &mut Reader<&[u8]>) -> Result<Vec<OdrSupereleva
         buf.clear();
     }
 
-    Ok(superelevations)
+    Ok((superelevations, shapes))
 }
 
 /// 解析 superelevation 元素
@@ -613,4 +626,44 @@ fn parse_superelevation(element: &quick_xml::events::BytesStart) -> Result<OdrSu
     }
 
     Ok(OdrSuperelevation::new(s, a, b, c, d))
+}
+
+/// 解析 shape 元素
+fn parse_shape(element: &quick_xml::events::BytesStart) -> Result<OdrShape> {
+    let mut s = 0.0_f64;
+    let mut t = 0.0_f64;
+    let mut a = 0.0_f64;
+    let mut b = 0.0_f64;
+    let mut c = 0.0_f64;
+    let mut d = 0.0_f64;
+
+    for attr in element.attributes() {
+        let attr = attr.context("读取属性错误")?;
+        let key = attr.key.as_ref();
+        let value = attr.unescape_value().context("解析属性值错误")?;
+
+        match key {
+            b"s" => {
+                s = value.parse().context("解析 s 错误")?;
+            }
+            b"t" => {
+                t = value.parse().context("解析 t 错误")?;
+            }
+            b"a" => {
+                a = value.parse().context("解析 a 错误")?;
+            }
+            b"b" => {
+                b = value.parse().context("解析 b 错误")?;
+            }
+            b"c" => {
+                c = value.parse().context("解析 c 错误")?;
+            }
+            b"d" => {
+                d = value.parse().context("解析 d 错误")?;
+            }
+            _ => {}
+        }
+    }
+
+    Ok(OdrShape::new(s, t, a, b, c, d))
 }

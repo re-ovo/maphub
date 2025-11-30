@@ -7,6 +7,7 @@ import {
   type MosaicPath,
 } from "@lonli-lokli/react-mosaic-component";
 import { X, Maximize2, Minimize2 } from "lucide-react";
+import { ArcRotateCamera } from "@babylonjs/core";
 import ViewportPanel from "./panels/viewport-panel";
 import SceneTreePanel from "./panels/scene-tree-panel";
 import PropertiesPanel from "./panels/properties-panel";
@@ -145,6 +146,18 @@ export default function Viewer() {
 
           // 渲染
           renderer.render();
+
+          // 聚焦到地图中心
+          const bounds = renderer.rootNode.getHierarchyBoundingVectors();
+          const center = bounds.min.add(bounds.max).scale(0.5);
+          const diagonal = bounds.max.subtract(bounds.min).length();
+
+          const camera = scene.activeCamera;
+          if (camera instanceof ArcRotateCamera) {
+            camera.setTarget(center);
+            // eslint-disable-next-line react-hooks/immutability
+            camera.radius = diagonal * 0.8;
+          }
 
           // 添加到 store
           addDocument(doc);

@@ -1,14 +1,15 @@
 import {
   Scene,
   TransformNode,
-  MeshBuilder,
+  Mesh,
+  VertexData,
   StandardMaterial,
   Color3,
   HighlightLayer,
   type PickingInfo,
   type AbstractMesh,
 } from "@babylonjs/core";
-import type { OpenDrive, OdrRoad } from "core";
+import { LaneMeshBuilder, type OpenDrive, type OdrRoad } from "core";
 import type { MapRenderer, Selectable } from "../../types";
 
 /** OpenDrive 渲染器 */
@@ -95,38 +96,39 @@ export class OpenDriveRenderer implements MapRenderer {
   }
 
   private renderRoad(road: OdrRoad): void {
-    const roadNode = new TransformNode(
-      `road_${road.id}`,
-      this.scene
-    );
+    const roadNode = new TransformNode(`road_${road.id}`, this.scene);
     roadNode.parent = this.rootNode;
 
-    // 简化渲染：为每条道路创建一个占位立方体
-    // TODO: 实现真正的道路几何渲染
-    const placeholder = MeshBuilder.CreateBox(
-      `road_${road.id}_placeholder`,
-      { width: road.length * 0.1, height: 0.5, depth: 3 },
-      this.scene
-    );
-    placeholder.parent = roadNode;
+    // 使用 LaneMeshBuilder 构建道路网格
+    const meshBuilder = new LaneMeshBuilder(1.0);
+    const meshData = meshBuilder.buildRoadMesh(road);
+
+    // 创建 BabylonJS 网格
+    const mesh = new Mesh(`road_${road.id}_lanes`, this.scene);
+    mesh.parent = roadNode;
+
+    // 设置顶点数据
+    const vertexData = new VertexData();
+    vertexData.positions = meshData.vertices;
+    vertexData.indices = Array.from(meshData.indices);
+    vertexData.normals = meshData.normals;
+    vertexData.applyToMesh(mesh);
 
     // 设置材质
-    const material = new StandardMaterial(
-      `road_${road.id}_mat`,
-      this.scene
-    );
+    const material = new StandardMaterial(`road_${road.id}_mat`, this.scene);
     material.diffuseColor = new Color3(0.3, 0.3, 0.3);
-    placeholder.material = material;
+    material.backFaceCulling = false;
+    mesh.material = material;
 
     // 注册可选择对象
     const selectable: Selectable = {
       documentId: this.documentId,
       type: "road",
       path: road.id,
-      meshes: [placeholder],
+      meshes: [mesh],
     };
 
-    this.registerSelectable(placeholder, selectable);
+    this.registerSelectable(mesh, selectable);
   }
 
   private registerSelectable(mesh: AbstractMesh, selectable: Selectable): void {

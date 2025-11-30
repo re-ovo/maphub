@@ -69,13 +69,14 @@ impl LaneMeshBuilder {
             let outer_point = road.sth_to_xyz(s, t_outer, h);
 
             // 添加顶点（内边界和外边界各一个）
+            // 坐标系转换：OpenDRIVE (x, y, z) -> 渲染 (x, z, y)，使 Y 轴向上
             vertices.push(inner_point.x as f32);
-            vertices.push(inner_point.y as f32);
             vertices.push(inner_point.z as f32);
+            vertices.push(inner_point.y as f32);
 
             vertices.push(outer_point.x as f32);
-            vertices.push(outer_point.y as f32);
             vertices.push(outer_point.z as f32);
+            vertices.push(outer_point.y as f32);
         }
 
         // 生成索引（三角形带）
@@ -291,10 +292,10 @@ impl LaneMeshBuilder {
                 normals[i + 1] /= len;
                 normals[i + 2] /= len;
             } else {
-                // 如果法线长度太小，使用默认向上方向
+                // 如果法线长度太小，使用默认向上方向（Y 轴）
                 normals[i] = 0.0;
-                normals[i + 1] = 0.0;
-                normals[i + 2] = 1.0;
+                normals[i + 1] = 1.0;
+                normals[i + 2] = 0.0;
             }
         }
 
@@ -380,11 +381,11 @@ mod tests {
     fn test_calculate_normals_flat_surface() {
         let builder = LaneMeshBuilder::new(None);
 
-        // 创建一个水平面（z=0）
+        // 创建一个水平面（y=0，即 XZ 平面）
         let vertices = vec![
             0.0, 0.0, 0.0, // 顶点 0
-            1.0, 0.0, 0.0, // 顶点 1
-            0.0, 1.0, 0.0, // 顶点 2
+            0.0, 0.0, 1.0, // 顶点 1
+            1.0, 0.0, 0.0, // 顶点 2
         ];
 
         // 单个三角形
@@ -392,13 +393,13 @@ mod tests {
 
         let normals = builder.calculate_normals(&vertices, &indices);
 
-        // 水平面的法线应该指向 z 轴正方向
+        // 水平面的法线应该指向 Y 轴正方向
         assert_eq!(normals.len(), 9);
-        // 每个顶点的法线都应该是 (0, 0, 1)
+        // 每个顶点的法线都应该是 (0, 1, 0)
         for i in (0..normals.len()).step_by(3) {
             assert!((normals[i] - 0.0).abs() < 1e-5);
-            assert!((normals[i + 1] - 0.0).abs() < 1e-5);
-            assert!((normals[i + 2] - 1.0).abs() < 1e-5);
+            assert!((normals[i + 1] - 1.0).abs() < 1e-5);
+            assert!((normals[i + 2] - 0.0).abs() < 1e-5);
         }
     }
 }

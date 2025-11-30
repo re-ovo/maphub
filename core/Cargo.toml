@@ -19,6 +19,7 @@ prost = "0.14.1"
 
 [dev-dependencies]
 wasm-bindgen-test = "0.3.34"
+criterion = { version = "0.7", features = ["html_reports"] }
 
 [build-dependencies]
 prost-build = "0.14.1"

@@ -559,26 +559,26 @@ fn parse_elevation(element: &quick_xml::events::BytesStart) -> Result<OdrRoadEle
 }
 
 /// 解析 lateralProfile 元素
-fn parse_lateral_profile(reader: &mut Reader<&[u8]>) -> Result<(Vec<OdrSuperelevation>, Vec<OdrShape>)> {
+fn parse_lateral_profile(
+    reader: &mut Reader<&[u8]>,
+) -> Result<(Vec<OdrSuperelevation>, Vec<OdrShape>)> {
     let mut superelevations = Vec::new();
     let mut shapes = Vec::new();
     let mut buf = Vec::new();
 
     loop {
         match reader.read_event_into(&mut buf) {
-            Ok(Event::Empty(ref e)) => {
-                match e.name().as_ref() {
-                    b"superelevation" => {
-                        let superelevation = parse_superelevation(e)?;
-                        superelevations.push(superelevation);
-                    }
-                    b"shape" => {
-                        let shape = parse_shape(e)?;
-                        shapes.push(shape);
-                    }
-                    _ => {}
+            Ok(Event::Empty(ref e)) => match e.name().as_ref() {
+                b"superelevation" => {
+                    let superelevation = parse_superelevation(e)?;
+                    superelevations.push(superelevation);
                 }
-            }
+                b"shape" => {
+                    let shape = parse_shape(e)?;
+                    shapes.push(shape);
+                }
+                _ => {}
+            },
             Ok(Event::End(ref e)) if e.name().as_ref() == b"lateralProfile" => {
                 break;
             }

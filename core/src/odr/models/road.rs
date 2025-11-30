@@ -1,17 +1,22 @@
 use wasm_bindgen::prelude::*;
 
-use crate::{math::vec3::Vec3, odr::models::{
-    lane::{lane_offset::OdrLaneOffset, lane_section::OdrLaneSection},
-    road::{
-        road_elevation::OdrRoadElevation, road_geometry::OdrRoadGeometry, road_link::OdrRoadLink,
-        road_type::OdrRoadType, superelevation::OdrSuperelevation, traffic_rule::OdrTrafficRule,
+use crate::{
+    math::{mesh::MeshData, vec3::Vec3},
+    odr::models::{
+        lane::{lane_offset::OdrLaneOffset, lane_section::OdrLaneSection},
+        road::{
+            road_elevation::OdrRoadElevation, road_geometry::OdrRoadGeometry,
+            road_link::OdrRoadLink, road_type::OdrRoadType, shape::OdrShape,
+            superelevation::OdrSuperelevation, traffic_rule::OdrTrafficRule,
+        },
     },
-}};
+};
 
 pub mod road_elevation;
 pub mod road_geometry;
 pub mod road_link;
 pub mod road_type;
+pub mod shape;
 pub mod superelevation;
 pub mod traffic_rule;
 
@@ -50,6 +55,9 @@ pub struct OdrRoad {
     #[wasm_bindgen(getter_with_clone, js_name = "superelevations")]
     pub superelevations: Vec<OdrSuperelevation>,
 
+    #[wasm_bindgen(getter_with_clone, js_name = "shapes")]
+    pub shapes: Vec<OdrShape>,
+
     #[wasm_bindgen(getter_with_clone)]
     pub lanes: Vec<OdrLaneSection>,
 
@@ -70,6 +78,7 @@ impl OdrRoad {
         plan_view: Option<Vec<OdrRoadGeometry>>,
         elevations: Option<Vec<OdrRoadElevation>>,
         superelevations: Option<Vec<OdrSuperelevation>>,
+        shapes: Option<Vec<OdrShape>>,
         predecessor: Option<OdrRoadLink>,
         successor: Option<OdrRoadLink>,
         lanes: Vec<OdrLaneSection>,
@@ -85,6 +94,7 @@ impl OdrRoad {
             road_types: road_types.unwrap_or_default(),
             elevations: elevations.unwrap_or_default(),
             superelevations: superelevations.unwrap_or_default(),
+            shapes: shapes.unwrap_or_default(),
             predecessor: predecessor,
             successor: successor,
             lanes: lanes,

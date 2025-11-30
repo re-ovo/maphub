@@ -4,7 +4,10 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
+    "build:core": "cd ../core && wasm-pack build",
+    "predev": "bun run build:core",
     "dev": "vite",
+    "prebuild": "bun run build:core",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview"

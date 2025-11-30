@@ -19,12 +19,21 @@ export function FileDropZone({
   const [isDragging, setIsDragging] = React.useState(false)
   const dragCounterRef = React.useRef(0)
 
+  // 检测是否是文件拖拽（而非 DOM 元素拖拽）
+  const isFileDrag = (e: React.DragEvent): boolean => {
+    if (!e.dataTransfer.types) return false
+    // 文件拖拽会包含 "Files" type
+    return e.dataTransfer.types.includes('Files')
+  }
+
   const handleDragOver = (e: React.DragEvent) => {
+    if (!isFileDrag(e)) return
     e.preventDefault()
     e.stopPropagation()
   }
 
   const handleDragEnter = (e: React.DragEvent) => {
+    if (!isFileDrag(e)) return
     e.preventDefault()
     e.stopPropagation()
     dragCounterRef.current++
@@ -34,6 +43,7 @@ export function FileDropZone({
   }
 
   const handleDragLeave = (e: React.DragEvent) => {
+    if (!isFileDrag(e)) return
     e.preventDefault()
     e.stopPropagation()
     dragCounterRef.current--
@@ -43,6 +53,7 @@ export function FileDropZone({
   }
 
   const handleDrop = (e: React.DragEvent) => {
+    if (!isFileDrag(e)) return
     e.preventDefault()
     e.stopPropagation()
     dragCounterRef.current = 0

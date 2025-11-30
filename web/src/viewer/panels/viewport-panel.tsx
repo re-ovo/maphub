@@ -70,7 +70,7 @@ export default function ViewportPanel() {
   // 处理悬浮
   const handlePointerMove = useCallback(
     (pointerInfo: PointerInfo) => {
-      if (!scene) return;
+      if (!scene || !canvasRef.current) return;
 
       const pickInfo = scene.pick(
         scene.pointerX,
@@ -116,7 +116,14 @@ export default function ViewportPanel() {
 
           // 获取悬浮信息
           const hoverInfo = doc.hoverProvider.getHoverInfo(selectable);
-          const position = { x: pointerInfo.event.clientX, y: pointerInfo.event.clientY };
+
+          // 计算相对于 canvas 容器的坐标
+          const rect = canvasRef.current.getBoundingClientRect();
+          const position = {
+            x: pointerInfo.event.clientX - rect.left,
+            y: pointerInfo.event.clientY - rect.top
+          };
+
           setHover(selectable, hoverInfo, position);
           return;
         }

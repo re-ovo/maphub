@@ -106,8 +106,8 @@ impl OdrRoadGeometry {
 
         // 圆心在起点的左侧（曲率为正）或右侧（曲率为负）
         let center_angle = self.hdg + std::f64::consts::FRAC_PI_2;
-        let cx = self.x - radius * center_angle.cos();
-        let cy = self.y - radius * center_angle.sin();
+        let cx = self.x + radius * center_angle.cos();
+        let cy = self.y + radius * center_angle.sin();
 
         PosHdg {
             x: cx + radius * (center_angle + theta).cos(),

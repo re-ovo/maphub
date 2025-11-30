@@ -1,25 +1,22 @@
-import type { Selectable } from "./selectable";
+import type { ReactNode } from "react";
 
 /** 悬浮信息项 */
 export interface HoverInfoItem {
+  /** 标签 */
   label: string;
-  value: string;
+
+  /** 值（支持 ReactNode 自定义渲染） */
+  value: string | ReactNode;
 }
 
 /** 悬浮信息 */
 export interface HoverInfo {
   /** 标题 */
-  title: string;
+  title: string | ReactNode;
 
   /** 副标题 */
-  subtitle?: string;
+  subtitle?: string | ReactNode;
 
   /** 快速信息列表 */
   items: HoverInfoItem[];
-}
-
-/** 悬浮信息提供者 */
-export interface HoverInfoProvider {
-  /** 获取悬浮信息 */
-  getHoverInfo(selectable: Selectable): HoverInfo | null;
 }

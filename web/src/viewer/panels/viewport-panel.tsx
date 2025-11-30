@@ -11,12 +11,12 @@ import {
 } from "@babylonjs/core";
 import { GridMaterial } from "@babylonjs/materials";
 import { useStore } from "@/store";
-import type { Selectable } from "@/viewer/types";
+import { formatRegistry } from "@/viewer/formats";
 
 export default function ViewportPanel() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const engineRef = useRef<Engine | null>(null);
-  const previousHoveredRef = useRef<Selectable | null>(null);
+  const previousHoveredRef = useRef<string | null>(null);
 
   const {
     scene,
@@ -25,7 +25,7 @@ export default function ViewportPanel() {
     documents,
     selection,
     setSelection,
-    hovered,
+    hoveredNodeId,
     setHover,
     clearHover,
   } = useStore();
@@ -46,16 +46,16 @@ export default function ViewportPanel() {
         return;
       }
 
-      // 从所有文档的渲染器中查找 selectable
+      // 从所有文档的渲染器中查找 nodeId
       for (const doc of documents.values()) {
-        const selectable = doc.renderer.getSelectableFromPick(pickInfo);
-        if (selectable) {
+        const nodeId = doc.renderer.getNodeFromPick(pickInfo);
+        if (nodeId) {
           // 检查是否按住 Ctrl/Cmd 进行多选
           const isMultiSelect = pointerInfo.event.ctrlKey || pointerInfo.event.metaKey;
           if (isMultiSelect) {
-            useStore.getState().toggleSelection(selectable);
+            useStore.getState().toggleSelection(nodeId);
           } else {
-            setSelection([selectable]);
+            setSelection([nodeId]);
           }
           return;
         }
@@ -90,16 +90,12 @@ export default function ViewportPanel() {
         return;
       }
 
-      // 查找 selectable
+      // 查找 nodeId
       for (const doc of documents.values()) {
-        const selectable = doc.renderer.getSelectableFromPick(pickInfo);
-        if (selectable) {
+        const nodeId = doc.renderer.getNodeFromPick(pickInfo);
+        if (nodeId) {
           // 如果是同一个对象，不需要更新
-          if (
-            previousHoveredRef.current &&
-            previousHoveredRef.current.documentId === selectable.documentId &&
-            previousHoveredRef.current.path === selectable.path
-          ) {
+          if (previousHoveredRef.current === nodeId) {
             return;
           }
 
@@ -111,11 +107,13 @@ export default function ViewportPanel() {
           }
 
           // 高亮新的对象
-          doc.renderer.highlight(selectable);
-          previousHoveredRef.current = selectable;
+          doc.renderer.highlight(nodeId);
+          previousHoveredRef.current = nodeId;
 
           // 获取悬浮信息
-          const hoverInfo = doc.hoverProvider.getHoverInfo(selectable);
+          const node = useStore.getState().getNode(nodeId);
+          const format = formatRegistry.getFormat(doc.formatId);
+          const hoverInfo = node && format ? format.getHoverInfo(node) : null;
 
           // 计算相对于 canvas 容器的坐标
           const rect = canvasRef.current.getBoundingClientRect();
@@ -124,7 +122,7 @@ export default function ViewportPanel() {
             y: pointerInfo.event.clientY - rect.top
           };
 
-          setHover(selectable, hoverInfo, position);
+          setHover(nodeId, hoverInfo, position);
           return;
         }
       }
@@ -241,10 +239,21 @@ export default function ViewportPanel() {
     }
 
     // 高亮选中的对象
-    for (const selectable of selection) {
-      const doc = documents.get(selectable.documentId);
-      if (doc) {
-        doc.renderer.highlight(selectable);
+    for (const nodeId of selection) {
+      // 找到节点所属的文档
+      const node = useStore.getState().getNode(nodeId);
+      if (node) {
+        // 向上查找到文档节点
+        let current = node;
+        while (current.parentId) {
+          const parent = useStore.getState().getNode(current.parentId);
+          if (!parent) break;
+          current = parent;
+        }
+        const doc = documents.get(current.id);
+        if (doc) {
+          doc.renderer.highlight(nodeId);
+        }
       }
     }
   }, [scene, documents, selection]);
@@ -254,7 +263,7 @@ export default function ViewportPanel() {
       <canvas ref={canvasRef} className="w-full h-full outline-none" />
 
       {/* 悬浮信息提示 */}
-      {hovered && useStore.getState().hoverInfo && useStore.getState().hoverPosition && (
+      {hoveredNodeId && useStore.getState().hoverInfo && useStore.getState().hoverPosition && (
         <HoverTooltip />
       )}
     </div>

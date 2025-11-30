@@ -1,5 +1,4 @@
 import type { PickingInfo, Scene, TransformNode } from "@babylonjs/core";
-import type { Selectable } from "./selectable";
 
 /** 地图渲染器接口 */
 export interface MapRenderer {
@@ -15,21 +14,24 @@ export interface MapRenderer {
   /** 销毁 */
   dispose(): void;
 
-  /** 根据 pick 结果获取 Selectable */
-  getSelectableFromPick(pickInfo: PickingInfo): Selectable | null;
+  /** 根据 pick 结果获取节点 ID */
+  getNodeFromPick(pickInfo: PickingInfo): string | null;
 
   /** 设置整体可见性 */
   setVisible(visible: boolean): void;
 
-  /** 高亮对象 */
-  highlight(selectable: Selectable): void;
+  /** 设置节点可见性 */
+  setNodeVisible(nodeId: string, visible: boolean): void;
+
+  /** 高亮节点 */
+  highlight(nodeId: string): void;
 
   /** 取消高亮 */
-  unhighlight(selectable: Selectable): void;
+  unhighlight(nodeId: string): void;
 
   /** 取消所有高亮 */
   unhighlightAll(): void;
 
-  /** 聚焦到对象 (移动相机) */
-  focusOn(selectable: Selectable): void;
+  /** 聚焦到节点（移动相机） */
+  focusOn(nodeId: string): void;
 }

@@ -10,7 +10,7 @@ import {
   type AbstractMesh,
 } from "@babylonjs/core";
 import { LaneMeshBuilder, type OpenDrive, type OdrRoad } from "core";
-import type { MapRenderer, Selectable } from "../../types";
+import type { MapRenderer } from "../../types";
 
 /** OpenDrive 渲染器 */
 export class OpenDriveRenderer implements MapRenderer {
@@ -20,8 +20,11 @@ export class OpenDriveRenderer implements MapRenderer {
   private odr: OpenDrive;
   private documentId: string;
   private highlightLayer: HighlightLayer;
-  private meshToSelectable = new Map<AbstractMesh, Selectable>();
-  private selectableToMeshes = new Map<string, AbstractMesh[]>();
+
+  /** nodeId -> meshes 映射 */
+  private nodeToMeshes = new Map<string, AbstractMesh[]>();
+  /** mesh -> nodeId 映射 */
+  private meshToNodeId = new Map<AbstractMesh, string>();
 
   constructor(scene: Scene, odr: OpenDrive, documentId: string) {
     this.scene = scene;
@@ -40,22 +43,28 @@ export class OpenDriveRenderer implements MapRenderer {
   dispose(): void {
     this.highlightLayer.dispose();
     this.rootNode.dispose();
-    this.meshToSelectable.clear();
-    this.selectableToMeshes.clear();
+    this.nodeToMeshes.clear();
+    this.meshToNodeId.clear();
   }
 
-  getSelectableFromPick(pickInfo: PickingInfo): Selectable | null {
+  getNodeFromPick(pickInfo: PickingInfo): string | null {
     if (!pickInfo.hit || !pickInfo.pickedMesh) return null;
-    return this.meshToSelectable.get(pickInfo.pickedMesh) ?? null;
+    return this.meshToNodeId.get(pickInfo.pickedMesh) ?? null;
   }
 
   setVisible(visible: boolean): void {
     this.rootNode.setEnabled(visible);
   }
 
-  highlight(selectable: Selectable): void {
-    const key = this.getSelectableKey(selectable);
-    const meshes = this.selectableToMeshes.get(key);
+  setNodeVisible(nodeId: string, visible: boolean): void {
+    const meshes = this.nodeToMeshes.get(nodeId);
+    if (meshes) {
+      meshes.forEach((mesh) => mesh.setEnabled(visible));
+    }
+  }
+
+  highlight(nodeId: string): void {
+    const meshes = this.nodeToMeshes.get(nodeId);
     if (meshes) {
       meshes.forEach((mesh) => {
         this.highlightLayer.addMesh(mesh, Color3.Yellow());
@@ -63,9 +72,8 @@ export class OpenDriveRenderer implements MapRenderer {
     }
   }
 
-  unhighlight(selectable: Selectable): void {
-    const key = this.getSelectableKey(selectable);
-    const meshes = this.selectableToMeshes.get(key);
+  unhighlight(nodeId: string): void {
+    const meshes = this.nodeToMeshes.get(nodeId);
     if (meshes) {
       meshes.forEach((mesh) => {
         this.highlightLayer.removeMesh(mesh);
@@ -77,11 +85,9 @@ export class OpenDriveRenderer implements MapRenderer {
     this.highlightLayer.removeAllMeshes();
   }
 
-  focusOn(selectable: Selectable): void {
-    const key = this.getSelectableKey(selectable);
-    const meshes = this.selectableToMeshes.get(key);
+  focusOn(nodeId: string): void {
+    const meshes = this.nodeToMeshes.get(nodeId);
     if (meshes && meshes.length > 0) {
-      // 计算边界框中心并移动相机
       const mesh = meshes[0];
       const boundingInfo = mesh.getBoundingInfo();
       const center = boundingInfo.boundingBox.centerWorld;
@@ -96,6 +102,7 @@ export class OpenDriveRenderer implements MapRenderer {
   }
 
   private renderRoad(road: OdrRoad): void {
+    const roadNodeId = `${this.documentId}:road:${road.id}`;
     const roadNode = new TransformNode(`road_${road.id}`, this.scene);
     roadNode.parent = this.rootNode;
 
@@ -120,30 +127,15 @@ export class OpenDriveRenderer implements MapRenderer {
     material.backFaceCulling = false;
     mesh.material = material;
 
-    // 注册可选择对象
-    const selectable: Selectable = {
-      documentId: this.documentId,
-      type: "road",
-      path: road.id,
-      meshes: [mesh],
-    };
-
-    this.registerSelectable(mesh, selectable);
+    // 注册 nodeId -> mesh 映射
+    this.registerNodeMesh(roadNodeId, mesh);
   }
 
-  private registerSelectable(mesh: AbstractMesh, selectable: Selectable): void {
-    this.meshToSelectable.set(mesh, selectable);
+  private registerNodeMesh(nodeId: string, mesh: AbstractMesh): void {
+    this.meshToNodeId.set(mesh, nodeId);
 
-    const key = this.getSelectableKey(selectable);
-    const existing = this.selectableToMeshes.get(key) || [];
+    const existing = this.nodeToMeshes.get(nodeId) || [];
     existing.push(mesh);
-    this.selectableToMeshes.set(key, existing);
-
-    // 更新 selectable 的 meshes 引用
-    selectable.meshes = existing;
-  }
-
-  private getSelectableKey(selectable: Selectable): string {
-    return `${selectable.documentId}:${selectable.type}:${selectable.path}`;
+    this.nodeToMeshes.set(nodeId, existing);
   }
 }

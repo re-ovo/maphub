@@ -3,7 +3,8 @@ import { ChevronRight, ChevronDown } from "lucide-react";
 import { CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useStore } from "@/store";
-import type { PropertyGroup, PropertyItem } from "@/viewer/types";
+import { formatRegistry } from "@/viewer/formats";
+import type { PropertyGroup, PropertyItem, PropertyValue } from "@/viewer/types";
 
 /** 属性分组组件 */
 function PropertyGroupView({
@@ -44,47 +45,52 @@ function PropertyGroupView({
   );
 }
 
+/** 检查是否是 ReactNode（非原始值） */
+function isReactNode(value: PropertyValue): boolean {
+  if (value === null || value === undefined) return false;
+  if (typeof value === "string" || typeof value === "number" || typeof value === "boolean") return false;
+  if (Array.isArray(value) && value.every(v => typeof v === "number")) return false;
+  return true;
+}
+
 /** 属性项组件 */
 function PropertyItemView({ item }: { item: PropertyItem }) {
   const renderValue = () => {
-    switch (item.type) {
-      case "boolean":
-        return (
-          <span className={item.value ? "text-green-500" : "text-red-500"}>
-            {item.value ? "true" : "false"}
-          </span>
-        );
-      case "number":
-        return (
-          <span>
-            {typeof item.value === "number" ? item.value.toFixed(3) : item.value}
-            {item.unit && (
-              <span className="text-muted-foreground ml-1">{item.unit}</span>
-            )}
-          </span>
-        );
-      case "link":
-        return (
-          <button
-            className="text-blue-500 hover:underline"
-            onClick={item.onClick}
-          >
-            {String(item.value)}
-          </button>
-        );
-      case "vec2":
-      case "vec3":
-        if (Array.isArray(item.value)) {
-          return (
-            <span className="font-mono text-xs">
-              [{item.value.map((v) => v.toFixed(2)).join(", ")}]
-            </span>
-          );
-        }
-        return <span>{String(item.value)}</span>;
-      default:
-        return <span>{String(item.value)}</span>;
+    const { value, type, unit } = item;
+
+    // 如果是 ReactNode，直接渲染
+    if (isReactNode(value)) {
+      return <>{value}</>;
     }
+
+    // 基于 type 或值类型渲染
+    if (typeof value === "boolean" || type === "boolean") {
+      return (
+        <span className={value ? "text-green-500" : "text-red-500"}>
+          {value ? "true" : "false"}
+        </span>
+      );
+    }
+
+    if (typeof value === "number" || type === "number") {
+      return (
+        <span>
+          {typeof value === "number" ? value.toFixed(3) : value}
+          {unit && <span className="text-muted-foreground ml-1">{unit}</span>}
+        </span>
+      );
+    }
+
+    if (Array.isArray(value) && (type === "vec2" || type === "vec3")) {
+      return (
+        <span className="font-mono text-xs">
+          [{value.map((v) => v.toFixed(2)).join(", ")}]
+        </span>
+      );
+    }
+
+    // 默认字符串渲染
+    return <span>{String(value)}</span>;
   };
 
   return (
@@ -114,7 +120,7 @@ function MultiSelectState({ count }: { count: number }) {
 }
 
 export default function PropertiesPanel() {
-  const { documents, selection } = useStore();
+  const { documents, selection, getNode } = useStore();
 
   // 获取主选择的属性
   const { title, subtitle, groups } = useMemo(() => {
@@ -126,21 +132,39 @@ export default function PropertiesPanel() {
       return { title: null, subtitle: null, groups: [] };
     }
 
-    const selectable = selection[0];
-    const doc = documents.get(selectable.documentId);
+    const nodeId = selection[0];
+    const node = getNode(nodeId);
+    if (!node) {
+      return { title: null, subtitle: null, groups: [] };
+    }
+
+    // 向上查找到文档节点以获取 formatId
+    let current = node;
+    while (current.parentId) {
+      const parent = getNode(current.parentId);
+      if (!parent) break;
+      current = parent;
+    }
+
+    const doc = documents.get(current.id);
     if (!doc) {
       return { title: null, subtitle: null, groups: [] };
     }
 
-    const titleInfo = doc.propertyProvider.getTitle(selectable);
-    const propGroups = doc.propertyProvider.getProperties(selectable);
+    const format = formatRegistry.getFormat(doc.formatId);
+    if (!format) {
+      return { title: null, subtitle: null, groups: [] };
+    }
+
+    const titleInfo = format.getTitle(node);
+    const propGroups = format.getProperties(node);
 
     return {
       title: titleInfo.title,
       subtitle: titleInfo.subtitle,
       groups: propGroups,
     };
-  }, [documents, selection]);
+  }, [documents, selection, getNode]);
 
   if (selection.length === 0) {
     return (

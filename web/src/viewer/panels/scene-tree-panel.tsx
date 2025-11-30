@@ -9,35 +9,56 @@ import {
   Route,
   Layers,
   Minus,
-  MoreHorizontal,
 } from "lucide-react";
 import { CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { useStore } from "@/store";
-import type { SceneNode, Selectable } from "@/viewer/types";
+import type { SemanticNode } from "@/viewer/types";
 
 /** 图标映射 */
 const ICON_MAP: Record<string, React.ElementType> = {
-  file: FileText,
+  document: FileText,
   folder: Folder,
   road: Route,
-  layers: Layers,
-  minus: Minus,
+  "lane-section": Layers,
+  lane: Minus,
 };
 
+/** 将 SemanticNode 树转换为可渲染的结构 */
+interface TreeNode {
+  id: string;
+  label: string;
+  type: string;
+  children: TreeNode[];
+  visible: boolean;
+}
+
+function buildTreeNodes(
+  nodeIds: string[],
+  getNode: (id: string) => SemanticNode | undefined
+): TreeNode[] {
+  return nodeIds.map((id) => {
+    const node = getNode(id);
+    if (!node) {
+      return { id, label: "Unknown", type: "unknown", children: [], visible: true };
+    }
+    return {
+      id: node.id,
+      label: node.label,
+      type: node.type,
+      children: buildTreeNodes(node.childrenIds, getNode),
+      visible: true, // TODO: 从 store 获取可见性状态
+    };
+  });
+}
+
 interface TreeItemProps {
-  node: SceneNode;
+  node: TreeNode;
   level: number;
   expandedNodes: Set<string>;
   onToggleExpand: (nodeId: string) => void;
-  onSelect: (node: SceneNode) => void;
-  onToggleVisibility: (node: SceneNode) => void;
+  onSelect: (nodeId: string) => void;
+  onToggleVisibility: (nodeId: string) => void;
   selectedNodeIds: Set<string>;
 }
 
@@ -50,10 +71,10 @@ function TreeItem({
   onToggleVisibility,
   selectedNodeIds,
 }: TreeItemProps) {
-  const hasChildren = node.children && node.children.length > 0;
+  const hasChildren = node.children.length > 0;
   const isExpanded = expandedNodes.has(node.id);
   const isSelected = selectedNodeIds.has(node.id);
-  const IconComponent = ICON_MAP[node.icon || ""] || FileText;
+  const IconComponent = ICON_MAP[node.type] || FileText;
 
   return (
     <div>
@@ -91,7 +112,7 @@ function TreeItem({
         {/* 名称 */}
         <div
           className="flex-1 text-sm truncate"
-          onClick={() => onSelect(node)}
+          onClick={() => onSelect(node.id)}
         >
           {node.label}
         </div>
@@ -100,7 +121,7 @@ function TreeItem({
         <button
           onClick={(e) => {
             e.stopPropagation();
-            onToggleVisibility(node);
+            onToggleVisibility(node.id);
           }}
           className="w-5 h-5 flex items-center justify-center hover:text-primary opacity-50 hover:opacity-100"
         >
@@ -110,37 +131,12 @@ function TreeItem({
             <EyeOff className="w-3 h-3" />
           )}
         </button>
-
-        {/* 上下文菜单 */}
-        {node.actions && node.actions.length > 0 && (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <button
-                onClick={(e) => e.stopPropagation()}
-                className="w-5 h-5 flex items-center justify-center hover:text-primary opacity-50 hover:opacity-100"
-              >
-                <MoreHorizontal className="w-3 h-3" />
-              </button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              {node.actions.map((action) => (
-                <DropdownMenuItem
-                  key={action.id}
-                  onClick={() => action.handler()}
-                  disabled={action.disabled}
-                >
-                  {action.label}
-                </DropdownMenuItem>
-              ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
-        )}
       </div>
 
       {/* 子节点 */}
       {hasChildren && isExpanded && (
         <div>
-          {node.children!.map((child) => (
+          {node.children.map((child) => (
             <TreeItem
               key={child.id}
               node={child}
@@ -159,39 +155,22 @@ function TreeItem({
 }
 
 /** 收集前两层节点 ID */
-function collectFirstTwoLevelIds(
-  nodes: SceneNode[],
-  level: number = 0
-): string[] {
+function collectFirstTwoLevelIds(nodes: TreeNode[], level: number = 0): string[] {
   const ids: string[] = [];
   for (const node of nodes) {
     if (level < 2) {
       ids.push(node.id);
-      if (node.children) {
-        ids.push(...collectFirstTwoLevelIds(node.children, level + 1));
-      }
+      ids.push(...collectFirstTwoLevelIds(node.children, level + 1));
     }
   }
   return ids;
-}
-
-/** 递归查找节点 */
-function findNodeById(nodes: SceneNode[], id: string): SceneNode | null {
-  for (const node of nodes) {
-    if (node.id === id) return node;
-    if (node.children) {
-      const found = findNodeById(node.children, id);
-      if (found) return found;
-    }
-  }
-  return null;
 }
 
 /** 展开状态的 reducer action */
 type ExpandAction =
   | { type: "toggle"; nodeId: string }
   | { type: "expand"; nodeIds: string[] }
-  | { type: "expandToSelection"; selection: Selectable[]; documents: Map<string, { treeProvider: { getNodeIdBySelectable: (s: Selectable) => string | null } }>; treeNodes: SceneNode[] };
+  | { type: "expandToSelection"; selectedIds: string[]; getNode: (id: string) => SemanticNode | undefined };
 
 /** 展开状态的 reducer */
 function expandedReducer(state: Set<string>, action: ExpandAction): Set<string> {
@@ -213,28 +192,21 @@ function expandedReducer(state: Set<string>, action: ExpandAction): Set<string> 
       return next;
     }
     case "expandToSelection": {
-      const { selection, documents, treeNodes } = action;
-      if (selection.length === 0) return state;
+      const { selectedIds, getNode } = action;
+      if (selectedIds.length === 0) return state;
 
       const next = new Set(state);
       let changed = false;
 
-      for (const selectable of selection) {
-        const doc = documents.get(selectable.documentId);
-        if (doc) {
-          const nodeId = doc.treeProvider.getNodeIdBySelectable(selectable);
-          if (nodeId) {
-            const parts = nodeId.split(":");
-            let path = "";
-            for (let i = 0; i < parts.length - 1; i++) {
-              path = path ? `${path}:${parts[i]}` : parts[i];
-              const parentNode = findNodeById(treeNodes, path);
-              if (parentNode && !next.has(parentNode.id)) {
-                next.add(parentNode.id);
-                changed = true;
-              }
-            }
+      for (const nodeId of selectedIds) {
+        // 向上遍历展开所有父节点
+        let current = getNode(nodeId);
+        while (current?.parentId) {
+          if (!next.has(current.parentId)) {
+            next.add(current.parentId);
+            changed = true;
           }
+          current = getNode(current.parentId);
         }
       }
 
@@ -246,17 +218,24 @@ function expandedReducer(state: Set<string>, action: ExpandAction): Set<string> 
 }
 
 export default function SceneTreePanel() {
-  const { documents, selection, setSelection } = useStore();
+  const { documents, selection, setSelection, getNode } = useStore();
   const [expandedNodes, dispatch] = useReducer(expandedReducer, new Set<string>());
 
-  // 从所有文档获取树节点
+  // 从所有文档构建树节点
   const treeNodes = useMemo(() => {
-    const nodes: SceneNode[] = [];
+    const nodes: TreeNode[] = [];
     for (const doc of documents.values()) {
-      nodes.push(...doc.treeProvider.getRootNodes());
+      // 文档节点本身就是根节点
+      nodes.push({
+        id: doc.id,
+        label: doc.label,
+        type: doc.type,
+        children: buildTreeNodes(doc.childrenIds, getNode),
+        visible: doc.visible,
+      });
     }
     return nodes;
-  }, [documents]);
+  }, [documents, getNode]);
 
   // 计算需要默认展开的节点（前两层）
   const defaultExpandedIds = useMemo(() => {
@@ -272,47 +251,36 @@ export default function SceneTreePanel() {
     return combined;
   }, [defaultExpandedIds, expandedNodes]);
 
-  // 计算选中的节点 ID
-  const selectedNodeIds = useMemo(() => {
-    const ids = new Set<string>();
-    for (const selectable of selection) {
-      const doc = documents.get(selectable.documentId);
-      if (doc) {
-        const nodeId = doc.treeProvider.getNodeIdBySelectable(selectable);
-        if (nodeId) {
-          ids.add(nodeId);
-        }
-      }
-    }
-    return ids;
-  }, [documents, selection]);
+  // 选中的节点 ID Set
+  const selectedNodeIds = useMemo(() => new Set(selection), [selection]);
 
   const handleToggleExpand = useCallback((nodeId: string) => {
     dispatch({ type: "toggle", nodeId });
   }, []);
 
   const handleSelect = useCallback(
-    (node: SceneNode) => {
-      if (node.selectable) {
-        setSelection([node.selectable]);
-        // 展开到选中节点
-        dispatch({
-          type: "expandToSelection",
-          selection: [node.selectable],
-          documents,
-          treeNodes,
-        });
-      }
+    (nodeId: string) => {
+      setSelection([nodeId]);
+      // 展开到选中节点
+      dispatch({
+        type: "expandToSelection",
+        selectedIds: [nodeId],
+        getNode,
+      });
     },
-    [setSelection, documents, treeNodes]
+    [setSelection, getNode]
   );
 
-  const handleToggleVisibility = useCallback((node: SceneNode) => {
-    if (node.type === "document" && node.id.endsWith(":root")) {
-      const docId = node.id.replace(":root", "");
-      useStore.getState().setDocumentVisible(docId, !node.visible);
+  const handleToggleVisibility = useCallback((nodeId: string) => {
+    // 如果是文档节点，切换文档可见性
+    const node = getNode(nodeId);
+    if (node?.type === "document") {
+      useStore.getState().setDocumentVisible(nodeId, !documents.get(nodeId)?.visible);
+    } else {
+      // 其他节点暂时不支持可见性切换
+      // TODO: 实现节点级别的可见性控制
     }
-  }, []);
+  }, [getNode, documents]);
 
   return (
     <div className="w-full h-full flex flex-col">

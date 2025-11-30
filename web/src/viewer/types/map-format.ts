@@ -1,8 +1,7 @@
 import type { Scene } from "@babylonjs/core";
-import type { MapRenderer } from "./renderer";
-import type { TreeNodeProvider } from "./scene-node";
-import type { PropertyProvider } from "./property";
-import type { HoverInfoProvider } from "./hover";
+import type { DocumentNode, SemanticNode } from "./semantic-node";
+import type { PropertyGroup } from "./property";
+import type { HoverInfo } from "./hover";
 
 /** 地图格式唯一标识 */
 export type MapFormatId = "opendrive" | "apollo" | "lanelet2" | (string & {});
@@ -24,19 +23,21 @@ export interface MapFormat<TData = unknown> {
   /** 检测文件是否为此格式 */
   detect(content: Uint8Array, filename: string): boolean;
 
-  /** 创建渲染器 */
-  createRenderer(
-    scene: Scene,
+  /** 创建文档节点（包含整棵语义树 + renderer） */
+  createDocument(
     data: TData,
-    documentId: string
-  ): MapRenderer;
+    filename: string,
+    scene: Scene
+  ): DocumentNode;
 
-  /** 创建场景树提供者 */
-  createTreeProvider(data: TData, documentId: string): TreeNodeProvider;
+  // ============ Provider 能力 ============
 
-  /** 创建属性面板提供者 */
-  createPropertyProvider(data: TData): PropertyProvider;
+  /** 获取节点属性 */
+  getProperties(node: SemanticNode): PropertyGroup[];
 
-  /** 创建悬浮信息提供者 */
-  createHoverProvider(data: TData): HoverInfoProvider;
+  /** 获取节点标题信息 */
+  getTitle(node: SemanticNode): { title: string; subtitle?: string };
+
+  /** 获取节点悬浮信息 */
+  getHoverInfo(node: SemanticNode): HoverInfo | null;
 }

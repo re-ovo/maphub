@@ -15,7 +15,6 @@ import { useStore } from "@/store";
 import { DEFAULT_MOSAIC_LAYOUT } from "@/store/pref-slice";
 import { FileDropZone } from "@/components/file-drop-zone";
 import { formatRegistry } from "./formats";
-import type { MapDocument } from "./types";
 
 export type ViewId = "viewport" | "sceneTree" | "properties";
 
@@ -89,11 +88,6 @@ function Tile({
   );
 }
 
-/** 生成唯一的文档 ID */
-function generateDocumentId(): string {
-  return `doc_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
-}
-
 export default function Viewer() {
   const { mosaicLayout, setMosaicLayout, scene, addDocument } = useStore();
 
@@ -125,30 +119,14 @@ export default function Viewer() {
           const parseTime = performance.now() - start;
           console.log(`Parse time: ${parseTime.toFixed(2)}ms`);
 
-          // 创建文档
-          const documentId = generateDocumentId();
-          const renderer = format.createRenderer(scene, data, documentId);
-          const treeProvider = format.createTreeProvider(data, documentId);
-          const propertyProvider = format.createPropertyProvider(data);
-          const hoverProvider = format.createHoverProvider(data);
-
-          const doc: MapDocument = {
-            id: documentId,
-            filename: file.name,
-            formatId: format.id,
-            data,
-            renderer,
-            treeProvider,
-            propertyProvider,
-            hoverProvider,
-            visible: true,
-          };
+          // 创建文档（新 API：返回 DocumentNode）
+          const doc = format.createDocument(data, file.name, scene);
 
           // 渲染
-          renderer.render();
+          doc.renderer.render();
 
           // 聚焦到地图中心
-          const bounds = renderer.rootNode.getHierarchyBoundingVectors();
+          const bounds = doc.renderer.rootNode.getHierarchyBoundingVectors();
           const center = bounds.min.add(bounds.max).scale(0.5);
           const diagonal = bounds.max.subtract(bounds.min).length();
 
@@ -162,7 +140,7 @@ export default function Viewer() {
           // 添加到 store
           addDocument(doc);
 
-          console.log(`Loaded ${file.name} (${documentId})`);
+          console.log(`Loaded ${file.name} (${doc.id})`);
         } catch (error) {
           console.error(`Failed to load ${file.name}:`, error);
         }

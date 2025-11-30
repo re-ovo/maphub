@@ -4,108 +4,145 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## 项目概述
 
-这是一个支持多种地图文件的 Web 查看器项目，使用 Rust + WASM 进行文件解析，React + BabylonJS 进行 3D 渲染和交互。
+MapHub 是一个高性能的在线自动驾驶地图查看器,支持多种地图格式。项目采用 Rust + WASM 处理核心解析逻辑,React + TypeScript + BabylonJS 构建前端界面。
 
-## 项目结构
+## 核心架构
+
+### 1. 双层架构设计
 
 ```
-opendrive-core/
-├── core/               # Rust WASM 核心库
-│   └── src/
-│       ├── odr/        # OpenDrive 格式相关
-│       │   ├── models/ # OpenDrive 数据模型（header, road, object 等）
-│       │   └── parser/ # XML 解析器（使用 quick-xml）
-│       ├── apollo/     # Apollo 格式相关
-│       └── math/       # 数学工具（vec2, vec3）
-└── web/                # React Web 前端
-    └── src/
-        ├── viewer/     # 查看器主界面（使用 react-mosaic-component）
-        │   └── panels/ # viewport, scene-tree, properties 面板
-        ├── store/      # Zustand 状态管理
-        └── components/ # UI 组件（基于 Radix UI + Tailwind）
+core/          # Rust WASM 核心库 - 负责地图格式解析
+web/           # React 前端 - 负责 UI 和 3D 渲染
 ```
 
-## 常用命令
+**核心库 (core/)** 使用 Rust 编译为 WASM:
+- 地图格式解析器位于 `core/src/{format}/parser/`
+- 数据模型定义在 `core/src/{format}/models/`
+- 使用 `wasm-bindgen` 导出 API 供 TypeScript 调用
+- 目前支持 OpenDRIVE (.xodr) 格式,扩展点在 `core/src/lib.rs` 的 `MapType` 枚举
 
-### Rust 核心库（core/）
+**Web 前端 (web/)** 负责渲染和交互:
+- BabylonJS 场景管理在 `web/src/viewer/panels/viewport-panel.tsx`
+- Zustand 状态管理拆分为多个 slice: `pref`, `scene`, `document`, `selection`, `hover`
+- React Mosaic 提供可拖拽分栏布局
 
+### 2. Provider 模式实现跨格式抽象
+
+位于 `web/src/viewer/formats/` 的格式注册系统:
+
+```typescript
+// registry.ts 提供统一的格式检测和注册机制
+MapFormat {
+  id, name, extensions,
+  detect(content, filename),     // 格式检测
+  parse(content),                 // 解析为数据模型
+  createRenderer(scene, data),    // 创建 3D 渲染器
+  createTreeProvider(data),       // 创建场景树 provider
+  createPropertyProvider(data),   // 创建属性面板 provider
+  createHoverProvider(data)       // 创建悬停提示 provider
+}
+```
+
+**添加新地图格式的步骤**:
+1. 在 `core/src/{format}/` 添加 Rust 解析器和数据模型
+2. 在 `web/src/viewer/formats/{format}/` 实现对应的 provider
+3. 在 `web/src/viewer/formats/index.ts` 注册格式
+
+### 3. OpenDRIVE 解析流程
+
+- `core/src/odr/parser/mod.rs` 是入口,导出 `parseOpendrive(xml: &[u8])`
+- 使用 `quick-xml` 进行 SAX 风格的流式解析
+- `parse_header`, `parse_road`, `parse_lanes` 模块化解析各个元素
+- 数据模型使用 `#[wasm_bindgen]` 宏导出给 JS
+
+### 4. 状态管理架构
+
+Zustand store (web/src/store/) 分为 5 个 slice:
+
+- **PrefSlice**: 用户偏好(布局、显示选项),持久化到 localStorage
+- **SceneSlice**: BabylonJS 场景对象引用
+- **DocumentSlice**: 已加载的地图文档列表 (MapDocument[])
+- **SelectionSlice**: 当前选中的地图元素
+- **HoverSlice**: 鼠标悬停的地图元素
+
+**MapDocument** 结构:
+```typescript
+{
+  id, filename, formatId, data,
+  renderer,           // 负责 3D 渲染
+  treeProvider,       // 提供场景树数据
+  propertyProvider,   // 提供属性面板数据
+  hoverProvider,      // 提供悬停提示
+  visible             // 是否显示
+}
+```
+
+## 常用开发命令
+
+### 构建 WASM 核心库
 ```bash
-# 构建 Rust 库
-cd core && cargo build
-
-# 运行测试
-cd core && cargo test
-
-# 构建 WASM（供 web 使用）
-cd core && wasm-pack build --target web
+cd core
+wasm-pack build
 ```
 
-### Web 前端（web/）
-
+### 前端开发
 ```bash
-# 安装依赖（使用 bun）
-cd web && bun install
-
-# 开发服务器
-cd web && bun run dev
-
-# 构建生产版本
-cd web && bun run build
-
-# 代码检查
-cd web && bun run lint
-
-# 预览构建
-cd web && bun run preview
+cd web
+bun install          # 首次安装依赖
+bun run dev          # 启动开发服务器
+bun run lint         # 运行 ESLint
+bun run build        # 生产构建
 ```
 
-## 架构要点
+### 完整构建流程
+```bash
+# 1. 构建 WASM (每次修改 Rust 代码后需要重新构建)
+cd core && wasm-pack build
 
-### Rust WASM 核心
+# 2. 前端会自动通过 package.json 中的 "core": "file:../core/pkg" 引用 WASM
+cd ../web && bun run build
+```
 
-- **编译目标**: `cdylib` 和 `rlib`，用于生成 WASM 模块
-- **XML 解析**: 使用 `quick-xml` 进行流式解析 OpenDrive XML 文件
-- **WASM 绑定**: 使用 `wasm-bindgen` 导出给 JavaScript 调用
-- **错误处理**: 内部使用 `anyhow::Result`，导出时转换为 `Result<T, String>`
-- **数据模型**: core/src/odr/models/ 中定义了 OpenDrive 规范的各种结构（Header, Road, Junction, Lane, Object 等）
-- **解析器位置**: core/src/odr/parser/mod.rs 提供了 `parse_opendrive()` 函数
+## 关键实现细节
 
-### Web 前端
+### Rust WASM 导出规范
+- 所有导出的 struct 需要 `#[wasm_bindgen]` 和 `#[derive(Clone)]`
+- 复杂类型(String, Vec, Option)字段需要 `#[wasm_bindgen(getter_with_clone)]`
+- snake_case 字段名使用 `#[wasm_bindgen(js_name = "camelCase")]` 转换
+- 解析函数使用 `Result<T, String>` 将错误信息传递给 JS
 
-- **构建工具**: Vite（使用 rolldown-vite）+ TypeScript
-- **UI 框架**: React 19 + Tailwind CSS 4
-- **3D 渲染**: BabylonJS（core, gui, loaders, materials）
-- **状态管理**: Zustand with persistence（localStorage）
-  - `pref-slice`: 用户偏好设置（面板布局、网格显示、坐标轴显示）
-  - `scene-slice`: 场景状态
-- **面板系统**: 使用 `react-mosaic-component` 实现可拖拽、可调整大小的面板布局
-  - viewport: 3D 渲染视口（BabylonJS）
-  - sceneTree: 场景树（对象层级）
-  - properties: 属性面板
-- **主题**: 支持明暗主题切换
-- **WASM 集成**: 通过 `vite-plugin-wasm` 加载 core/pkg 中的 WASM 模块
+### 文件加载流程 (viewer.tsx)
+1. 用户拖拽文件到 FileDropZone
+2. `formatRegistry.detectFormat()` 检测格式
+3. `format.parse(content)` 调用 WASM 解析器
+4. 创建 renderer、treeProvider、propertyProvider、hoverProvider
+5. `renderer.render()` 在 BabylonJS 场景中渲染
+6. `addDocument()` 添加到 store
 
-### 模块依赖
+### 3D 渲染器职责
+- 实现 `render()` 方法创建 BabylonJS Mesh
+- 监听 selection/hover 变化更新高亮状态
+- 提供 `dispose()` 方法清理资源
 
-- web 依赖 core 构建的 WASM 包：`"core": "file:../core/pkg"`
-- 在修改 core 后需要重新构建 WASM 并重启 web 开发服务器
+### 场景树 Provider
+- 返回树形结构数据供 `scene-tree-panel.tsx` 展示
+- 节点需包含 `id`, `label`, `type`, `children` 属性
+- 点击节点触发 selection 更新
 
-### 状态持久化
+## 技术栈依赖
 
-Zustand store 使用 localStorage 持久化以下状态：
-- mosaicLayout: 面板布局配置
-- showGrid: 是否显示网格
-- showAxis: 是否显示坐标轴
+- **Rust**: `wasm-bindgen`, `quick-xml`, `anyhow`
+- **构建工具**: `wasm-pack`, Vite (使用 rolldown-vite fork)
+- **前端框架**: React 19, TypeScript
+- **3D 引擎**: BabylonJS 8.x
+- **状态管理**: Zustand (带 persist 中间件)
+- **UI 库**: shadcn/ui (基于 Radix UI), Tailwind CSS 4
+- **布局**: React Mosaic Component
+- **包管理**: Bun
 
-## 开发工作流
+## 性能优化要点
 
-1. 修改 core Rust 代码后，需要在 core/ 目录运行 `wasm-pack build --target web`
-2. web 开发服务器会自动检测 WASM 变化并热更新
-3. UI 组件基于 shadcn/ui（Radix UI），配置在 web/components.json
-
-## 代码风格
-
-- TypeScript 严格模式
-- 使用 ESLint（配置在 web/eslint.config.js）
-- Rust 2024 edition
-- 路径别名：`@` 映射到 `web/src/`
+1. WASM 编译使用 `opt-level = "s"` 优化体积
+2. Rust 解析器使用流式解析避免大量内存分配
+3. 前端使用 Vite 的 rolldown 引擎加速构建
+4. BabylonJS 渲染使用实例化几何体减少 draw call

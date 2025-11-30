@@ -31,19 +31,3 @@ impl OdrRoadElevation {
         Self { s, a, b, c, d }
     }
 }
-
-#[wasm_bindgen]
-impl OdrRoadElevation {
-    /// 计算指定位置的高程值
-    ///
-    /// # 参数
-    /// * `s_current` - 当前沿参考线的位置
-    ///
-    /// # 返回
-    /// 计算得到的高程值（米）
-    #[wasm_bindgen(js_name = "getElevation")]
-    pub fn get_elevation(&self, s_current: f64) -> f64 {
-        let ds = s_current - self.s;
-        self.a + self.b * ds + self.c * ds.powi(2) + self.d * ds.powi(3)
-    }
-}

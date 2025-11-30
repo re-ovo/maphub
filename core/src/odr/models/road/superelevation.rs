@@ -32,19 +32,3 @@ impl OdrSuperelevation {
         Self { s, a, b, c, d }
     }
 }
-
-#[wasm_bindgen]
-impl OdrSuperelevation {
-    /// 计算指定位置的超高值
-    ///
-    /// # 参数
-    /// * `s_current` - 当前沿参考线的位置
-    ///
-    /// # 返回
-    /// 计算得到的超高角度（弧度）
-    #[wasm_bindgen(js_name = "getSuperelevation")]
-    pub fn get_superelevation(&self, s_current: f64) -> f64 {
-        let ds = s_current - self.s;
-        self.a + self.b * ds + self.c * ds.powi(2) + self.d * ds.powi(3)
-    }
-}

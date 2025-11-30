@@ -109,9 +109,13 @@ impl OdrRoadGeometry {
         let cx = self.x + radius * center_angle.cos();
         let cy = self.y + radius * center_angle.sin();
 
+        // 从圆心到起点的方向是 center_angle + PI
+        // 走过 theta 角度后，从圆心到当前点的方向是 center_angle + PI + theta
+        let to_point_angle = center_angle + std::f64::consts::PI + theta;
+
         PosHdg {
-            x: cx + radius * (center_angle + theta).cos(),
-            y: cy + radius * (center_angle + theta).sin(),
+            x: cx + radius * to_point_angle.cos(),
+            y: cy + radius * to_point_angle.sin(),
             hdg: self.hdg + theta,
         }
     }

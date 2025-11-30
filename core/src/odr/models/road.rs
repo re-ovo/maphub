@@ -1,13 +1,17 @@
 use wasm_bindgen::prelude::*;
 
 use crate::{
-    math::{mesh::MeshData, vec3::Vec3},
+    math::vec3::Vec3,
     odr::models::{
         lane::{lane_offset::OdrLaneOffset, lane_section::OdrLaneSection},
         road::{
-            road_elevation::OdrRoadElevation, road_geometry::OdrRoadGeometry,
-            road_link::OdrRoadLink, road_type::OdrRoadType, shape::OdrShape,
-            superelevation::OdrSuperelevation, traffic_rule::OdrTrafficRule,
+            road_elevation::OdrRoadElevation,
+            road_geometry::{OdrRoadGeometry, PosHdg},
+            road_link::OdrRoadLink,
+            road_type::OdrRoadType,
+            shape::OdrShape,
+            superelevation::OdrSuperelevation,
+            traffic_rule::OdrTrafficRule,
         },
     },
 };
@@ -99,6 +103,74 @@ impl OdrRoad {
             successor: successor,
             lanes: lanes,
             lane_offsets: lane_offsets,
+        }
+    }
+
+    /// 将道路坐标 (s, t, h) 转换为笛卡尔坐标 (x, y, z)
+    ///
+    /// # 参数
+    /// - `s`: 沿参考线的纵向距离
+    /// - `t`: 垂直于参考线的横向偏移（正值=左，负值=右）
+    /// - `h`: 相对于参考平面的高度偏移
+    #[wasm_bindgen(js_name = "sthToXyz")]
+    pub fn sth_to_xyz(&self, s: f64, t: f64, h: f64) -> Vec3 {
+        // 1. 获取参考线点和切线方向
+        let pos_hdg = self.eval_reference_line(s);
+
+        // 2. 计算基础高程
+        let base_z = self.eval_elevation(s);
+
+        // 3. 计算超高角度
+        let roll = self.eval_superelevation(s);
+
+        // 4. 应用横向偏移（垂直于切线方向）
+        let normal = pos_hdg.hdg + std::f64::consts::FRAC_PI_2;
+        let x = pos_hdg.x + t * normal.cos();
+        let y = pos_hdg.y + t * normal.sin();
+
+        // 5. 高度 = 基础高程 + 超高影响 + h
+        let z = base_z + t * roll.tan() + h;
+
+        Vec3::new(x, y, z)
+    }
+
+    /// 计算参考线上 s 位置的点和切线方向
+    fn eval_reference_line(&self, s: f64) -> PosHdg {
+        // 找到包含该 s 值的几何段
+        let geom = self
+            .plan_view
+            .iter()
+            .filter(|g| g.s <= s)
+            .last()
+            .unwrap_or_else(|| self.plan_view.first().expect("plan_view is empty"));
+
+        let ds = s - geom.s;
+        geom.eval_at(ds)
+    }
+
+    /// 计算 s 位置的基础高程
+    fn eval_elevation(&self, s: f64) -> f64 {
+        let elev = self.elevations.iter().filter(|e| e.s <= s).last();
+
+        match elev {
+            Some(e) => {
+                let ds = s - e.s;
+                e.a + e.b * ds + e.c * ds.powi(2) + e.d * ds.powi(3)
+            }
+            None => 0.0,
+        }
+    }
+
+    /// 计算 s 位置的超高角度（弧度）
+    fn eval_superelevation(&self, s: f64) -> f64 {
+        let se = self.superelevations.iter().filter(|e| e.s <= s).last();
+
+        match se {
+            Some(e) => {
+                let ds = s - e.s;
+                e.a + e.b * ds + e.c * ds.powi(2) + e.d * ds.powi(3)
+            }
+            None => 0.0,
         }
     }
 }

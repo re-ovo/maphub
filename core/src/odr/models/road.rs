@@ -134,6 +134,102 @@ impl OdrRoad {
         Vec3::new(x, y, z)
     }
 
+    /// 将笛卡尔坐标 (x, y, z) 转换为道路坐标 (s, t, h)
+    ///
+    /// # 参数
+    /// - `x`: 笛卡尔坐标 x
+    /// - `y`: 笛卡尔坐标 y
+    /// - `z`: 笛卡尔坐标 z
+    ///
+    /// # 返回值
+    /// 返回 Vec3，其中 x=s, y=t, z=h
+    ///
+    /// # 算法
+    /// 使用牛顿迭代法找到参考线上距离目标点最近的 s 值，
+    /// 然后计算横向偏移 t 和高度偏移 h
+    #[wasm_bindgen(js_name = "xyzToSth")]
+    pub fn xyz_to_sth(&self, x: f64, y: f64, z: f64) -> Vec3 {
+        // 使用牛顿迭代法找到最近的 s 值
+        let s = self.find_closest_s(x, y);
+
+        // 获取参考线上该点的位置和方向
+        let pos_hdg = self.eval_reference_line(s);
+
+        // 计算从参考线点到目标点的向量
+        let dx = x - pos_hdg.x;
+        let dy = y - pos_hdg.y;
+
+        // 计算 t：将向量投影到法线方向（垂直于切线）
+        // 法线方向 = hdg + π/2
+        let normal = pos_hdg.hdg + std::f64::consts::FRAC_PI_2;
+        let t = dx * normal.cos() + dy * normal.sin();
+
+        // 计算 h：z - 基础高程 - 超高影响
+        let base_z = self.eval_elevation(s);
+        let roll = self.eval_superelevation(s);
+        let h = z - base_z - t * roll.tan();
+
+        Vec3::new(s, t, h)
+    }
+
+    /// 使用牛顿迭代法找到参考线上距离点 (x, y) 最近的 s 值
+    fn find_closest_s(&self, x: f64, y: f64) -> f64 {
+        const MAX_ITERATIONS: usize = 50;
+        const TOLERANCE: f64 = 1e-8;
+
+        // 初始猜测：在参考线上采样找到最近点
+        let mut best_s = self.initial_s_guess(x, y);
+
+        for _ in 0..MAX_ITERATIONS {
+            let pos_hdg = self.eval_reference_line(best_s);
+
+            // 计算从参考线点到目标点的向量
+            let dx = x - pos_hdg.x;
+            let dy = y - pos_hdg.y;
+
+            // 切线方向向量
+            let tx = pos_hdg.hdg.cos();
+            let ty = pos_hdg.hdg.sin();
+
+            // 计算沿切线方向的距离（这就是 s 需要调整的量）
+            let ds = dx * tx + dy * ty;
+
+            if ds.abs() < TOLERANCE {
+                break;
+            }
+
+            // 更新 s，但限制在道路范围内
+            best_s = (best_s + ds).clamp(0.0, self.length);
+        }
+
+        best_s
+    }
+
+    /// 通过采样找到初始 s 猜测值
+    fn initial_s_guess(&self, x: f64, y: f64) -> f64 {
+        let num_samples = 100.max((self.length / 5.0) as usize);
+        let step = self.length / num_samples as f64;
+
+        let mut best_s = 0.0;
+        let mut min_dist_sq = f64::MAX;
+
+        for i in 0..=num_samples {
+            let s = (i as f64) * step;
+            let pos_hdg = self.eval_reference_line(s);
+
+            let dx = x - pos_hdg.x;
+            let dy = y - pos_hdg.y;
+            let dist_sq = dx * dx + dy * dy;
+
+            if dist_sq < min_dist_sq {
+                min_dist_sq = dist_sq;
+                best_s = s;
+            }
+        }
+
+        best_s
+    }
+
     /// 计算参考线上 s 位置的点和切线方向
     fn eval_reference_line(&self, s: f64) -> PosHdg {
         // 找到包含该 s 值的几何段

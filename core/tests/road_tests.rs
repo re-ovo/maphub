@@ -389,3 +389,261 @@ fn test_sth_to_xyz_with_combined_elevation_and_superelevation() {
         result.z
     );
 }
+
+// ============================================================================
+// sth <-> xyz 往返测试 (Round-trip tests)
+// ============================================================================
+
+#[test]
+fn test_sth_xyz_roundtrip_on_reference_line() {
+    let road = create_test_road_with_elevation_and_superelevation();
+
+    // 测试参考线上的点
+    let original_s = 50.0;
+    let original_t = 0.0;
+    let original_h = 0.0;
+
+    // sth -> xyz -> sth
+    let xyz = road.sth_to_xyz(original_s, original_t, original_h);
+    let sth = road.xyz_to_sth(xyz.x, xyz.y, xyz.z);
+
+    assert!(
+        (sth.x - original_s).abs() < 1e-6,
+        "s roundtrip failed: original={}, got={}",
+        original_s,
+        sth.x
+    );
+    assert!(
+        (sth.y - original_t).abs() < 1e-6,
+        "t roundtrip failed: original={}, got={}",
+        original_t,
+        sth.y
+    );
+    assert!(
+        (sth.z - original_h).abs() < 1e-6,
+        "h roundtrip failed: original={}, got={}",
+        original_h,
+        sth.z
+    );
+}
+
+#[test]
+fn test_sth_xyz_roundtrip_with_lateral_offset() {
+    let road = create_test_road_with_elevation_and_superelevation();
+
+    // 测试带横向偏移的点
+    let original_s = 30.0;
+    let original_t = 5.0; // 向左偏移
+    let original_h = 0.0;
+
+    let xyz = road.sth_to_xyz(original_s, original_t, original_h);
+    let sth = road.xyz_to_sth(xyz.x, xyz.y, xyz.z);
+
+    assert!(
+        (sth.x - original_s).abs() < 1e-6,
+        "s roundtrip failed: original={}, got={}",
+        original_s,
+        sth.x
+    );
+    assert!(
+        (sth.y - original_t).abs() < 1e-6,
+        "t roundtrip failed: original={}, got={}",
+        original_t,
+        sth.y
+    );
+    assert!(
+        (sth.z - original_h).abs() < 1e-6,
+        "h roundtrip failed: original={}, got={}",
+        original_h,
+        sth.z
+    );
+}
+
+#[test]
+fn test_sth_xyz_roundtrip_with_negative_lateral_offset() {
+    let road = create_test_road_with_elevation_and_superelevation();
+
+    // 测试负横向偏移（向右）
+    let original_s = 70.0;
+    let original_t = -3.5;
+    let original_h = 0.0;
+
+    let xyz = road.sth_to_xyz(original_s, original_t, original_h);
+    let sth = road.xyz_to_sth(xyz.x, xyz.y, xyz.z);
+
+    assert!(
+        (sth.x - original_s).abs() < 1e-6,
+        "s roundtrip failed: original={}, got={}",
+        original_s,
+        sth.x
+    );
+    assert!(
+        (sth.y - original_t).abs() < 1e-6,
+        "t roundtrip failed: original={}, got={}",
+        original_t,
+        sth.y
+    );
+    assert!(
+        (sth.z - original_h).abs() < 1e-6,
+        "h roundtrip failed: original={}, got={}",
+        original_h,
+        sth.z
+    );
+}
+
+#[test]
+fn test_sth_xyz_roundtrip_with_height_offset() {
+    let road = create_test_road_with_elevation_and_superelevation();
+
+    // 测试带高度偏移的点
+    let original_s = 25.0;
+    let original_t = 0.0;
+    let original_h = 2.5;
+
+    let xyz = road.sth_to_xyz(original_s, original_t, original_h);
+    let sth = road.xyz_to_sth(xyz.x, xyz.y, xyz.z);
+
+    assert!(
+        (sth.x - original_s).abs() < 1e-6,
+        "s roundtrip failed: original={}, got={}",
+        original_s,
+        sth.x
+    );
+    assert!(
+        (sth.y - original_t).abs() < 1e-6,
+        "t roundtrip failed: original={}, got={}",
+        original_t,
+        sth.y
+    );
+    assert!(
+        (sth.z - original_h).abs() < 1e-6,
+        "h roundtrip failed: original={}, got={}",
+        original_h,
+        sth.z
+    );
+}
+
+#[test]
+fn test_sth_xyz_roundtrip_with_all_offsets() {
+    let road = create_test_road_with_elevation_and_superelevation();
+
+    // 测试同时带横向和高度偏移的点
+    let original_s = 60.0;
+    let original_t = -2.0;
+    let original_h = 1.5;
+
+    let xyz = road.sth_to_xyz(original_s, original_t, original_h);
+    let sth = road.xyz_to_sth(xyz.x, xyz.y, xyz.z);
+
+    assert!(
+        (sth.x - original_s).abs() < 1e-6,
+        "s roundtrip failed: original={}, got={}",
+        original_s,
+        sth.x
+    );
+    assert!(
+        (sth.y - original_t).abs() < 1e-6,
+        "t roundtrip failed: original={}, got={}",
+        original_t,
+        sth.y
+    );
+    assert!(
+        (sth.z - original_h).abs() < 1e-6,
+        "h roundtrip failed: original={}, got={}",
+        original_h,
+        sth.z
+    );
+}
+
+#[test]
+fn test_sth_xyz_roundtrip_at_road_boundaries() {
+    let road = create_test_road_with_elevation_and_superelevation();
+
+    // 测试道路起点
+    let xyz_start = road.sth_to_xyz(0.0, 1.0, 0.5);
+    let sth_start = road.xyz_to_sth(xyz_start.x, xyz_start.y, xyz_start.z);
+
+    assert!(
+        sth_start.x.abs() < 1e-6,
+        "s roundtrip at start failed: got={}",
+        sth_start.x
+    );
+    assert!(
+        (sth_start.y - 1.0).abs() < 1e-6,
+        "t roundtrip at start failed: got={}",
+        sth_start.y
+    );
+    assert!(
+        (sth_start.z - 0.5).abs() < 1e-6,
+        "h roundtrip at start failed: got={}",
+        sth_start.z
+    );
+
+    // 测试道路终点
+    let xyz_end = road.sth_to_xyz(100.0, -1.5, 0.0);
+    let sth_end = road.xyz_to_sth(xyz_end.x, xyz_end.y, xyz_end.z);
+
+    assert!(
+        (sth_end.x - 100.0).abs() < 1e-6,
+        "s roundtrip at end failed: got={}",
+        sth_end.x
+    );
+    assert!(
+        (sth_end.y - (-1.5)).abs() < 1e-6,
+        "t roundtrip at end failed: got={}",
+        sth_end.y
+    );
+    assert!(
+        sth_end.z.abs() < 1e-6,
+        "h roundtrip at end failed: got={}",
+        sth_end.z
+    );
+}
+
+#[test]
+fn test_sth_xyz_roundtrip_multiple_points() {
+    let road = create_test_road_with_elevation_and_superelevation();
+
+    // 测试多个点的往返一致性
+    let test_cases = [
+        (10.0, 2.0, 0.0),
+        (20.0, -1.0, 1.0),
+        (35.0, 0.0, 0.5),
+        (50.0, 3.0, -0.5),
+        (75.0, -2.5, 2.0),
+        (90.0, 1.5, 0.0),
+    ];
+
+    for (original_s, original_t, original_h) in test_cases {
+        let xyz = road.sth_to_xyz(original_s, original_t, original_h);
+        let sth = road.xyz_to_sth(xyz.x, xyz.y, xyz.z);
+
+        assert!(
+            (sth.x - original_s).abs() < 1e-6,
+            "s roundtrip failed at ({}, {}, {}): original={}, got={}",
+            original_s,
+            original_t,
+            original_h,
+            original_s,
+            sth.x
+        );
+        assert!(
+            (sth.y - original_t).abs() < 1e-6,
+            "t roundtrip failed at ({}, {}, {}): original={}, got={}",
+            original_s,
+            original_t,
+            original_h,
+            original_t,
+            sth.y
+        );
+        assert!(
+            (sth.z - original_h).abs() < 1e-6,
+            "h roundtrip failed at ({}, {}, {}): original={}, got={}",
+            original_s,
+            original_t,
+            original_h,
+            original_h,
+            sth.z
+        );
+    }
+}

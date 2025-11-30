@@ -151,7 +151,7 @@ export default function PropertiesPanel() {
       return { title: null, subtitle: null, groups: [] };
     }
 
-    const format = formatRegistry.getFormat(doc.formatId);
+    const format = formatRegistry.get(doc.formatId);
     if (!format) {
       return { title: null, subtitle: null, groups: [] };
     }

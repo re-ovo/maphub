@@ -112,7 +112,7 @@ export default function ViewportPanel() {
 
           // 获取悬浮信息
           const node = useStore.getState().getNode(nodeId);
-          const format = formatRegistry.getFormat(doc.formatId);
+          const format = formatRegistry.get(doc.formatId);
           const hoverInfo = node && format ? format.getHoverInfo(node) : null;
 
           // 计算相对于 canvas 容器的坐标

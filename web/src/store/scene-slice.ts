@@ -85,12 +85,21 @@ export interface SceneSlice {
 /** 从 DocumentNode 构建节点索引 */
 function buildNodeIndex(doc: DocumentNode): Map<string, SemanticNode> {
   const index = new Map<string, SemanticNode>();
+
   // DocumentNode 本身也是 SemanticNode
   index.set(doc.id, doc);
 
-  // 递归索引子节点需要一个完整的节点映射
-  // 由于 DocumentNode 只有 childrenIds，我们需要从 metadata 或其他方式获取子节点
-  // 这里假设子节点会在后续通过其他方式添加到 index
+  // 从 metadata.nodeIndex 获取子节点索引（由 MapFormat.createDocument 构建）
+  const metadataIndex = (doc.metadata as Record<string, unknown>)?.nodeIndex as
+    | Map<string, SemanticNode>
+    | undefined;
+
+  if (metadataIndex) {
+    metadataIndex.forEach((node, id) => {
+      index.set(id, node);
+    });
+  }
+
   return index;
 }
 

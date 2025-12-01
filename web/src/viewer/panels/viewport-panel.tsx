@@ -191,14 +191,14 @@ export default function ViewportPanel() {
       newScene.render();
     });
 
-    // 监听窗口大小变化
-    const handleResize = () => {
+    // 监听容器大小变化（支持 Mosaic 面板拖动）
+    const resizeObserver = new ResizeObserver(() => {
       engine.resize();
-    };
-    window.addEventListener("resize", handleResize);
+    });
+    resizeObserver.observe(canvasRef.current);
 
     return () => {
-      window.removeEventListener("resize", handleResize);
+      resizeObserver.disconnect();
       newScene.dispose();
       engine.dispose();
     };

@@ -1,14 +1,16 @@
 import {
   Scene,
-  TransformNode,
+  Group,
   Mesh,
-  VertexData,
-  StandardMaterial,
-  Color3,
-  HighlightLayer,
-  type PickingInfo,
-  type AbstractMesh,
-} from "@babylonjs/core";
+  BufferGeometry,
+  MeshStandardMaterial,
+  Color,
+  Float32BufferAttribute,
+  DoubleSide,
+  type Object3D,
+  type Intersection,
+  type Material,
+} from "three";
 import {
   LaneMeshBuilder,
   type OpenDrive,
@@ -20,25 +22,27 @@ import type { MapRenderer } from "../../types";
 
 /** OpenDrive 渲染器 */
 export class OpenDriveRenderer implements MapRenderer {
-  readonly rootNode: TransformNode;
+  readonly rootNode: Group;
   readonly scene: Scene;
 
   private odr: OpenDrive;
   private documentId: string;
-  private highlightLayer: HighlightLayer;
 
   /** nodeId -> meshes 映射 */
-  private nodeToMeshes = new Map<string, AbstractMesh[]>();
+  private nodeToMeshes = new Map<string, Mesh[]>();
   /** mesh -> nodeId 映射 */
-  private meshToNodeId = new Map<AbstractMesh, string>();
+  private meshToNodeId = new Map<Object3D, string>();
+  /** 高亮前的原始颜色 */
+  private originalColors = new Map<Mesh, Color>();
 
   constructor(scene: Scene, odr: OpenDrive, documentId: string) {
     this.scene = scene;
     this.odr = odr;
     this.documentId = documentId;
 
-    this.rootNode = new TransformNode(`odr_${documentId}`, scene);
-    this.highlightLayer = new HighlightLayer(`highlight_${documentId}`, scene);
+    this.rootNode = new Group();
+    this.rootNode.name = `odr_${documentId}`;
+    scene.add(this.rootNode);
   }
 
   render(): void {
@@ -47,25 +51,45 @@ export class OpenDriveRenderer implements MapRenderer {
   }
 
   dispose(): void {
-    this.highlightLayer.dispose();
-    this.rootNode.dispose();
+    // Three.js 需要手动释放几何体和材质
+    this.rootNode.traverse((child) => {
+      if (child instanceof Mesh) {
+        child.geometry.dispose();
+        if (Array.isArray(child.material)) {
+          child.material.forEach((m) => m.dispose());
+        } else {
+          (child.material as Material).dispose();
+        }
+      }
+    });
+
+    this.scene.remove(this.rootNode);
     this.nodeToMeshes.clear();
     this.meshToNodeId.clear();
+    this.originalColors.clear();
   }
 
-  getNodeFromPick(pickInfo: PickingInfo): string | null {
-    if (!pickInfo.hit || !pickInfo.pickedMesh) return null;
-    return this.meshToNodeId.get(pickInfo.pickedMesh) ?? null;
+  getNodeFromIntersection(intersection: Intersection): string | null {
+    // 向上遍历找到注册的节点
+    let current: Object3D | null = intersection.object;
+    while (current) {
+      const nodeId = this.meshToNodeId.get(current);
+      if (nodeId) return nodeId;
+      current = current.parent;
+    }
+    return null;
   }
 
   setVisible(visible: boolean): void {
-    this.rootNode.setEnabled(visible);
+    this.rootNode.visible = visible;
   }
 
   setNodeVisible(nodeId: string, visible: boolean): void {
     const meshes = this.nodeToMeshes.get(nodeId);
     if (meshes) {
-      meshes.forEach((mesh) => mesh.setEnabled(visible));
+      meshes.forEach((mesh) => {
+        mesh.visible = visible;
+      });
     }
   }
 
@@ -73,7 +97,14 @@ export class OpenDriveRenderer implements MapRenderer {
     const meshes = this.nodeToMeshes.get(nodeId);
     if (meshes) {
       meshes.forEach((mesh) => {
-        this.highlightLayer.addMesh(mesh, Color3.Yellow());
+        const material = mesh.material as MeshStandardMaterial;
+        // 保存原始颜色
+        if (!this.originalColors.has(mesh)) {
+          this.originalColors.set(mesh, material.color.clone());
+        }
+        // 设置高亮颜色
+        material.color.set(0xffff00);
+        material.emissive.set(0x333300);
       });
     }
   }
@@ -82,35 +113,46 @@ export class OpenDriveRenderer implements MapRenderer {
     const meshes = this.nodeToMeshes.get(nodeId);
     if (meshes) {
       meshes.forEach((mesh) => {
-        this.highlightLayer.removeMesh(mesh);
+        const original = this.originalColors.get(mesh);
+        if (original) {
+          const material = mesh.material as MeshStandardMaterial;
+          material.color.copy(original);
+          material.emissive.set(0x000000);
+          this.originalColors.delete(mesh);
+        }
       });
     }
   }
 
   unhighlightAll(): void {
-    this.highlightLayer.removeAllMeshes();
+    this.originalColors.forEach((original, mesh) => {
+      const material = mesh.material as MeshStandardMaterial;
+      material.color.copy(original);
+      material.emissive.set(0x000000);
+    });
+    this.originalColors.clear();
   }
 
   focusOn(nodeId: string): void {
     const meshes = this.nodeToMeshes.get(nodeId);
     if (meshes && meshes.length > 0) {
       const mesh = meshes[0];
-      const boundingInfo = mesh.getBoundingInfo();
-      const center = boundingInfo.boundingBox.centerWorld;
-
-      const camera = this.scene.activeCamera;
-      if (camera && "setTarget" in camera) {
-        (camera as { setTarget: (target: typeof center) => void }).setTarget(
-          center
-        );
+      mesh.geometry.computeBoundingBox();
+      const box = mesh.geometry.boundingBox;
+      if (box) {
+        const center = box.getCenter(mesh.position.clone());
+        mesh.localToWorld(center);
+        // 相机聚焦需要通过 store 的 controls 实现
+        // 这里只提供目标位置
       }
     }
   }
 
   private renderRoad(road: OdrRoad): void {
     const roadNodeId = `${this.documentId}:road:${road.id}`;
-    const roadNode = new TransformNode(`road_${road.id}`, this.scene);
-    roadNode.parent = this.rootNode;
+    const roadGroup = new Group();
+    roadGroup.name = `road_${road.id}`;
+    this.rootNode.add(roadGroup);
 
     const meshBuilder = new LaneMeshBuilder(1.0);
     const sections = road.lanes || [];
@@ -118,11 +160,9 @@ export class OpenDriveRenderer implements MapRenderer {
     // 遍历每个 lane section
     sections.forEach((section, sectionIndex) => {
       const sectionNodeId = `${this.documentId}:road:${road.id}:section:${sectionIndex}`;
-      const sectionNode = new TransformNode(
-        `road_${road.id}_section_${sectionIndex}`,
-        this.scene
-      );
-      sectionNode.parent = roadNode;
+      const sectionGroup = new Group();
+      sectionGroup.name = `road_${road.id}_section_${sectionIndex}`;
+      roadGroup.add(sectionGroup);
 
       // 计算 s 范围
       const sStart = section.s;
@@ -141,7 +181,7 @@ export class OpenDriveRenderer implements MapRenderer {
           sectionIndex,
           sStart,
           sEnd,
-          sectionNode
+          sectionGroup
         );
       }
 
@@ -155,24 +195,31 @@ export class OpenDriveRenderer implements MapRenderer {
           sectionIndex,
           sStart,
           sEnd,
-          sectionNode
+          sectionGroup
         );
       }
 
       // 注册 section 节点（包含其下所有 lane mesh）
-      const sectionMeshes = sectionNode.getChildMeshes();
+      const sectionMeshes: Mesh[] = [];
+      sectionGroup.traverse((child) => {
+        if (child instanceof Mesh) {
+          sectionMeshes.push(child);
+        }
+      });
       if (sectionMeshes.length > 0) {
-        this.nodeToMeshes.set(
-          sectionNodeId,
-          sectionMeshes as AbstractMesh[]
-        );
+        this.nodeToMeshes.set(sectionNodeId, sectionMeshes);
       }
     });
 
     // 注册 road 节点（包含所有子 mesh）
-    const roadMeshes = roadNode.getChildMeshes();
+    const roadMeshes: Mesh[] = [];
+    roadGroup.traverse((child) => {
+      if (child instanceof Mesh) {
+        roadMeshes.push(child);
+      }
+    });
     if (roadMeshes.length > 0) {
-      this.nodeToMeshes.set(roadNodeId, roadMeshes as AbstractMesh[]);
+      this.nodeToMeshes.set(roadNodeId, roadMeshes);
     }
   }
 
@@ -184,63 +231,65 @@ export class OpenDriveRenderer implements MapRenderer {
     sectionIndex: number,
     sStart: number,
     sEnd: number,
-    parentNode: TransformNode
+    parentGroup: Group
   ): void {
     const laneNodeId = `${this.documentId}:road:${road.id}:section:${sectionIndex}:lane:${lane.id}`;
 
-    // 构建 lane mesh
+    // 构建 lane mesh 数据
     const meshData = meshBuilder.buildLaneMesh(road, section, lane, sStart, sEnd);
 
-    // 创建 BabylonJS 网格
-    const mesh = new Mesh(
-      `road_${road.id}_section_${sectionIndex}_lane_${lane.id}`,
-      this.scene
+    // 创建 Three.js BufferGeometry
+    const geometry = new BufferGeometry();
+    geometry.setAttribute(
+      "position",
+      new Float32BufferAttribute(meshData.vertices, 3)
     );
-    mesh.parent = parentNode;
-
-    // 设置顶点数据
-    const vertexData = new VertexData();
-    vertexData.positions = meshData.vertices;
-    vertexData.indices = Array.from(meshData.indices);
-    vertexData.normals = meshData.normals;
-    vertexData.applyToMesh(mesh);
-
-    // 根据车道类型设置材质颜色
-    const material = new StandardMaterial(
-      `lane_${road.id}_${sectionIndex}_${lane.id}_mat`,
-      this.scene
+    geometry.setAttribute(
+      "normal",
+      new Float32BufferAttribute(meshData.normals, 3)
     );
-    material.diffuseColor = this.getLaneColor(lane.type);
-    material.backFaceCulling = false;
-    mesh.material = material;
+    geometry.setIndex(Array.from(meshData.indices));
+
+    // 创建材质
+    const material = new MeshStandardMaterial({
+      color: this.getLaneColor(lane.type),
+      side: DoubleSide,
+      roughness: 0.8,
+      metalness: 0.1,
+    });
+
+    // 创建 mesh
+    const mesh = new Mesh(geometry, material);
+    mesh.name = `road_${road.id}_section_${sectionIndex}_lane_${lane.id}`;
+    parentGroup.add(mesh);
 
     // 注册 lane nodeId -> mesh 映射
     this.registerNodeMesh(laneNodeId, mesh);
   }
 
   /** 根据车道类型返回颜色 */
-  private getLaneColor(laneType: string): Color3 {
+  private getLaneColor(laneType: string): Color {
     switch (laneType) {
       case "driving":
-        return new Color3(0.3, 0.3, 0.3); // 深灰色
+        return new Color(0.3, 0.3, 0.3); // 深灰色
       case "shoulder":
-        return new Color3(0.5, 0.5, 0.5); // 浅灰色
+        return new Color(0.5, 0.5, 0.5); // 浅灰色
       case "sidewalk":
-        return new Color3(0.6, 0.55, 0.5); // 米色
+        return new Color(0.6, 0.55, 0.5); // 米色
       case "border":
-        return new Color3(0.4, 0.4, 0.4);
+        return new Color(0.4, 0.4, 0.4);
       case "parking":
-        return new Color3(0.3, 0.4, 0.5); // 蓝灰色
+        return new Color(0.3, 0.4, 0.5); // 蓝灰色
       case "biking":
-        return new Color3(0.2, 0.5, 0.3); // 绿色
+        return new Color(0.2, 0.5, 0.3); // 绿色
       case "median":
-        return new Color3(0.35, 0.45, 0.35); // 草绿
+        return new Color(0.35, 0.45, 0.35); // 草绿
       default:
-        return new Color3(0.35, 0.35, 0.35);
+        return new Color(0.35, 0.35, 0.35);
     }
   }
 
-  private registerNodeMesh(nodeId: string, mesh: AbstractMesh): void {
+  private registerNodeMesh(nodeId: string, mesh: Mesh): void {
     this.meshToNodeId.set(mesh, nodeId);
 
     const existing = this.nodeToMeshes.get(nodeId) || [];

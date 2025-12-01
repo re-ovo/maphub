@@ -1,14 +1,32 @@
 import type { StateCreator } from "zustand";
-import type { Scene } from "@babylonjs/core";
+import type {
+  OrthographicCamera,
+  PerspectiveCamera,
+  Scene,
+  WebGLRenderer,
+} from "three";
+import type { MapControls } from "three/examples/jsm/controls/MapControls.js";
 import type { DocumentNode, SemanticNode, HoverInfo } from "@/viewer/types";
 
 export type CameraMode = "perspective" | "orthographic";
 
 export interface SceneSlice {
-  // ============ Babylon.js Scene ============
-  /** BabylonJS 场景实例 */
+  // ============ Three.js Scene ============
+  /** Three.js 场景实例 */
   scene: Scene | null;
   setScene: (scene: Scene | null) => void;
+
+  /** Three.js 渲染器 */
+  renderer: WebGLRenderer | null;
+  setRenderer: (renderer: WebGLRenderer | null) => void;
+
+  /** Three.js 相机 */
+  camera: PerspectiveCamera | OrthographicCamera | null;
+  setCamera: (camera: PerspectiveCamera | OrthographicCamera | null) => void;
+
+  /** Three.js 控制器 */
+  controls: MapControls | null;
+  setControls: (controls: MapControls | null) => void;
 
   // ============ Viewport Settings ============
   showGrid: boolean;
@@ -117,6 +135,15 @@ export const createSceneSlice: StateCreator<SceneSlice, [], [], SceneSlice> = (
   // ============ Scene ============
   scene: null,
   setScene: (scene) => set({ scene }),
+
+  renderer: null,
+  setRenderer: (renderer) => set({ renderer }),
+
+  camera: null,
+  setCamera: (camera) => set({ camera }),
+
+  controls: null,
+  setControls: (controls) => set({ controls }),
 
   showGrid: true,
   showAxis: true,

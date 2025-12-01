@@ -1,4 +1,4 @@
-import type { Scene } from "@babylonjs/core";
+import type { Scene } from "three";
 import type { DocumentNode, SemanticNode } from "./semantic-node";
 import type { PropertyGroup } from "./property";
 import type { HoverInfo } from "./hover";

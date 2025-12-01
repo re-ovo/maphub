@@ -1,4 +1,4 @@
-import type { Scene } from "@babylonjs/core";
+import type { Scene } from "three";
 import {
   parseOpendrive,
   type OpenDrive,

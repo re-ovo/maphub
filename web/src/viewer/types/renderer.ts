@@ -1,9 +1,9 @@
-import type { PickingInfo, Scene, TransformNode } from "@babylonjs/core";
+import type { Intersection, Object3D, Scene } from "three";
 
 /** 地图渲染器接口 */
 export interface MapRenderer {
   /** 根节点 */
-  readonly rootNode: TransformNode;
+  readonly rootNode: Object3D;
 
   /** 所属场景 */
   readonly scene: Scene;
@@ -14,8 +14,8 @@ export interface MapRenderer {
   /** 销毁 */
   dispose(): void;
 
-  /** 根据 pick 结果获取节点 ID */
-  getNodeFromPick(pickInfo: PickingInfo): string | null;
+  /** 根据射线投射结果获取节点 ID */
+  getNodeFromIntersection(intersection: Intersection): string | null;
 
   /** 设置整体可见性 */
   setVisible(visible: boolean): void;

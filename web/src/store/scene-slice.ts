@@ -2,6 +2,8 @@ import type { StateCreator } from "zustand";
 import type { Scene } from "@babylonjs/core";
 import type { DocumentNode, SemanticNode, HoverInfo } from "@/viewer/types";
 
+export type CameraMode = "perspective" | "orthographic";
+
 export interface SceneSlice {
   // ============ Babylon.js Scene ============
   /** BabylonJS 场景实例 */
@@ -13,6 +15,11 @@ export interface SceneSlice {
   showAxis: boolean;
   toggleGrid: () => void;
   toggleAxis: () => void;
+
+  /** 相机模式：透视/正交 */
+  cameraMode: CameraMode;
+  setCameraMode: (mode: CameraMode) => void;
+  toggleCameraMode: () => void;
 
   // ============ Documents ============
   /** 已加载的文档节点 (documentId -> DocumentNode) */
@@ -115,6 +122,13 @@ export const createSceneSlice: StateCreator<SceneSlice, [], [], SceneSlice> = (
   showAxis: true,
   toggleGrid: () => set((state) => ({ showGrid: !state.showGrid })),
   toggleAxis: () => set((state) => ({ showAxis: !state.showAxis })),
+
+  cameraMode: "perspective",
+  setCameraMode: (mode) => set({ cameraMode: mode }),
+  toggleCameraMode: () =>
+    set((state) => ({
+      cameraMode: state.cameraMode === "perspective" ? "orthographic" : "perspective",
+    })),
 
   // ============ Documents ============
   documents: new Map(),

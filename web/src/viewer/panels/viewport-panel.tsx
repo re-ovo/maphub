@@ -7,11 +7,13 @@ import {
   MeshBuilder,
   ArcRotateCamera,
   PointerEventTypes,
+  Camera,
   type PointerInfo,
 } from "@babylonjs/core";
 import { GridMaterial } from "@babylonjs/materials";
 import { useStore } from "@/store";
 import { formatRegistry } from "@/viewer/formats";
+import { Button } from "@/components/ui/button";
 
 export default function ViewportPanel() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -28,6 +30,8 @@ export default function ViewportPanel() {
     hoveredNodeId,
     setHover,
     clearHover,
+    cameraMode,
+    toggleCameraMode,
   } = useStore();
 
   // 处理点击选择
@@ -258,9 +262,44 @@ export default function ViewportPanel() {
     }
   }, [scene, documents, selection]);
 
+  // 更新相机模式
+  useEffect(() => {
+    if (!scene) return;
+    const camera = scene.activeCamera as ArcRotateCamera;
+    if (!camera) return;
+
+    if (cameraMode === "orthographic") {
+      camera.mode = Camera.ORTHOGRAPHIC_CAMERA;
+      // 根据当前距离计算正交视图的大小
+      const orthoSize = camera.radius * 0.5;
+      const aspectRatio = engineRef.current
+        ? engineRef.current.getRenderWidth() / engineRef.current.getRenderHeight()
+        : 1;
+      camera.orthoLeft = -orthoSize * aspectRatio;
+      camera.orthoRight = orthoSize * aspectRatio;
+      camera.orthoTop = orthoSize;
+      camera.orthoBottom = -orthoSize;
+    } else {
+      camera.mode = Camera.PERSPECTIVE_CAMERA;
+    }
+  }, [scene, cameraMode]);
+
   return (
     <div className="w-full h-full bg-gray-900 relative">
       <canvas ref={canvasRef} className="w-full h-full outline-none" />
+
+      {/* 工具栏 */}
+      <div className="absolute top-2 right-2 flex gap-1">
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={toggleCameraMode}
+          title={cameraMode === "perspective" ? "切换到正交视图" : "切换到透视视图"}
+          className="bg-background/80 hover:bg-background"
+        >
+          {cameraMode === "perspective" ? "Perspective" : "Orthographic"}
+        </Button>
+      </div>
 
       {/* 悬浮信息提示 */}
       {hoveredNodeId && useStore.getState().hoverInfo && useStore.getState().hoverPosition && (

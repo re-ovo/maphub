@@ -19,6 +19,7 @@ export const useStore = create<StoreState>()(
         mosaicLayout: state.mosaicLayout,
         showGrid: state.showGrid,
         showAxis: state.showAxis,
+        cameraMode: state.cameraMode,
       }),
     }
   )

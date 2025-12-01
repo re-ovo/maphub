@@ -89,6 +89,7 @@ export class ViewportRenderer {
 
     // 创建相机
     const { width, height } = this.getSize();
+    this.renderer.setSize(width, height, false);
     this._camera = new PerspectiveCamera(60, width / height, 0.1, 10000);
 
     // 创建控制器
@@ -116,13 +117,7 @@ export class ViewportRenderer {
     this.gridHelper.visible = this._showGrid;
     this.scene.add(this.gridHelper);
 
-    // 初始化尺寸
-    this.renderer.setSize(width, height);
-
-    // 启动渲染循环
     this.startRenderLoop();
-
-    // 监听容器大小变化
     this.setupResizeObserver();
   }
 
@@ -276,7 +271,7 @@ export class ViewportRenderer {
         this._camera.bottom = -frustumSize;
       }
       this._camera.updateProjectionMatrix();
-      this.renderer.setSize(width, height);
+      this.renderer.setSize(width, height, false);
     });
     this.resizeObserver.observe(this.canvas);
   }

@@ -5,7 +5,7 @@ import type {
   Scene,
   WebGLRenderer,
 } from "three";
-import type { MapControls } from "three/examples/jsm/controls/MapControls.js";
+import type CameraControls from "camera-controls";
 import type { DocumentNode, SemanticNode, HoverInfo } from "@/viewer/types";
 
 export type CameraMode = "perspective" | "orthographic";
@@ -25,8 +25,8 @@ export interface SceneSlice {
   setCamera: (camera: PerspectiveCamera | OrthographicCamera | null) => void;
 
   /** Three.js 控制器 */
-  controls: MapControls | null;
-  setControls: (controls: MapControls | null) => void;
+  controls: CameraControls | null;
+  setControls: (controls: CameraControls | null) => void;
 
   // ============ Viewport Settings ============
   showGrid: boolean;

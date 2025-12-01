@@ -8,11 +8,34 @@ import {
   GridHelper,
   Raycaster,
   Vector2,
+  Vector3,
+  Vector4,
+  Quaternion,
+  Matrix4,
+  Spherical,
+  Box3,
+  Sphere,
   Color,
+  Clock,
   type Intersection,
 } from "three";
-import { MapControls } from "three/examples/jsm/controls/MapControls.js";
+import CameraControls from "camera-controls";
 import type { CameraMode } from "@/store/scene-slice";
+
+// 安装 camera-controls 所需的 THREE 子模块
+CameraControls.install({
+  THREE: {
+    Vector2,
+    Vector3,
+    Vector4,
+    Quaternion,
+    Matrix4,
+    Spherical,
+    Box3,
+    Sphere,
+    Raycaster,
+  },
+});
 
 export type Camera = PerspectiveCamera | OrthographicCamera;
 
@@ -32,7 +55,7 @@ export interface RaycastResult {
 export class ViewportRenderer {
   readonly scene: Scene;
   readonly renderer: WebGLRenderer;
-  readonly controls: MapControls;
+  readonly controls: CameraControls;
 
   private _camera: Camera;
   private _cameraMode: CameraMode = "perspective";
@@ -42,6 +65,7 @@ export class ViewportRenderer {
   private readonly raycaster = new Raycaster();
   private readonly pointer = new Vector2();
   private readonly gridHelper: GridHelper;
+  private readonly clock = new Clock();
 
   private animationId = 0;
   private resizeObserver: ResizeObserver | null = null;
@@ -66,17 +90,17 @@ export class ViewportRenderer {
     // 创建相机
     const { width, height } = this.getSize();
     this._camera = new PerspectiveCamera(60, width / height, 0.1, 10000);
-    this._camera.position.set(50, 50, 50);
-    this._camera.lookAt(0, 0, 0);
 
     // 创建控制器
-    this.controls = new MapControls(this._camera, this.canvas);
-    this.controls.enableDamping = true;
-    this.controls.dampingFactor = 0.05;
-    this.controls.screenSpacePanning = true;
+    this.controls = new CameraControls(this._camera, this.canvas);
     this.controls.minDistance = 1;
-    this.controls.maxDistance = 1000;
+    this.controls.maxDistance = 5000;
     this.controls.maxPolarAngle = Math.PI / 2;
+    this.controls.dollyToCursor = true;
+    this.controls.draggingSmoothTime = 0.1;
+
+    // 设置初始相机位置
+    this.controls.setLookAt(50, 50, 50, 0, 0, 0, false);
 
     // 创建灯光
     const ambientLight = new AmbientLight(0xffffff, 0.6);
@@ -126,7 +150,10 @@ export class ViewportRenderer {
     if (mode === this._cameraMode) return;
 
     const { width, height } = this.getSize();
-    const oldCamera = this._camera;
+
+    // 保存当前相机状态
+    const position = this.controls.getPosition(new Vector3());
+    const target = this.controls.getTarget(new Vector3());
 
     if (mode === "orthographic") {
       const frustumSize = 50;
@@ -139,19 +166,21 @@ export class ViewportRenderer {
         0.1,
         10000
       );
-      newCamera.position.copy(oldCamera.position);
-      newCamera.quaternion.copy(oldCamera.quaternion);
       this._camera = newCamera;
     } else {
       const newCamera = new PerspectiveCamera(60, width / height, 0.1, 10000);
-      newCamera.position.copy(oldCamera.position);
-      newCamera.quaternion.copy(oldCamera.quaternion);
       this._camera = newCamera;
     }
 
     this._cameraMode = mode;
-    this.controls.object = this._camera;
-    this.controls.update();
+
+    // 更新控制器的相机并恢复位置
+    this.controls.camera = this._camera;
+    this.controls.setLookAt(
+      position.x, position.y, position.z,
+      target.x, target.y, target.z,
+      false
+    );
   }
 
   /**
@@ -191,6 +220,13 @@ export class ViewportRenderer {
   }
 
   /**
+   * 聚焦到指定位置
+   */
+  fitTo(box: Box3, enableTransition = true): Promise<void> {
+    return this.controls.fitToBox(box, enableTransition);
+  }
+
+  /**
    * 销毁渲染器
    */
   dispose(): void {
@@ -214,7 +250,9 @@ export class ViewportRenderer {
     const animate = () => {
       if (this.disposed) return;
       this.animationId = requestAnimationFrame(animate);
-      this.controls.update();
+
+      const delta = this.clock.getDelta();
+      this.controls.update(delta);
       this.renderer.render(this.scene, this._camera);
     };
     animate();

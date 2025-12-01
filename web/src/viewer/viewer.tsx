@@ -7,7 +7,7 @@ import {
   type MosaicPath,
 } from "@lonli-lokli/react-mosaic-component";
 import { X, Maximize2, Minimize2 } from "lucide-react";
-import { Box3, Vector3 } from "three";
+import { Box3 } from "three";
 import ViewportPanel from "./panels/viewport-panel";
 import SceneTreePanel from "./panels/scene-tree-panel";
 import PropertiesPanel from "./panels/properties-panel";
@@ -89,7 +89,7 @@ function Tile({
 }
 
 export default function Viewer() {
-  const { mosaicLayout, setMosaicLayout, scene, camera, controls, addDocument } = useStore();
+  const { mosaicLayout, setMosaicLayout, scene, controls, addDocument } = useStore();
 
   const currentLayout = mosaicLayout || DEFAULT_MOSAIC_LAYOUT;
 
@@ -125,16 +125,10 @@ export default function Viewer() {
           // 渲染
           doc.renderer.render();
 
-          // 聚焦到地图中心 (Three.js 方式)
-          const box = new Box3().setFromObject(doc.renderer.rootNode);
-          const center = box.getCenter(new Vector3());
-          const size = box.getSize(new Vector3());
-          const diagonal = size.length();
-
-          if (controls && camera) {
-            controls.target.copy(center);
-            camera.position.copy(center).add(new Vector3(diagonal * 0.5, diagonal * 0.5, diagonal * 0.5));
-            controls.update();
+          // 聚焦到地图
+          if (controls) {
+            const box = new Box3().setFromObject(doc.renderer.rootNode);
+            controls.fitToBox(box, true);
           }
 
           // 添加到 store
@@ -146,7 +140,7 @@ export default function Viewer() {
         }
       }
     },
-    [scene, camera, controls, addDocument]
+    [scene, controls, addDocument]
   );
 
   return (

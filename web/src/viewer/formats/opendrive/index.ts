@@ -397,7 +397,7 @@ function getLaneProperties(lane: OdrLane): PropertyGroup[] {
       defaultExpanded: false,
       properties: lane.width.map((w, i) => ({
         key: `width_${i}`,
-        label: `Width @${w.s_offset.toFixed(2)}`,
+        label: `Width @${w.sOffset.toFixed(2)}`,
         value: `a=${w.a.toFixed(3)}, b=${w.b.toFixed(3)}`,
         type: "string" as const,
         readonly: true,
@@ -412,7 +412,7 @@ function getLaneProperties(lane: OdrLane): PropertyGroup[] {
       defaultExpanded: false,
       properties: lane.speed.map((s, i) => ({
         key: `speed_${i}`,
-        label: `Speed @${s.s_offset.toFixed(2)}`,
+        label: `Speed @${s.sOffset.toFixed(2)}`,
         value: s.max,
         type: "number" as const,
         unit: s.unit || "m/s",

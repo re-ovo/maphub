@@ -4,24 +4,24 @@ use wasm_bindgen::prelude::*;
 #[wasm_bindgen]
 #[derive(Clone, Debug)]
 pub enum OdrContactPoint {
-    Start,
-    End,
+    Start = "start",
+    End = "end",
 }
 
 #[wasm_bindgen]
 #[derive(Clone, Debug)]
 pub enum OdrElementDir {
-    Positive,
-    Negative,
+    Positive = "+",
+    Negative = "-",
 }
 
 #[wasm_bindgen]
 #[derive(Clone, Debug)]
 pub enum OdrSpeedUnit {
     /// km/h
-    KMH,
+    KMH = "km/h",
     /// m/s
-    MPS,
+    MPS = "m/s",
     /// mph
-    MPH,
+    MPH = "mph",
 }

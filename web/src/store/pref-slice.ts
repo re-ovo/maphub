@@ -1,6 +1,6 @@
 import type { StateCreator } from 'zustand'
 import type { MosaicNode } from '@lonli-lokli/react-mosaic-component';
-import type { ViewId } from '@/viewer/viewer'
+import type { ViewId } from '@/viewer/panels'
 
 // Default mosaic layout configuration
 export const DEFAULT_MOSAIC_LAYOUT: MosaicNode<ViewId> = {

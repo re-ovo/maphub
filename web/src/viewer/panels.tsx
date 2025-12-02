@@ -86,7 +86,7 @@ function Tile({
   );
 }
 
-export default function Viewer() {
+export default function Panels() {
   const { mosaicLayout, setMosaicLayout } = useStore();
 
   const currentLayout = mosaicLayout || DEFAULT_MOSAIC_LAYOUT;

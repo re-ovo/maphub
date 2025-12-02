@@ -1,7 +1,7 @@
 import { MenuBar } from "./components/menu-bar";
 import { ThemeProvider } from "./components/theme-provider";
 import { Toaster } from "./components/ui/sonner";
-import Viewer from "./viewer/viewer";
+import Panels from "./viewer/panels";
 
 function App() {
   return (
@@ -12,7 +12,7 @@ function App() {
           <MenuBar />
         </header>
         <main className="flex-1">
-          <Viewer />
+          <Panels />
         </main>
       </div>
     </ThemeProvider>

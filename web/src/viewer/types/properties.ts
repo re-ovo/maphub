@@ -7,10 +7,12 @@ export interface PropertiesProvider<E extends ElementNode<unknown, ElementType>>
 
 export interface PropertyGroup {
     label: string;
-    properties: Property[];
+    properties: PropertyItem[];
 }
 
-export interface Property {
+export interface PropertyItem {
     label: string;
-    value: string | number | boolean | ReactNode;
+    value: PropertyValue;
 }
+
+export type PropertyValue = string | number | ReactNode | null;

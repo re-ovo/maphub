@@ -5,7 +5,12 @@ import type { ReactNode } from "react";
 export type HoverInfo = {
   title: string;
   subtitle: string;
-  items: { label: string; value: string | number | boolean | ReactNode }[];
+  items: HoverInfoItem[];
+};
+
+export type HoverInfoItem = {
+  label: string;
+  value: string | number | ReactNode | null;
 };
 
 export interface HoverInfoProvider<

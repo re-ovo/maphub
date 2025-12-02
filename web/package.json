@@ -6,7 +6,6 @@
   "scripts": {
     "build:core": "cd ../core && wasm-pack build",
     "dev": "vite",
-    "prebuild": "bun run build:core",
     "build": "tsc -b && vite build",
     "lint": "oxlint .",
     "preview": "vite preview",

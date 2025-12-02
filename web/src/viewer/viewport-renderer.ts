@@ -62,8 +62,6 @@ export class ViewportRenderer {
   private _showGrid = true;
 
   private readonly canvas: HTMLCanvasElement;
-  private readonly raycaster = new Raycaster();
-  private readonly pointer = new Vector2();
   private readonly gridHelper: GridHelper;
   private readonly clock = new Clock();
 
@@ -180,42 +178,6 @@ export class ViewportRenderer {
       target.x, target.y, target.z,
       false
     );
-  }
-
-  /**
-   * 更新指针坐标（用于射线投射）
-   */
-  updatePointer(event: PointerEvent): void {
-    const rect = this.canvas.getBoundingClientRect();
-    this.pointer.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
-    this.pointer.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
-  }
-
-  /**
-   * 执行射线投射
-   */
-  raycast(): Intersection | null {
-    this.raycaster.setFromCamera(this.pointer, this._camera);
-    const intersects = this.raycaster.intersectObjects(this.scene.children, true);
-    return intersects.length > 0 ? intersects[0] : null;
-  }
-
-  /**
-   * 更新指针并执行射线投射
-   */
-  raycastFromEvent(event: PointerEvent): RaycastResult | null {
-    this.updatePointer(event);
-    const intersection = this.raycast();
-    if (!intersection) return null;
-
-    const rect = this.canvas.getBoundingClientRect();
-    return {
-      intersection,
-      position: {
-        x: event.clientX - rect.left,
-        y: event.clientY - rect.top,
-      },
-    };
   }
 
   /**

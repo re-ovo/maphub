@@ -269,4 +269,142 @@ impl OdrRoad {
             None => 0.0,
         }
     }
+
+    /// 计算 s 位置的车道偏移量
+    ///
+    /// 车道偏移量定义了所有车道相对于道路参考线的横向偏移
+    /// 使用三次多项式计算：offset(ds) = a + b*ds + c*ds² + d*ds³
+    ///
+    /// # 参数
+    /// - `s`: 沿参考线的纵向距离
+    ///
+    /// # 返回值
+    /// 横向偏移量（米），正值表示向左偏移，负值表示向右偏移
+    pub(crate) fn eval_lane_offset(&self, s: f64) -> f64 {
+        let offset = self.lane_offsets.iter().filter(|o| o.s <= s).last();
+
+        match offset {
+            Some(o) => {
+                let ds = s - o.s;
+                o.a + o.b * ds + o.c * ds.powi(2) + o.d * ds.powi(3)
+            }
+            None => 0.0,
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_eval_lane_offset_no_offset() {
+        // 测试没有 lane offset 的情况
+        let road = OdrRoad::new(
+            "road1".to_string(),
+            100.0,
+            "-1".to_string(),
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            vec![],
+            vec![],
+        );
+
+        assert_eq!(road.eval_lane_offset(0.0), 0.0);
+        assert_eq!(road.eval_lane_offset(50.0), 0.0);
+        assert_eq!(road.eval_lane_offset(100.0), 0.0);
+    }
+
+    #[test]
+    fn test_eval_lane_offset_constant() {
+        // 测试常数偏移
+        let lane_offsets = vec![OdrLaneOffset::new(0.0, 2.0, 0.0, 0.0, 0.0)];
+
+        let road = OdrRoad::new(
+            "road1".to_string(),
+            100.0,
+            "-1".to_string(),
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            vec![],
+            lane_offsets,
+        );
+
+        assert_eq!(road.eval_lane_offset(0.0), 2.0);
+        assert_eq!(road.eval_lane_offset(50.0), 2.0);
+        assert_eq!(road.eval_lane_offset(100.0), 2.0);
+    }
+
+    #[test]
+    fn test_eval_lane_offset_linear() {
+        // 测试线性变化：offset = 1.0 + 0.1*ds
+        let lane_offsets = vec![OdrLaneOffset::new(0.0, 1.0, 0.1, 0.0, 0.0)];
+
+        let road = OdrRoad::new(
+            "road1".to_string(),
+            100.0,
+            "-1".to_string(),
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            vec![],
+            lane_offsets,
+        );
+
+        assert_eq!(road.eval_lane_offset(0.0), 1.0);
+        assert_eq!(road.eval_lane_offset(10.0), 2.0); // 1.0 + 0.1*10
+        assert_eq!(road.eval_lane_offset(50.0), 6.0); // 1.0 + 0.1*50
+    }
+
+    #[test]
+    fn test_eval_lane_offset_multiple_segments() {
+        // 测试多段 lane offset
+        let lane_offsets = vec![
+            OdrLaneOffset::new(0.0, 0.0, 0.0, 0.0, 0.0),    // s=0: offset=0
+            OdrLaneOffset::new(25.0, 2.0, 0.0, 0.0, 0.0),   // s=25: offset=2
+            OdrLaneOffset::new(75.0, 2.0, -0.04, 0.0, 0.0), // s=75: offset=2-0.04*ds
+        ];
+
+        let road = OdrRoad::new(
+            "road1".to_string(),
+            100.0,
+            "-1".to_string(),
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            vec![],
+            lane_offsets,
+        );
+
+        assert_eq!(road.eval_lane_offset(10.0), 0.0);
+        assert_eq!(road.eval_lane_offset(30.0), 2.0);
+        assert_eq!(road.eval_lane_offset(50.0), 2.0);
+        assert_eq!(road.eval_lane_offset(100.0), 1.0); // 2.0 - 0.04*25
+    }
 }

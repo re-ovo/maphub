@@ -217,8 +217,8 @@ export class ViewportRenderer {
   /**
    * 聚焦到指定位置
    */
-  fitTo(box: Box3, enableTransition = true): Promise<void> {
-    return this.controls.fitToBox(box, enableTransition);
+  async fitTo(box: Box3, enableTransition = true) {
+    await this.controls.fitToBox(box, enableTransition);
   }
 
   /**

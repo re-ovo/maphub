@@ -1,0 +1,13 @@
+#:schema node_modules/wrangler/config-schema.json
+name = "maphub"
+compatibility_date = "2025-12-02"
+
+# Cloudflare Pages 配置
+pages_build_output_dir = "dist"
+
+# 环境变量(可选)
+[env.production.vars]
+# 添加生产环境变量
+
+[env.preview.vars]
+# 添加预览环境变量

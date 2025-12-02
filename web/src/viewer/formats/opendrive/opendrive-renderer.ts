@@ -19,6 +19,7 @@ import {
   type OdrLane,
 } from "core";
 import type { MapRenderer } from "../../types";
+import { LANE_COLORS, DEFAULT_LANE_COLOR } from "./enums";
 
 /** OpenDrive 渲染器 */
 export class OpenDriveRenderer implements MapRenderer {
@@ -269,24 +270,7 @@ export class OpenDriveRenderer implements MapRenderer {
 
   /** 根据车道类型返回颜色 */
   private getLaneColor(laneType: string): Color {
-    switch (laneType) {
-      case "driving":
-        return new Color(0.3, 0.3, 0.3); // 深灰色
-      case "shoulder":
-        return new Color(0.5, 0.5, 0.5); // 浅灰色
-      case "sidewalk":
-        return new Color(0.6, 0.55, 0.5); // 米色
-      case "border":
-        return new Color(0.4, 0.4, 0.4);
-      case "parking":
-        return new Color(0.3, 0.4, 0.5); // 蓝灰色
-      case "biking":
-        return new Color(0.2, 0.5, 0.3); // 绿色
-      case "median":
-        return new Color(0.35, 0.45, 0.35); // 草绿
-      default:
-        return new Color(0.35, 0.35, 0.35);
-    }
+    return LANE_COLORS[laneType] || DEFAULT_LANE_COLOR;
   }
 
   private registerNodeMesh(nodeId: string, mesh: Mesh): void {

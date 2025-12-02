@@ -1,26 +1,28 @@
+import type { CameraMode } from "@/store/scene-slice";
+import CameraControls from "camera-controls";
 import {
-  Scene,
-  WebGLRenderer,
-  PerspectiveCamera,
-  OrthographicCamera,
   AmbientLight,
+  Box3,
+  Clock,
+  Color,
   DirectionalLight,
   GridHelper,
+  Matrix4,
+  OrthographicCamera,
+  PerspectiveCamera,
+  PMREMGenerator,
+  Quaternion,
   Raycaster,
+  Scene,
+  Sphere,
+  Spherical,
   Vector2,
   Vector3,
   Vector4,
-  Quaternion,
-  Matrix4,
-  Spherical,
-  Box3,
-  Sphere,
-  Color,
-  Clock,
-  type Intersection,
+  WebGLRenderer,
+  type Intersection
 } from "three";
-import CameraControls from "camera-controls";
-import type { CameraMode } from "@/store/scene-slice";
+import { RGBELoader } from "three/addons/loaders/RGBELoader.js";
 
 // 安装 camera-controls 所需的 THREE 子模块
 CameraControls.install({
@@ -108,13 +110,17 @@ export class ViewportRenderer {
     this.scene.add(ambientLight);
 
     const directionalLight = new DirectionalLight(0xffffff, 0.4);
-    directionalLight.position.set(10, 20, 10);
+    directionalLight.position.set(50, 100, 50);
+    directionalLight.castShadow = true;
     this.scene.add(directionalLight);
 
     // 创建网格
     this.gridHelper = new GridHelper(1000, 100, 0x444444, 0x222222);
     this.gridHelper.name = "ground";
     this.gridHelper.visible = this._showGrid;
+    this.gridHelper.position.y = -5;
+    this.gridHelper.material.opacity = 0.5;
+    this.gridHelper.material.transparent = true;
     this.scene.add(this.gridHelper);
 
     this.startRenderLoop();

@@ -1,4 +1,3 @@
-import type { CameraMode } from "@/store/scene-slice";
 import CameraControls from "camera-controls";
 import {
   AmbientLight,
@@ -10,7 +9,6 @@ import {
   Matrix4,
   OrthographicCamera,
   PerspectiveCamera,
-  PMREMGenerator,
   Quaternion,
   Raycaster,
   Scene,
@@ -22,7 +20,6 @@ import {
   WebGLRenderer,
   type Intersection
 } from "three";
-import { RGBELoader } from "three/addons/loaders/RGBELoader.js";
 
 // 安装 camera-controls 所需的 THREE 子模块
 CameraControls.install({
@@ -40,6 +37,7 @@ CameraControls.install({
 });
 
 export type Camera = PerspectiveCamera | OrthographicCamera;
+export type CameraMode = "perspective" | "orthographic";
 
 export interface ViewportRendererOptions {
   canvas: HTMLCanvasElement;

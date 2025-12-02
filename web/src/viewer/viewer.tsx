@@ -1,4 +1,6 @@
-import React, { useContext, useCallback } from "react";
+import { FileDropZone } from "@/components/file-drop-zone";
+import { useStore } from "@/store";
+import { DEFAULT_MOSAIC_LAYOUT } from "@/store/pref-slice";
 import {
   Mosaic,
   MosaicContext,
@@ -6,15 +8,11 @@ import {
   type MosaicNode,
   type MosaicPath,
 } from "@lonli-lokli/react-mosaic-component";
-import { X, Maximize2, Minimize2 } from "lucide-react";
-import { Box3 } from "three";
-import ViewportPanel from "./panels/viewport-panel";
-import SceneTreePanel from "./panels/scene-tree-panel";
+import { Maximize2, Minimize2, X } from "lucide-react";
+import React, { useCallback, useContext } from "react";
 import PropertiesPanel from "./panels/properties-panel";
-import { useStore } from "@/store";
-import { DEFAULT_MOSAIC_LAYOUT } from "@/store/pref-slice";
-import { FileDropZone } from "@/components/file-drop-zone";
-import { formatRegistry } from "./formats";
+import SceneTreePanel from "./panels/scene-tree-panel";
+import ViewportPanel from "./panels/viewport-panel";
 
 export type ViewId = "viewport" | "sceneTree" | "properties";
 
@@ -89,58 +87,23 @@ function Tile({
 }
 
 export default function Viewer() {
-  const { mosaicLayout, setMosaicLayout, scene, controls, addDocument } = useStore();
+  const { mosaicLayout, setMosaicLayout } = useStore();
 
   const currentLayout = mosaicLayout || DEFAULT_MOSAIC_LAYOUT;
 
   const handleFilesDropped = useCallback(
     async (files: File[]) => {
-      if (!scene) {
-        console.warn("Scene not ready");
-        return;
-      }
-
       for (const file of files) {
         try {
           const content = new Uint8Array(await file.arrayBuffer());
 
-          // 检测文件格式
-          const format = formatRegistry.detectFormat(content, file.name);
-          if (!format) {
-            console.warn(`Unsupported file format: ${file.name}`);
-            continue;
-          }
-
-          console.log(`Loading ${file.name} as ${format.name}...`);
-          const start = performance.now();
-
-          // 解析数据
-          const data = await format.parse(content);
-          const parseTime = performance.now() - start;
-          console.log(`Parse time: ${parseTime.toFixed(2)}ms`);
-
-          // 创建文档（新 API：返回 DocumentNode）
-          const doc = format.createDocument(data, file.name, scene);
-
-          // 渲染
-          doc.renderer.render();
-
-          // 聚焦到地图
-          if (controls) {
-            const box = new Box3().setFromObject(doc.renderer.rootNode);
-            controls.fitToBox(box, true);
-          }
-
-          // 添加到 store
-          addDocument(doc);
-
-          console.log(`Loaded ${file.name} (${doc.id})`);
+          // TODO: 加载文件
         } catch (error) {
           console.error(`Failed to load ${file.name}:`, error);
         }
       }
     },
-    [scene, controls, addDocument]
+    []
   );
 
   return (

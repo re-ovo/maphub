@@ -59,7 +59,7 @@ impl LaneMeshBuilder {
             let s = s_start + t * length;
 
             // 计算车道在当前 s 位置的横向边界
-            let (t_inner, t_outer) = self.get_lane_t_bounds(lane, lane_section, s);
+            let (t_inner, t_outer) = self.get_lane_t_bounds(lane, lane_section, road, s);
 
             // 计算高度偏移（目前简化为 0）
             let h = 0.0;
@@ -69,14 +69,15 @@ impl LaneMeshBuilder {
             let outer_point = road.sth_to_xyz(s, t_outer, h);
 
             // 添加顶点（内边界和外边界各一个）
-            // 坐标系转换：OpenDRIVE (x, y, z) -> 渲染 (x, z, y)，使 Y 轴向上
+            // 坐标系转换：OpenDRIVE (x, y, z) -> WebGL (x, z, -y)
+            // X_webgl = x_od, Y_webgl = z_od, Z_webgl = -y_od
             vertices.push(inner_point.x as f32);
             vertices.push(inner_point.z as f32);
-            vertices.push(inner_point.y as f32);
+            vertices.push(-inner_point.y as f32);
 
             vertices.push(outer_point.x as f32);
             vertices.push(outer_point.z as f32);
-            vertices.push(outer_point.y as f32);
+            vertices.push(-outer_point.y as f32);
         }
 
         // 生成索引（三角形带）
@@ -129,6 +130,7 @@ impl LaneMeshBuilder {
     /// # 参数
     /// - `lane`: 车道对象
     /// - `section`: 车道所在的车道段
+    /// - `road`: 道路对象（用于获取 lane offset）
     /// - `s`: 全局 s 坐标
     ///
     /// # 返回值
@@ -137,6 +139,7 @@ impl LaneMeshBuilder {
         &self,
         lane: &OdrLane,
         section: &OdrLaneSection,
+        road: &OdrRoad,
         s: f64,
     ) -> (f64, f64) {
         let ds = s - section.s;
@@ -144,8 +147,11 @@ impl LaneMeshBuilder {
         // 计算当前车道的宽度
         let width = Self::eval_lane_width(&lane.width, ds);
 
+        // 计算 lane offset（道路级别的横向偏移）
+        let lane_offset = road.eval_lane_offset(s);
+
         // 计算内侧车道的累积宽度
-        let t_inner = self.calculate_inner_offset(lane.id, section, s);
+        let t_inner = self.calculate_inner_offset(lane.id, section, s) + lane_offset;
 
         // 外边界 = 内边界 + 宽度（考虑正负方向）
         let t_outer = if lane.id > 0 {
@@ -167,21 +173,17 @@ impl LaneMeshBuilder {
         let mut offset = 0.0;
 
         if lane_id > 0 {
-            // 左侧车道：累加 ID 小于当前车道的所有车道宽度
+            // 左侧车道：累加所有更靠近中心线的车道宽度（ID 更小）
             for other_lane in &section.left {
-                if other_lane.id < lane_id {
+                if other_lane.id > 0 && other_lane.id < lane_id {
                     offset += Self::eval_lane_width(&other_lane.width, ds);
-                } else {
-                    break;
                 }
             }
         } else if lane_id < 0 {
-            // 右侧车道：累加 ID 大于当前车道的所有车道宽度
+            // 右侧车道：累加所有更靠近中心线的车道宽度（数值更大）
             for other_lane in &section.right {
-                if other_lane.id > lane_id {
+                if other_lane.id < 0 && other_lane.id > lane_id {
                     offset -= Self::eval_lane_width(&other_lane.width, ds);
-                } else {
-                    break;
                 }
             }
         }
@@ -330,6 +332,7 @@ impl LaneMeshBuilder {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::odr::models::lane::lane_link::OdrLaneLink;
 
     #[test]
     fn test_eval_lane_width_constant() {
@@ -401,5 +404,48 @@ mod tests {
             assert!((normals[i + 1] - 1.0).abs() < 1e-5);
             assert!((normals[i + 2] - 0.0).abs() < 1e-5);
         }
+    }
+
+    #[test]
+    fn test_calculate_inner_offset_with_descending_lane_ids() {
+        fn build_lane(id: i32, width: f64) -> OdrLane {
+            OdrLane {
+                id,
+                lane_type: "driving".into(),
+                level: false,
+                road_works: None,
+                link: OdrLaneLink::new(None, None),
+                width: vec![OdrLaneWidth::new(0.0, width, 0.0, 0.0, 0.0)],
+                border: Vec::new(),
+                height: Vec::new(),
+                speed: Vec::new(),
+                access: Vec::new(),
+                rule: Vec::new(),
+                material: Vec::new(),
+                road_marks: Vec::new(),
+            }
+        }
+
+        let left = vec![build_lane(4, 4.0), build_lane(3, 3.0), build_lane(2, 2.0), build_lane(1, 1.0)];
+        let right = vec![
+            build_lane(-1, 1.0),
+            build_lane(-2, 2.0),
+            build_lane(-3, 3.0),
+            build_lane(-4, 4.0),
+        ];
+
+        let section = OdrLaneSection::new(0.0, left, right, build_lane(0, 0.0), None);
+        let builder = LaneMeshBuilder::new(None);
+        let s = 5.0; // 任意 s，宽度恒定
+
+        assert!((builder.calculate_inner_offset(1, &section, s) - 0.0).abs() < 1e-6);
+        assert!((builder.calculate_inner_offset(2, &section, s) - 1.0).abs() < 1e-6);
+        assert!((builder.calculate_inner_offset(3, &section, s) - 3.0).abs() < 1e-6);
+        assert!((builder.calculate_inner_offset(4, &section, s) - 6.0).abs() < 1e-6);
+
+        assert!((builder.calculate_inner_offset(-1, &section, s) - 0.0).abs() < 1e-6);
+        assert!((builder.calculate_inner_offset(-2, &section, s) + 1.0).abs() < 1e-6);
+        assert!((builder.calculate_inner_offset(-3, &section, s) + 3.0).abs() < 1e-6);
+        assert!((builder.calculate_inner_offset(-4, &section, s) + 6.0).abs() < 1e-6);
     }
 }

@@ -17,8 +17,6 @@ export interface ElementNode<
   data: D;
 }
 
-export type Value = string | number | ReactNode | null;
-
 export type HoverInfo = {
   title: string;
   subtitle: string;
@@ -27,7 +25,7 @@ export type HoverInfo = {
 
 export type HoverInfoItem = {
   label: string;
-  value: Value;
+  value: ReactNode;
 };
 
 export interface PropertyGroup {
@@ -37,7 +35,7 @@ export interface PropertyGroup {
 
 export interface PropertyItem {
   label: string;
-  value: Value;
+  value: ReactNode;
 }
 
 export interface TreeNode {

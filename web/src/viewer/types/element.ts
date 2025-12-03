@@ -1,20 +1,14 @@
 import type { Id } from "@/utils/id";
 import type { ReactNode } from "react";
-import type { Vector3 } from "three";
 
-export interface ElementNode<D = unknown> {
+export interface ElementNode<D = unknown, T extends string = string> {
   id: Id;
   parentId: Id | null;
   childrenIds: Id[];
   name: string;
   visible: boolean;
+  type: T; // union type of all possible element types (e.g. "road", "lane", "junction", etc.)
   data: D;
-
-  provideHoverInfo(pos: Vector3): HoverInfo | null;
-
-  provideProperties(): PropertyGroup[];
-
-  provideTreeNode(): TreeNode;
 }
 
 export type Value = string | number | ReactNode | null;

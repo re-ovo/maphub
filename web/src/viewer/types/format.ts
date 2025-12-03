@@ -6,11 +6,12 @@ import type {
   TreeNode,
 } from "./element";
 import type { Vector3 } from "three";
+import type { RenderBase } from "./render-base";
 
 export interface Format<
   ParsedData,
-  Renderer,
-  E extends ElementNode<unknown, string>
+  E extends ElementNode<unknown, string>,
+  Renderer extends RenderBase<E>
 > {
   parse(data: Files): Promise<ParsedData>;
 

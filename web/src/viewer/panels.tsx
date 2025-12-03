@@ -10,9 +10,9 @@ import {
 } from "@lonli-lokli/react-mosaic-component";
 import { Maximize2, Minimize2, X } from "lucide-react";
 import React, { useCallback, useContext } from "react";
-import PropertiesPanel from "./panels/properties-panel";
-import SceneTreePanel from "./panels/scene-tree-panel";
-import ViewportPanel from "./panels/viewport-panel";
+import PropertiesPanel from "./panels/properties";
+import SceneTreePanel from "./panels/scene-tree";
+import ViewportPanel from "./panels/viewport";
 
 export type ViewId = "viewport" | "sceneTree" | "properties";
 
@@ -91,20 +91,17 @@ export default function Panels() {
 
   const currentLayout = mosaicLayout || DEFAULT_MOSAIC_LAYOUT;
 
-  const handleFilesDropped = useCallback(
-    async (files: File[]) => {
-      for (const file of files) {
-        try {
-          const content = new Uint8Array(await file.arrayBuffer());
+  const handleFilesDropped = useCallback(async (files: File[]) => {
+    for (const file of files) {
+      try {
+        const content = new Uint8Array(await file.arrayBuffer());
 
-          // TODO: 加载文件
-        } catch (error) {
-          console.error(`Failed to load ${file.name}:`, error);
-        }
+        // TODO: 加载文件
+      } catch (error) {
+        console.error(`Failed to load ${file.name}:`, error);
       }
-    },
-    []
-  );
+    }
+  }, []);
 
   return (
     <FileDropZone onFilesDropped={handleFilesDropped} className="w-full h-full">

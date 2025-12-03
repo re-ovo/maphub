@@ -76,7 +76,7 @@ pub struct OdrRoadMark {
     pub s_offset: f64,
 
     /// Type of the road mark (simplified keyword type)
-    #[wasm_bindgen(getter_with_clone)]
+    #[wasm_bindgen(getter_with_clone, js_name = "markType")]
     pub mark_type: OdrRoadMarkType,
 
     /// Color of the road mark

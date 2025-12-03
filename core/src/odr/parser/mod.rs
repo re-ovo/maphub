@@ -12,7 +12,7 @@ pub use lane::parse_lanes;
 pub use road::parse_road;
 
 use crate::odr::models::opendrive::OpenDrive;
-use crate::Files;
+use crate::fs::Files;
 
 /// 解析 OpenDrive XML
 #[wasm_bindgen(js_name = parseOpendrive)]

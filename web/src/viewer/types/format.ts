@@ -7,34 +7,20 @@ import type {
 } from "./element";
 import type { Vector3 } from "three";
 
-/**
- * Format interface for map format implementations.
- *
- * @typeParam ParsedData - The type of data returned by parse()
- * @typeParam Renderer - The renderer type returned by buildRenderer()
- * @typeParam ElementData - The data type stored in ElementNode.data (default: unknown)
- * @typeParam ElementType - Union type of element types (default: string)
- */
 export interface Format<
   ParsedData,
   Renderer,
-  ElementData = unknown,
-  ElementType extends string = string,
+  E extends ElementNode<unknown, string>
 > {
   parse(data: Files): Promise<ParsedData>;
 
-  buildElements(data: ParsedData): ElementNode<ElementData, ElementType>[];
+  buildElements(data: ParsedData): E[];
 
   buildRenderer(data: ParsedData): Renderer;
 
-  provideHoverInfo(
-    element: ElementNode<ElementData, ElementType>,
-    pos: Vector3,
-  ): HoverInfo | null;
+  provideHoverInfo(element: E, pos: Vector3): HoverInfo | null;
 
-  provideProperties(
-    element: ElementNode<ElementData, ElementType>,
-  ): PropertyGroup[];
+  provideProperties(element: E): PropertyGroup[];
 
-  provideTreeNode(element: ElementNode<ElementData, ElementType>): TreeNode;
+  provideTreeNode(element: E): TreeNode;
 }

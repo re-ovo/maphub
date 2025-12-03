@@ -1,7 +1,7 @@
 import type { Id } from "@/utils/id";
 import type { ReactNode } from "react";
 
-export interface ElementNode<D = unknown, T extends string = string> {
+export interface ElementNode<D, T extends string> {
   id: Id;
   parentId: Id | null;
   childrenIds: Id[];

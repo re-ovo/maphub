@@ -1,19 +1,20 @@
 import type { Id } from "@/utils/id";
 import type { ReactNode } from "react";
+import type { Vector3 } from "three";
 
-export type ElementType = string;
-
-export interface ElementNode<D, T extends ElementType> {
+export interface ElementNode<D = unknown> {
   id: Id;
   parentId: Id | null;
   childrenIds: Id[];
   name: string;
   visible: boolean;
-  type: T;
   data: D;
-  provideHoverInfo(): HoverInfo | null;
+
+  provideHoverInfo(pos: Vector3): HoverInfo | null;
+
   provideProperties(): PropertyGroup[];
-  provideTree(): TreeAction[];
+
+  provideTreeNode(): TreeNode;
 }
 
 export type Value = string | number | ReactNode | null;
@@ -37,6 +38,12 @@ export interface PropertyGroup {
 export interface PropertyItem {
   label: string;
   value: Value;
+}
+
+export interface TreeNode {
+  icon?: ReactNode;
+  label: string | ReactNode;
+  actions: TreeAction[];
 }
 
 export interface TreeAction {

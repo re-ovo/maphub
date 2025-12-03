@@ -12,11 +12,24 @@ pub use lane::parse_lanes;
 pub use road::parse_road;
 
 use crate::odr::models::opendrive::OpenDrive;
+use crate::Files;
 
 /// 解析 OpenDrive XML
 #[wasm_bindgen(js_name = parseOpendrive)]
 pub fn parse_opendrive(xml: &[u8]) -> Result<OpenDrive, String> {
     parse_opendrive_internal(xml).map_err(|e| e.to_string())
+}
+
+/// 从 Files 中解析 OpenDrive
+#[wasm_bindgen(js_name = parseOpendriveFromFiles)]
+pub fn parse_opendrive_from_files(files: &Files) -> Result<OpenDrive, String> {
+    // 查找 .xodr 文件
+    let file = files
+        .find_by_extension(".xodr")
+        .ok_or_else(|| "未找到 .xodr 格式的文件".to_string())?;
+
+    // 解析文件数据
+    parse_opendrive_internal(file.get_data()).map_err(|e| e.to_string())
 }
 
 fn parse_opendrive_internal(xml: &[u8]) -> Result<OpenDrive> {

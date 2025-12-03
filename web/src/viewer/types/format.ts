@@ -8,9 +8,12 @@ import type {
 import type { Vector3 } from "three";
 import type { RenderBase } from "./render-base";
 
+export type MapFormatType = "opendrive" | "apollo";
+
 export interface Format<
   ParsedData,
-  E extends ElementNode<unknown, string>,
+  M extends MapFormatType,
+  E extends ElementNode<unknown, M, string>,
   Renderer extends RenderBase<E>
 > {
   parse(data: Files): Promise<ParsedData>;

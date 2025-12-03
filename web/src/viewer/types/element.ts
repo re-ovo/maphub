@@ -1,12 +1,18 @@
 import type { Id } from "@/utils/id";
 import type { ReactNode } from "react";
+import type { MapFormatType } from "./format";
 
-export interface ElementNode<D, T extends string> {
+export interface ElementNode<
+  D = unknown,
+  F extends MapFormatType = MapFormatType,
+  T extends string = string
+> {
   id: Id;
   parentId: Id | null;
   childrenIds: Id[];
   name: string;
   visible: boolean;
+  format: F; // the format of the element (e.g. "opendrive", "apollo")
   type: T; // union type of all possible element types (e.g. "road", "lane", "junction", etc.)
   data: D;
 }

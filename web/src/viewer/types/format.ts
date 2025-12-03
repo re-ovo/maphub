@@ -16,6 +16,8 @@ export interface Format<
   E extends ElementNode<unknown, M, string>,
   Renderer extends RenderBase<E>
 > {
+  format: M;
+
   parse(data: Files): Promise<ParsedData>;
 
   buildElements(data: ParsedData): E[];

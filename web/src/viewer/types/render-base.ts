@@ -1,5 +1,6 @@
 import { Object3D, type Intersection, type Object3DEventMap } from "three";
 import type { ElementNode } from "./element";
+import type { MapFormatType } from "./format";
 
 export interface HoverEnterEvent {
   type: "hoverenter";
@@ -25,7 +26,7 @@ export interface RenderBaseEventMap extends Object3DEventMap {
 }
 
 export abstract class RenderBase<
-  E extends ElementNode<unknown, string>
+  E extends ElementNode<unknown, MapFormatType, string>
 > extends Object3D<RenderBaseEventMap> {
   element: E;
 

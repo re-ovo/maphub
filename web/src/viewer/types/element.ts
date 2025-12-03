@@ -12,8 +12,8 @@ export interface ElementNode<D, T extends ElementType> {
   type: T;
   data: D;
   provideHoverInfo(): HoverInfo | null;
-  provideProperties(): PropertyGroup[] | null;
-  provideTree(): TreeAction[] | null;
+  provideProperties(): PropertyGroup[];
+  provideTree(): TreeAction[];
 }
 
 export type Value = string | number | ReactNode | null;

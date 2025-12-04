@@ -35,3 +35,19 @@ cd web && bun run preview
 # 仅构建 core 模块
 cd web && bun run build:core
 ```
+
+## 代码架构
+
+### Rust WASM 核心 (core/)
+- **地图格式支持**: 通过 `MapFormatType` 枚举定义支持的地图格式(OpenDrive, Apollo)
+- **OpenDRIVE 模块** (`odr/`):
+  - `models/`: 数据模型定义(road, lane, junction 等)
+  - `parser/`: XML 解析逻辑,使用 quick-xml
+  - `mesh/`: 几何网格生成,将道路/车道转换为可渲染的三角网格
+- **数学库** (`math/`): 向量、参考线、网格等几何计算
+- **WASM 接口**: 通过 wasm-bindgen 暴露给 JavaScript
+
+### Web 前端 (web/)
+- **状态管理**: 使用 Zustand
+- **UI 组件**: 基于 shadcn/ui + Radix UI + Tailwind CSS 4
+- **布局**: 使用 React Mosaic 实现可拖拽的面板布局

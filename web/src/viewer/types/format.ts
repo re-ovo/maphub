@@ -3,12 +3,7 @@ import type { MapNode } from "./map-node";
 import type { Vector3 } from "three";
 import type { Files } from "core";
 import type { MapRenderer } from "./renderer";
-
-export type MapFormatType = "opendrive";
-
-export interface MapFormatNodeType {
-  opendrive: "map" | "roads" | "junctions" | "road" | "lane-section" | "lane";
-}
+import type { MapFormatNodeType, MapFormatType } from "../format";
 
 export interface MapFormat<
   F extends MapFormatType = MapFormatType, // 格式类型

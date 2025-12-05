@@ -1,6 +1,6 @@
 import { Object3D } from "three";
 import type { MapNode } from "./map-node";
-import type { MapFormatType, MapFormatNodeType } from "./format";
+import type { MapFormatNodeType, MapFormatType } from "../format";
 
 /**
  * 地图渲染器基类

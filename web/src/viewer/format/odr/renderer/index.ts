@@ -146,10 +146,6 @@ export class OdrLaneRenderer extends MapRenderer<"opendrive", "lane"> {
     const mesh = new Mesh(geometry, material);
     mesh.name = `LaneMesh-${lane.id}`;
 
-    // 启用阴影
-    mesh.castShadow = true;
-    mesh.receiveShadow = true;
-
     this.add(mesh);
 
     // 清理 WASM 对象

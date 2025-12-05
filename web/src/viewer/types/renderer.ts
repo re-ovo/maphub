@@ -21,6 +21,9 @@ export interface MapRendererEventMap extends Object3DEventMap {
   hoverOn: {
     pos: Vector3;
   };
+  hover: {
+    pos: Vector3;
+  };
   hoverOff: {
     pos: Vector3;
   };

@@ -21,7 +21,7 @@ import {
   WebGLRenderer,
   type Intersection,
 } from "three";
-import { ViewerEventHandler } from "./event-handler";
+import { ViewerEventHandler, type ViewerEventHandlerOptions } from "./event-handler";
 
 // 安装 camera-controls 所需的 THREE 子模块
 CameraControls.install({
@@ -44,6 +44,8 @@ export type CameraMode = "perspective" | "orthographic";
 export interface ViewportRendererOptions {
   canvas: HTMLCanvasElement;
   showGrid?: boolean;
+  /** 事件处理器选项 */
+  eventHandlerOptions?: ViewerEventHandlerOptions;
 }
 
 export interface RaycastResult {
@@ -125,7 +127,11 @@ export class ViewportRenderer {
     this.startRenderLoop();
     this.setupResizeObserver();
 
-    this.eventHandler = new ViewerEventHandler(this, this.canvas);
+    this.eventHandler = new ViewerEventHandler(
+      this,
+      this.canvas,
+      options.eventHandlerOptions
+    );
   }
 
   get camera(): Camera {

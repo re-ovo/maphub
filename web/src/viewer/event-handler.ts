@@ -2,6 +2,26 @@ import { Raycaster, Vector2, Vector3, type Object3D } from "three";
 import type { ViewportRenderer } from "./viewport-renderer";
 import { MapRenderer, type MapRendererEventMap } from "./types/renderer";
 
+/** Hover 事件回调参数 */
+export interface HoverCallbackParams {
+  /** 当前悬停的渲染器，null 表示离开 */
+  renderer: MapRenderer | null;
+  /** 3D 空间中的命中点 */
+  hitPoint: Vector3;
+  /** 屏幕坐标 */
+  screenPos: { x: number; y: number };
+}
+
+/** 点击事件回调参数 */
+export interface ClickCallbackParams {
+  /** 点击的渲染器 */
+  renderer: MapRenderer;
+  /** 3D 空间中的命中点 */
+  hitPoint: Vector3;
+  /** 屏幕坐标 */
+  screenPos: { x: number; y: number };
+}
+
 export interface ViewerEventHandlerOptions {
   /** 是否启用悬停检测 */
   enableHover?: boolean;
@@ -9,6 +29,12 @@ export interface ViewerEventHandlerOptions {
   enableClick?: boolean;
   /** 是否启用右键点击检测 */
   enableRightClick?: boolean;
+  /** Hover 事件回调 */
+  onHover?: (params: HoverCallbackParams) => void;
+  /** 点击事件回调 */
+  onClick?: (params: ClickCallbackParams) => void;
+  /** 右键点击事件回调 */
+  onRightClick?: (params: ClickCallbackParams) => void;
 }
 
 /**
@@ -25,10 +51,17 @@ export class ViewerEventHandler {
   private readonly enableClick: boolean;
   private readonly enableRightClick: boolean;
 
+  /** 回调函数 */
+  private readonly onHoverCallback?: (params: HoverCallbackParams) => void;
+  private readonly onClickCallback?: (params: ClickCallbackParams) => void;
+  private readonly onRightClickCallback?: (params: ClickCallbackParams) => void;
+
   /** 当前悬停的渲染器 */
   private hoveredRenderer: MapRenderer | null = null;
   /** 上一次悬停的位置 */
   private lastHoverPos = new Vector3();
+  /** 上一次鼠标的屏幕坐标 */
+  private lastScreenPos = { x: 0, y: 0 };
 
   private disposed = false;
 
@@ -49,7 +82,10 @@ export class ViewerEventHandler {
     this.enableClick = options.enableClick ?? true;
     this.enableRightClick = options.enableRightClick ?? true;
 
-    // 绑定事件处理函数
+    this.onHoverCallback = options.onHover;
+    this.onClickCallback = options.onClick;
+    this.onRightClickCallback = options.onRightClick;
+
     this.boundOnPointerMove = this.onPointerMove.bind(this);
     this.boundOnClick = this.onClick.bind(this);
     this.boundOnContextMenu = this.onContextMenu.bind(this);
@@ -68,9 +104,12 @@ export class ViewerEventHandler {
     this.canvas.removeEventListener("click", this.boundOnClick);
     this.canvas.removeEventListener("contextmenu", this.boundOnContextMenu);
 
-    // 触发离开事件
     if (this.hoveredRenderer) {
-      this.dispatchRendererEvent(this.hoveredRenderer, "hoverOff", this.lastHoverPos);
+      this.dispatchRendererEvent(
+        this.hoveredRenderer,
+        "hoverOff",
+        this.lastHoverPos
+      );
       this.hoveredRenderer = null;
     }
   }
@@ -97,6 +136,8 @@ export class ViewerEventHandler {
     const rect = this.canvas.getBoundingClientRect();
     this.pointer.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
     this.pointer.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+    // 保存屏幕坐标
+    this.lastScreenPos = { x: event.clientX, y: event.clientY };
   }
 
   /**
@@ -161,13 +202,32 @@ export class ViewerEventHandler {
     if (newRenderer !== this.hoveredRenderer) {
       // 离开旧的渲染器
       if (this.hoveredRenderer) {
-        this.dispatchRendererEvent(this.hoveredRenderer, "hoverOff", this.lastHoverPos);
+        this.dispatchRendererEvent(
+          this.hoveredRenderer,
+          "hoverOff",
+          this.lastHoverPos
+        );
       }
       // 进入新的渲染器
       if (newRenderer) {
         this.dispatchRendererEvent(newRenderer, "hoverOn", hitPoint);
       }
       this.hoveredRenderer = newRenderer;
+
+      // 调用 hover 回调
+      this.onHoverCallback?.({
+        renderer: newRenderer,
+        hitPoint,
+        screenPos: this.lastScreenPos,
+      });
+    } else if (newRenderer) {
+      // 同一个渲染器上持续移动，触发 hover 事件
+      this.dispatchRendererEvent(newRenderer, "hover", hitPoint);
+      this.onHoverCallback?.({
+        renderer: newRenderer,
+        hitPoint,
+        screenPos: this.lastScreenPos,
+      });
     }
 
     if (hit) {
@@ -186,6 +246,11 @@ export class ViewerEventHandler {
 
     if (hit) {
       this.dispatchRendererEvent(hit.renderer, "click", hit.point);
+      this.onClickCallback?.({
+        renderer: hit.renderer,
+        hitPoint: hit.point,
+        screenPos: this.lastScreenPos,
+      });
     }
   }
 
@@ -201,6 +266,11 @@ export class ViewerEventHandler {
     if (hit) {
       event.preventDefault();
       this.dispatchRendererEvent(hit.renderer, "rightClick", hit.point);
+      this.onRightClickCallback?.({
+        renderer: hit.renderer,
+        hitPoint: hit.point,
+        screenPos: this.lastScreenPos,
+      });
     }
   }
 }

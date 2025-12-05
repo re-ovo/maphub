@@ -1,9 +1,9 @@
 import type { Id } from "@/utils/id";
-import type { ReactNode } from "react";
 import type { StateCreator } from "zustand";
 import type { ViewportRenderer } from "@/viewer/viewport-renderer";
 import type { MapRenderer } from "@/viewer/types/renderer";
 import type { MapNode } from "@/viewer/types/map-node";
+import type { HoverInfo } from "@/viewer/types/format";
 import { Files, File } from "core";
 import { formatRegistry, type MapFormatType } from "@/viewer/format";
 
@@ -132,5 +132,5 @@ interface HoverData {
     x: number;
     y: number;
   };
-  content: ReactNode;
+  info: HoverInfo;
 }

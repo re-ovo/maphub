@@ -21,10 +21,7 @@ import {
   WebGLRenderer,
   type Intersection,
 } from "three";
-import {
-  ViewerEventHandler,
-  type ViewerEventHandlerOptions,
-} from "./event-handler";
+import { ViewerEventHandler } from "./event-handler";
 
 // 安装 camera-controls 所需的 THREE 子模块
 CameraControls.install({

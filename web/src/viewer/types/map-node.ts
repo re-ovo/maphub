@@ -1,5 +1,4 @@
 import type { Id } from "@/utils/id";
-import type { MapFormat } from "./format";
 import type { MapFormatNodeType, MapFormatType } from "../format";
 
 export interface MapNode<

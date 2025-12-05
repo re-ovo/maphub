@@ -13,7 +13,7 @@ export interface MapFormat<
   format: F;
   rootNodeType: R;
 
-  parse: (files: Files) => MapNode<F>[];
+  parse: (files: Files) => Extract<E, MapNode<F, R>>[];
 
   provideRenderer: (node: Extract<E, MapNode<F, R>>) => MapRenderer<F, R>;
 

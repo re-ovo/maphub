@@ -48,6 +48,14 @@ impl Files {
     pub fn find_by_extension(&self, extension: &str) -> Option<&File> {
         self.files.iter().find(|f| f.name.ends_with(extension))
     }
+
+    /// 根据扩展名筛选所有匹配的文件
+    pub fn filter_by_extension(&self, extension: &str) -> Vec<&File> {
+        self.files
+            .iter()
+            .filter(|f| f.name.ends_with(extension))
+            .collect()
+    }
 }
 
 #[wasm_bindgen]

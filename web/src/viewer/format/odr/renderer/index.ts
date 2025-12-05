@@ -4,92 +4,114 @@ import {
   DoubleSide,
   Mesh,
   MeshStandardMaterial,
-  Object3D,
 } from "three";
-import {
-  LaneMeshBuilder,
-  OdrLane,
-  OdrLaneSection,
-  OdrRoad,
-  OpenDrive,
-} from "core";
+import { LaneMeshBuilder, OdrLane } from "core";
+import { MapRenderer } from "@/viewer/types/renderer";
+import type {
+  OdrMapElement,
+  OdrRoadElement,
+  OdrLaneSectionElement,
+  OdrLaneElement,
+} from "../elements";
 
-export class MapRenderer extends Object3D {
-  constructor(opendrive: OpenDrive) {
+export class OdrMapRenderer extends MapRenderer<"opendrive", "map"> {
+  readonly node: OdrMapElement;
+
+  constructor(node: OdrMapElement) {
     super();
 
-    this.createRoads(opendrive);
+    this.node = node;
+    this.name = node.name;
+    this.visible = node.visible;
+
+    this.createRoads();
   }
 
-  createRoads(opendrive: OpenDrive) {
-    opendrive.roads.forEach((road) => {
-      this.add(new RoadRenderer(road));
+  private createRoads() {
+    // 遍历子节点，找到 roads 节点或直接找到 road 节点
+    this.node.children.forEach((child) => {
+      if (child.type === "roads") {
+        // 如果是 roads 容器节点，遍历其子节点
+        child.children.forEach((roadChild) => {
+          this.add(new OdrRoadRenderer(roadChild));
+        });
+      } else if (child.type === "road") {
+        // 直接是 road 节点
+        this.add(new OdrRoadRenderer(child));
+      }
     });
   }
 }
 
-export class RoadRenderer extends Object3D {
-  constructor(road: OdrRoad) {
+export class OdrRoadRenderer extends MapRenderer<"opendrive", "road"> {
+  readonly node: OdrRoadElement;
+
+  constructor(node: OdrRoadElement) {
     super();
 
-    this.name = `Road-${road.id}`;
+    this.node = node;
+    this.name = node.name;
+    this.visible = node.visible;
 
-    // 为每个 lane section 创建渲染器
-    road.lanes.forEach((laneSection, index) => {
-      // 计算 lane section 的结束位置
-      const sStart = laneSection.s;
-      const sEnd =
-        index < road.lanes.length - 1 ? road.lanes[index + 1].s : road.length;
+    this.createLaneSections();
+  }
 
-      this.add(new LaneSectionRenderer(road, laneSection, sStart, sEnd));
+  private createLaneSections() {
+    // 遍历子节点，都是 lane-section 节点
+    this.node.children.forEach((child) => {
+      this.add(new OdrLaneSectionRenderer(child));
     });
   }
 }
 
-export class LaneSectionRenderer extends Object3D {
-  constructor(
-    road: OdrRoad,
-    laneSection: OdrLaneSection,
-    sStart: number,
-    sEnd: number
-  ) {
+export class OdrLaneSectionRenderer extends MapRenderer<
+  "opendrive",
+  "lane-section"
+> {
+  readonly node: OdrLaneSectionElement;
+
+  constructor(node: OdrLaneSectionElement) {
     super();
 
-    this.name = `LaneSection-${laneSection.s}`;
+    this.node = node;
+    this.name = node.name;
+    this.visible = node.visible;
 
-    // 渲染左侧车道
-    laneSection.left.forEach((lane) => {
-      this.add(new LaneRenderer(road, laneSection, lane, sStart, sEnd));
+    this.createLanes();
+  }
+
+  private createLanes() {
+    // 遍历子节点，都是 lane 节点
+    this.node.children.forEach((child) => {
+      this.add(new OdrLaneRenderer(child));
     });
-
-    // 渲染右侧车道
-    laneSection.right.forEach((lane) => {
-      this.add(new LaneRenderer(road, laneSection, lane, sStart, sEnd));
-    });
-
-    // 中心车道通常不需要渲染（id=0，参考线）
   }
 }
 
-export class LaneRenderer extends Object3D {
-  constructor(
-    road: OdrRoad,
-    laneSection: OdrLaneSection,
-    lane: OdrLane,
-    sStart: number,
-    sEnd: number
-  ) {
+export class OdrLaneRenderer extends MapRenderer<"opendrive", "lane"> {
+  readonly node: OdrLaneElement;
+
+  constructor(node: OdrLaneElement) {
     super();
 
-    this.name = `Lane-${lane.id}`;
+    this.node = node;
+    this.name = node.name;
+    this.visible = node.visible;
 
+    this.createMesh();
+  }
+
+  private createMesh() {
     // 创建车道网格构建器（采样间隔 1 米）
     const meshBuilder = new LaneMeshBuilder(1.0);
+
+    // 从节点中获取必要的数据
+    const { road, section, lane, sStart, sEnd } = this.node;
 
     // 构建单个车道的网格数据
     const meshData = meshBuilder.buildLaneMesh(
       road,
-      laneSection,
+      section,
       lane,
       sStart,
       sEnd

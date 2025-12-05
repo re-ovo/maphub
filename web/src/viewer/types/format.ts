@@ -1,7 +1,8 @@
 import type { ReactNode } from "react";
 import type { MapNode } from "./map-node";
-import type { Object3D, Vector3 } from "three";
+import type { Vector3 } from "three";
 import type { Files } from "core";
+import type { MapRenderer } from "./renderer";
 
 export type MapFormatType = "opendrive";
 
@@ -9,13 +10,17 @@ export interface MapFormatNodeType {
   opendrive: "map" | "roads" | "junctions" | "road" | "lane-section" | "lane";
 }
 
-export interface MapFormat<F extends MapFormatType = MapFormatType> {
+export interface MapFormat<
+  F extends MapFormatType = MapFormatType, // 格式类型
+  E extends MapNode<F> = MapNode<F>, // 所有节点类型的联合类型
+  R extends MapFormatNodeType[F] = MapFormatNodeType[F] // 根节点类型
+> {
   format: F;
-  rootNodeType: MapFormatNodeType[F];
+  rootNodeType: R;
 
   parse: (files: Files) => MapNode<F>[];
 
-  provideRenderer: (node: MapNode<F>) => Object3D;
+  provideRenderer: (node: Extract<E, MapNode<F, R>>) => MapRenderer<F, R>;
 
   provideHoverInfo: (node: MapNode<F>, pos: Vector3) => HoverInfo | null;
 

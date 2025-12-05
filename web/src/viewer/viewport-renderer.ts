@@ -7,6 +7,7 @@ import {
   DirectionalLight,
   GridHelper,
   Matrix4,
+  Object3D,
   OrthographicCamera,
   PerspectiveCamera,
   Quaternion,
@@ -18,8 +19,12 @@ import {
   Vector3,
   Vector4,
   WebGLRenderer,
-  type Intersection
+  type Intersection,
 } from "three";
+import {
+  ViewerEventHandler,
+  type ViewerEventHandlerOptions,
+} from "./event-handler";
 
 // 安装 camera-controls 所需的 THREE 子模块
 CameraControls.install({
@@ -56,6 +61,7 @@ export class ViewportRenderer {
   readonly scene: Scene;
   readonly renderer: WebGLRenderer;
   readonly controls: CameraControls;
+  readonly eventHandler: ViewerEventHandler;
 
   private _camera: Camera;
   private _cameraMode: CameraMode = "perspective";
@@ -121,6 +127,8 @@ export class ViewportRenderer {
 
     this.startRenderLoop();
     this.setupResizeObserver();
+
+    this.eventHandler = new ViewerEventHandler(this, this.canvas);
   }
 
   get camera(): Camera {
@@ -174,8 +182,12 @@ export class ViewportRenderer {
     // 更新控制器的相机并恢复位置
     this.controls.camera = this._camera;
     this.controls.setLookAt(
-      position.x, position.y, position.z,
-      target.x, target.y, target.z,
+      position.x,
+      position.y,
+      position.z,
+      target.x,
+      target.y,
+      target.z,
       false
     );
   }
@@ -183,7 +195,7 @@ export class ViewportRenderer {
   /**
    * 聚焦到指定位置
    */
-  async fitTo(box: Box3, enableTransition = true) {
+  async fitTo(box: Object3D, enableTransition = true) {
     await this.controls.fitToBox(box, enableTransition);
   }
 
@@ -196,6 +208,7 @@ export class ViewportRenderer {
 
     cancelAnimationFrame(this.animationId);
     this.resizeObserver?.disconnect();
+    this.eventHandler?.dispose();
     this.controls.dispose();
     this.renderer.dispose();
   }

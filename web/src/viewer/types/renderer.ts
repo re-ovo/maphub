@@ -1,4 +1,4 @@
-import { Object3D } from "three";
+import { Object3D, Vector3, type Object3DEventMap } from "three";
 import type { MapNode } from "./map-node";
 import type { MapFormatNodeType, MapFormatType } from "../format";
 
@@ -12,7 +12,22 @@ import type { MapFormatNodeType, MapFormatType } from "../format";
 export abstract class MapRenderer<
   F extends MapFormatType = MapFormatType,
   T extends MapFormatNodeType[F] = MapFormatNodeType[F]
-> extends Object3D {
+> extends Object3D<MapRendererEventMap> {
   /** 关联的地图节点 */
   abstract readonly node: MapNode<F, T>;
+}
+
+export interface MapRendererEventMap extends Object3DEventMap {
+  hoverOn: {
+    pos: Vector3;
+  };
+  hoverOff: {
+    pos: Vector3;
+  };
+  click: {
+    pos: Vector3;
+  };
+  rightClick: {
+    pos: Vector3;
+  };
 }

@@ -15,6 +15,6 @@ extern "C" {
 #[wasm_bindgen]
 #[derive(Clone, Debug)]
 pub enum MapFormatType {
-    OpenDrive,
-    Apollo,
+    OpenDrive = "opendrive",
+    Apollo = "apollo",
 }

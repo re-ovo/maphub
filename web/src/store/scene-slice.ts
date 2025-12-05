@@ -6,6 +6,7 @@ import type { MapNode } from "@/viewer/types/map-node";
 import type { HoverInfo } from "@/viewer/types/format";
 import { Files, File } from "core";
 import { formatRegistry, type MapFormatType } from "@/viewer/format";
+import { GLTFExporter } from "three/examples/jsm/exporters/GLTFExporter.js";
 
 export interface SceneSlice {
   /** ViewportRenderer 实例（由 viewport 组件设置） */
@@ -25,6 +26,9 @@ export interface SceneSlice {
 
   /** 清空所有地图 */
   clearMaps: () => void;
+
+  /** 导出为 GLB 文件 */
+  exportGLB: () => Promise<void>;
 
   /** Hover 数据 */
   hoverData: HoverData | null;
@@ -121,6 +125,55 @@ export const createSceneSlice: StateCreator<SceneSlice, [], [], SceneSlice> = (
     }
 
     set({ rootNodes: [], rootRenderers: [] });
+  },
+
+  exportGLB: async () => {
+    const { viewportRenderer, rootRenderers } = get();
+
+    // 检查是否有可用的渲染器
+    if (!viewportRenderer) {
+      console.error("ViewportRenderer not initialized");
+      return;
+    }
+
+    // 检查是否有加载的地图
+    if (rootRenderers.length === 0) {
+      console.warn("No map loaded to export");
+      return;
+    }
+
+    // 创建导出器
+    const exporter = new GLTFExporter();
+
+    // 导出所有根渲染器
+    try {
+      // 导出为二进制 GLB 格式
+      const result = await new Promise<ArrayBuffer>((resolve, reject) => {
+        exporter.parse(
+          rootRenderers,
+          (gltf) => {
+            resolve(gltf as ArrayBuffer);
+          },
+          (error) => {
+            reject(error);
+          },
+          { binary: true }
+        );
+      });
+
+      // 创建 Blob 并下载
+      const blob = new Blob([result], { type: "application/octet-stream" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `map_export_${new Date().getTime()}.glb`;
+      link.click();
+      URL.revokeObjectURL(url);
+
+      console.log("GLB exported successfully");
+    } catch (error) {
+      console.error("Failed to export GLB:", error);
+    }
   },
 
   hoverData: null,

@@ -21,7 +21,10 @@ import {
   WebGLRenderer,
   type Intersection,
 } from "three";
-import { ViewerEventHandler, type ViewerEventHandlerOptions } from "./event-handler";
+import {
+  ViewerEventHandler,
+  type ViewerEventHandlerOptions,
+} from "./event-handler";
 
 // 安装 camera-controls 所需的 THREE 子模块
 CameraControls.install({
@@ -254,6 +257,7 @@ export class ViewportRenderer {
       }
       this._camera.updateProjectionMatrix();
       this.renderer.setSize(width, height, false);
+      this.renderer.render(this.scene, this._camera);
     });
     this.resizeObserver.observe(this.canvas);
   }

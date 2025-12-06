@@ -21,7 +21,7 @@ export function MenuBar() {
       </div>
 
       {/* 左侧菜单 */}
-      <Menubar className="border-none shadow-none">
+      <Menubar className="border-none shadow-none [app-region:no-drag]">
         <MenubarMenu>
           <MenubarTrigger>文件</MenubarTrigger>
           <MenubarContent>
@@ -51,7 +51,7 @@ export function MenuBar() {
       </Menubar>
 
       {/* 右侧主题切换 */}
-      <ThemeSwitch className="ml-auto" />
+      <ThemeSwitch className="ml-auto [app-region:no-drag]" />
     </div>
   );
 }

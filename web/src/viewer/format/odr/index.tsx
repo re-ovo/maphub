@@ -20,7 +20,7 @@ import type {
 } from "./elements";
 import { OdrMapRenderer } from "./renderer";
 import { generateId, type Id } from "@/utils/id";
-import { Map, FolderOpen, Route, Layers, RectangleHorizontal } from "lucide-react";
+import { FolderOpen, Route, Layers, RectangleHorizontal, MapIcon } from "lucide-react";
 
 /**
  * OpenDRIVE 地图格式实现
@@ -91,7 +91,7 @@ export const OpenDriveFormat: MapFormat<"opendrive", OdrElement, "map"> = {
 
     switch (element.type) {
       case "map":
-        return { icon: <Map className={iconClass} />, menus: [] };
+        return { icon: <MapIcon className={iconClass} />, menus: [] };
       case "roads":
         return { icon: <FolderOpen className={iconClass} />, menus: [] };
       case "road":
@@ -421,7 +421,7 @@ function provideRoadProperties(element: OdrRoadElement): PropertiyGroup[] {
   const { road } = element;
 
   const isJunction = road.junction !== "-1" && road.junction !== "";
-  const trafficRuleStr = road.trafficRule === 0 ? "左行 (LHT)" : "右行 (RHT)";
+  const trafficRuleStr = road.trafficRule === "LHT" ? "左行 (LHT)" : "右行 (RHT)";
 
   const groups: PropertiyGroup[] = [];
 
@@ -453,7 +453,7 @@ function provideRoadProperties(element: OdrRoadElement): PropertiyGroup[] {
   const linkItems = [];
   if (road.predecessor) {
     const pred = road.predecessor;
-    const typeStr = pred.elementType === 0 ? "路口" : "道路";
+    const typeStr = pred.elementType === "junction" ? "路口" : "道路";
     linkItems.push({
       label: "前驱",
       value: `${typeStr} ${pred.elementId}${pred.contactPoint ? ` (${pred.contactPoint})` : ""}`,
@@ -461,7 +461,7 @@ function provideRoadProperties(element: OdrRoadElement): PropertiyGroup[] {
   }
   if (road.successor) {
     const succ = road.successor;
-    const typeStr = succ.elementType === 0 ? "路口" : "道路";
+    const typeStr = succ.elementType === "junction" ? "路口" : "道路";
     linkItems.push({
       label: "后继",
       value: `${typeStr} ${succ.elementId}${succ.contactPoint ? ` (${succ.contactPoint})` : ""}`,
@@ -573,7 +573,7 @@ function provideLaneProperties(element: OdrLaneElement): PropertiyGroup[] {
   // 速度限制
   if (lane.speed.length > 0) {
     const speedItems = lane.speed.map((s) => {
-      const unitStr = s.unit !== undefined ? ["km/h", "m/s", "mph"][s.unit] || "" : "km/h";
+      const unitStr = s.unit ?? "km/h";
       return {
         label: `s = ${s.sOffset.toFixed(2)} m`,
         value: `${s.max} ${unitStr}`,
@@ -611,7 +611,7 @@ function provideLaneProperties(element: OdrLaneElement): PropertiyGroup[] {
   // 通行规则
   if (lane.access.length > 0) {
     const accessItems = lane.access.map((a) => {
-      const ruleStr = a.rule !== undefined ? (a.rule === 0 ? "允许" : "禁止") : "";
+      const ruleStr = a.rule !== undefined ? (a.rule === "allow" ? "允许" : "禁止") : "";
       return {
         label: `s = ${a.sOffset.toFixed(2)} m`,
         value: `${ruleStr} ${a.restriction.join(", ")}`,

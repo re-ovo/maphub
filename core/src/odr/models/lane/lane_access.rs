@@ -34,8 +34,8 @@ pub struct OdrLaneAccess {
 #[wasm_bindgen]
 #[derive(Clone, Debug)]
 pub enum OdrLaneAccessRule {
-    Allow,
-    Deny,
+    Allow = "allow",
+    Deny = "deny",
 }
 
 #[wasm_bindgen]

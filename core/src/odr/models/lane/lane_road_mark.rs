@@ -3,57 +3,57 @@ use wasm_bindgen::prelude::*;
 #[wasm_bindgen]
 #[derive(Clone, Debug)]
 pub enum OdrRoadMarkColor {
-    Black,
-    Blue,
-    Green,
-    Orange,
-    Red,
-    Standard,
+    Black = "black",
+    Blue = "blue",
+    Green = "green",
+    Orange = "orange",
+    Red = "red",
+    Standard = "standard",
     /// equivalent to white
-    Violet,
-    White,
-    Yellow,
+    Violet = "violet",
+    White = "white",
+    Yellow = "yellow",
 }
 
 #[wasm_bindgen]
 #[derive(Clone, Debug)]
 pub enum OdrRoadMarkType {
-    BottsDots,
-    BrokenBroken,
-    BrokenSolid,
-    Broken,
-    Curb,
-    Custom,
-    Edge,
-    Grass,
-    None,
-    SolidBroken,
-    SolidSolid,
-    Solid,
+    BottsDots = "botts dots",
+    BrokenBroken = "broken broken",
+    BrokenSolid = "broken solid",
+    Broken = "broken",
+    Curb = "curb",
+    Custom = "custom",
+    Edge = "edge",
+    Grass = "grass",
+    None = "none",
+    SolidBroken = "solid broken",
+    SolidSolid = "solid solid",
+    Solid = "solid",
 }
 
 #[wasm_bindgen]
 #[derive(Clone, Debug)]
 pub enum OdrRoadMarkWeight {
-    Bold,
-    Standard,
+    Bold = "bold",
+    Standard = "standard",
 }
 
 #[wasm_bindgen]
 #[derive(Clone, Debug)]
 pub enum OdrRoadMarkLaneChange {
-    Both,
-    Decrease,
-    Increase,
-    None,
+    Both = "both",
+    Decrease = "decrease",
+    Increase = "increase",
+    None = "none",
 }
 
 #[wasm_bindgen]
 #[derive(Clone, Debug)]
 pub enum OdrRoadMarkRule {
-    Caution,
-    NoPassing,
-    None,
+    Caution = "caution",
+    NoPassing = "no passing",
+    None = "none",
 }
 
 /// <roadMark> element defines the style of the line at the outer border of a lane

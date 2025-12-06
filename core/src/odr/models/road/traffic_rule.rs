@@ -6,8 +6,8 @@ use wasm_bindgen::prelude::*;
 #[wasm_bindgen]
 #[derive(Copy, Clone, Debug)]
 pub enum OdrTrafficRule {
-    LHT,
-    RHT,
+    LHT = "LHT",
+    RHT = "RHT",
 }
 
 impl Default for OdrTrafficRule {

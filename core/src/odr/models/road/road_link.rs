@@ -24,6 +24,6 @@ pub struct OdrRoadLink {
 #[wasm_bindgen]
 #[derive(Clone, Debug)]
 pub enum OdrRoadLinkElementType {
-    Junction,
-    Road,
+    Junction = "junction",
+    Road = "road",
 }

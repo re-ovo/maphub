@@ -1,6 +1,7 @@
 import { BufferAttribute, BufferGeometry, DoubleSide, Mesh, MeshStandardMaterial } from "three";
 import { LaneMeshBuilder, OdrLane } from "core";
 import { MapRenderer } from "@/viewer/types/renderer";
+import { AdaptiveGrid } from "@/utils/three/adaptive-grid";
 import type {
   OdrMapElement,
   OdrRoadElement,
@@ -10,6 +11,7 @@ import type {
 
 export class OdrMapRenderer extends MapRenderer<"opendrive", "map"> {
   readonly node: OdrMapElement;
+  private readonly grid: AdaptiveGrid;
 
   constructor(node: OdrMapElement) {
     super();
@@ -19,6 +21,18 @@ export class OdrMapRenderer extends MapRenderer<"opendrive", "map"> {
     this.visible = node.visible;
 
     this.createRoads();
+
+    // 创建自适应网格
+    this.grid = new AdaptiveGrid({
+      primaryColor: 0x444444,
+      secondaryColor: 0x222222,
+      opacity: 0.5,
+      offsetY: 0.5,
+    });
+    this.add(this.grid);
+
+    // 在所有道路创建完成后更新网格
+    this.grid.updateFromTarget(this);
   }
 
   private createRoads() {

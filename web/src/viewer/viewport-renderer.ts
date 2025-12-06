@@ -5,7 +5,6 @@ import {
   Clock,
   Color,
   DirectionalLight,
-  GridHelper,
   Matrix4,
   Object3D,
   OrthographicCamera,
@@ -43,7 +42,6 @@ export type CameraMode = "perspective" | "orthographic";
 
 export interface ViewportRendererOptions {
   canvas: HTMLCanvasElement;
-  showGrid?: boolean;
   /** 事件处理器选项 */
   eventHandlerOptions?: ViewerEventHandlerOptions;
 }
@@ -64,10 +62,8 @@ export class ViewportRenderer {
 
   private _camera: Camera;
   private _cameraMode: CameraMode = "perspective";
-  private _showGrid = true;
 
   private readonly canvas: HTMLCanvasElement;
-  private readonly gridHelper: GridHelper;
   private readonly clock = new Clock();
 
   private animationId = 0;
@@ -76,7 +72,6 @@ export class ViewportRenderer {
 
   constructor(options: ViewportRendererOptions) {
     this.canvas = options.canvas;
-    this._showGrid = options.showGrid ?? true;
 
     // 创建渲染器
     this.renderer = new WebGLRenderer({
@@ -119,15 +114,6 @@ export class ViewportRenderer {
     directionalLight.castShadow = true;
     this.scene.add(directionalLight);
 
-    // 创建网格
-    this.gridHelper = new GridHelper(1000, 100, 0x444444, 0x222222);
-    this.gridHelper.name = "ground";
-    this.gridHelper.visible = this._showGrid;
-    this.gridHelper.position.y = -5;
-    this.gridHelper.material.opacity = 0.5;
-    this.gridHelper.material.transparent = true;
-    this.scene.add(this.gridHelper);
-
     this.startRenderLoop();
     this.setupResizeObserver();
 
@@ -140,15 +126,6 @@ export class ViewportRenderer {
 
   get cameraMode(): CameraMode {
     return this._cameraMode;
-  }
-
-  get showGrid(): boolean {
-    return this._showGrid;
-  }
-
-  set showGrid(value: boolean) {
-    this._showGrid = value;
-    this.gridHelper.visible = value;
   }
 
   /**

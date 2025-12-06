@@ -103,6 +103,10 @@ export class ViewportRenderer {
     this.controls.dollyToCursor = true;
     this.controls.draggingSmoothTime = 0.1;
 
+    // 左键平移，右键旋转
+    this.controls.mouseButtons.left = CameraControls.ACTION.TRUCK;
+    this.controls.mouseButtons.right = CameraControls.ACTION.ROTATE;
+
     // 设置初始相机位置
     this.controls.setLookAt(50, 50, 50, 0, 0, 0, false);
 

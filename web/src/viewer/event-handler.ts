@@ -1,6 +1,14 @@
 import { Raycaster, Vector2, Vector3, type Object3D } from "three";
 import type { ViewportRenderer } from "./viewport-renderer";
-import { MapRenderer, type MapRendererEventMap } from "./types/renderer";
+import {
+  MapRenderer,
+  type MapRendererEventMap,
+  HoverOnEvent,
+  HoverOffEvent,
+  HoverEvent,
+  ClickEvent,
+  ContextMenuEvent,
+} from "./types/renderer";
 
 /** Hover 事件回调参数 */
 export interface HoverCallbackParams {
@@ -169,14 +177,49 @@ export class ViewerEventHandler {
   }
 
   /**
-   * 触发 MapRenderer 事件
+   * 触发 MapRenderer 事件（支持冒泡）
    */
   private dispatchRendererEvent(
     renderer: MapRenderer,
     type: keyof MapRendererEventMap,
     pos: Vector3,
   ): void {
-    renderer.dispatchEvent({ type, pos } as any);
+    // 创建事件对象
+    let event;
+    switch (type) {
+      case "hoverOn":
+        event = new HoverOnEvent(renderer, pos);
+        break;
+      case "hoverOff":
+        event = new HoverOffEvent(renderer);
+        break;
+      case "hover":
+        event = new HoverEvent(renderer, pos);
+        break;
+      case "click":
+        event = new ClickEvent(renderer, pos);
+        break;
+      case "contextMenu":
+        event = new ContextMenuEvent(renderer, pos);
+        break;
+      default:
+        return;
+    }
+
+    // 实现事件冒泡
+    let currentTarget: Object3D | null = renderer;
+    while (currentTarget) {
+      if (currentTarget instanceof MapRenderer) {
+        currentTarget.dispatchEvent({ type, ...event } as any);
+
+        // 检查是否停止冒泡
+        if (!event.isPropagationAllowed()) {
+          break;
+        }
+      }
+
+      currentTarget = currentTarget.parent;
+    }
   }
 
   /**
@@ -254,7 +297,7 @@ export class ViewerEventHandler {
 
     if (hit) {
       event.preventDefault();
-      this.dispatchRendererEvent(hit.renderer, "rightClick", hit.point);
+      this.dispatchRendererEvent(hit.renderer, "contextMenu", hit.point);
       this.onRightClickCallback?.({
         renderer: hit.renderer,
         hitPoint: hit.point,

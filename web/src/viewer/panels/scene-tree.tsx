@@ -1,5 +1,6 @@
+import { useRef, useMemo } from "react";
+import { useVirtualizer } from "@tanstack/react-virtual";
 import { useStore } from "@/store";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -21,13 +22,62 @@ import {
   MoreHorizontal,
 } from "lucide-react";
 
-interface TreeNodeProps {
+interface FlatNode {
   node: MapNode;
   depth: number;
-  isRoot?: boolean;
+  isRoot: boolean;
 }
 
-function TreeNode({ node, depth, isRoot = false }: TreeNodeProps) {
+// 将树结构扁平化为列表，只包含展开的节点
+function flattenTree(
+  nodes: MapNode[],
+  expandedIds: Set<string>,
+  depth = 0,
+  isRoot = true
+): FlatNode[] {
+  const result: FlatNode[] = [];
+
+  for (const node of nodes) {
+    result.push({ node, depth, isRoot });
+
+    if (expandedIds.has(node.id) && node.children.length > 0) {
+      result.push(
+        ...flattenTree(node.children as MapNode[], expandedIds, depth + 1, false)
+      );
+    }
+  }
+
+  return result;
+}
+
+// 递归在渲染器树中查找目标节点
+function findRenderer(
+  targetId: string,
+  renderers: MapRenderer[]
+): MapRenderer | null {
+  for (const renderer of renderers) {
+    if (renderer.node.id === targetId) {
+      return renderer;
+    }
+
+    const childRenderers = renderer.children.filter(
+      (child): child is MapRenderer => "node" in child
+    );
+    if (childRenderers.length > 0) {
+      const found = findRenderer(targetId, childRenderers);
+      if (found) return found;
+    }
+  }
+  return null;
+}
+
+interface TreeNodeRowProps {
+  flatNode: FlatNode;
+}
+
+function TreeNodeRow({ flatNode }: TreeNodeRowProps) {
+  const { node, depth, isRoot } = flatNode;
+
   const {
     selectedNodeId,
     selectNode,
@@ -76,28 +126,6 @@ function TreeNode({ node, depth, isRoot = false }: TreeNodeProps) {
   const handleFocus = () => {
     if (!viewportRenderer) return;
 
-    // 递归在渲染器树中查找目标节点
-    const findRenderer = (
-      targetId: string,
-      renderers: MapRenderer[]
-    ): MapRenderer | null => {
-      for (const renderer of renderers) {
-        if (renderer.node.id === targetId) {
-          return renderer;
-        }
-
-        // 递归查找子渲染器
-        const childRenderers = renderer.children.filter(
-          (child): child is MapRenderer => "node" in child
-        );
-        if (childRenderers.length > 0) {
-          const found = findRenderer(targetId, childRenderers);
-          if (found) return found;
-        }
-      }
-      return null;
-    };
-
     const renderer = findRenderer(node.id, rootRenderers);
     if (renderer) {
       viewportRenderer.fitTo(renderer);
@@ -105,56 +133,71 @@ function TreeNode({ node, depth, isRoot = false }: TreeNodeProps) {
   };
 
   return (
-    <div>
-      <div
+    <div
+      className={cn(
+        "flex items-center h-7 px-1 pr-4 cursor-pointer select-none rounded-sm group",
+        "hover:bg-accent/50",
+        isSelected && "bg-accent text-accent-foreground"
+      )}
+      style={{ paddingLeft: `${depth * 16 + 4}px` }}
+      onClick={handleSelect}
+    >
+      {/* 展开/折叠按钮 */}
+      <button
         className={cn(
-          "flex items-center h-7 px-1 pr-4 cursor-pointer select-none rounded-sm group",
-          "hover:bg-accent/50",
-          isSelected && "bg-accent text-accent-foreground"
+          "w-4 h-4 flex items-center justify-center shrink-0",
+          !hasChildren && "invisible"
         )}
-        style={{ paddingLeft: `${depth * 16 + 4}px` }}
-        onClick={handleSelect}
+        onClick={handleToggleExpand}
       >
-        {/* 展开/折叠按钮 */}
-        <button
+        <ChevronRight
           className={cn(
-            "w-4 h-4 flex items-center justify-center shrink-0",
-            !hasChildren && "invisible"
+            "w-3 h-3 transition-transform",
+            isExpanded && "rotate-90"
           )}
-          onClick={handleToggleExpand}
-        >
-          <ChevronRight
-            className={cn(
-              "w-3 h-3 transition-transform",
-              isExpanded && "rotate-90"
-            )}
-          />
-        </button>
+        />
+      </button>
 
-        {/* 图标 */}
-        <span className="mr-1.5">{icon}</span>
+      {/* 图标 */}
+      <span className="mr-1.5">{icon}</span>
 
-        {/* 节点名称 */}
-        <span className="truncate flex-1 text-sm">{node.name}</span>
+      {/* 节点名称 */}
+      <span className="truncate flex-1 text-sm">{node.name}</span>
 
-        {/* 可见性切换按钮 */}
-        <button
-          className={cn(
-            "w-5 h-5 flex items-center justify-center shrink-0 rounded-sm",
-            "opacity-0 group-hover:opacity-100 hover:bg-accent",
-            !node.visible && "opacity-100"
-          )}
-          onClick={handleToggleVisibility}
-          title={node.visible ? "隐藏" : "显示"}
-        >
-          {node.visible ? (
-            <Eye className="w-3.5 h-3.5 text-muted-foreground" />
-          ) : (
-            <EyeOff className="w-3.5 h-3.5 text-muted-foreground/50" />
-          )}
-        </button>
+      {/* 聚焦按钮 */}
+      <button
+        className={cn(
+          "w-5 h-5 flex items-center justify-center shrink-0 rounded-sm",
+          "opacity-0 group-hover:opacity-100 hover:bg-accent"
+        )}
+        onClick={(e) => {
+          e.stopPropagation();
+          handleFocus();
+        }}
+        title="聚焦"
+      >
+        <Focus className="w-3.5 h-3.5 text-muted-foreground" />
+      </button>
 
-        {/* 更多菜单 */}
+      {/* 可见性切换按钮 */}
+      <button
+        className={cn(
+          "w-5 h-5 flex items-center justify-center shrink-0 rounded-sm",
+          "opacity-0 group-hover:opacity-100 hover:bg-accent",
+          !node.visible && "opacity-100"
+        )}
+        onClick={handleToggleVisibility}
+        title={node.visible ? "隐藏" : "显示"}
+      >
+        {node.visible ? (
+          <Eye className="w-3.5 h-3.5 text-muted-foreground" />
+        ) : (
+          <EyeOff className="w-3.5 h-3.5 text-muted-foreground/50" />
+        )}
+      </button>
+
+      {/* 更多菜单 */}
+      {(formatMenus.length > 0 || isRoot) && (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <button
@@ -168,29 +211,18 @@ function TreeNode({ node, depth, isRoot = false }: TreeNodeProps) {
             </button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="start">
-            {/* 公共菜单：聚焦 */}
-            <DropdownMenuItem onClick={handleFocus}>
-              <Focus className="w-4 h-4 mr-2" />
-              聚焦
-            </DropdownMenuItem>
-
             {/* 格式特定菜单 */}
-            {formatMenus.length > 0 && (
-              <>
-                <DropdownMenuSeparator />
-                {formatMenus.map((menu, index) => (
-                  <DropdownMenuItem key={index} onClick={menu.onClick}>
-                    {menu.icon}
-                    {menu.label}
-                  </DropdownMenuItem>
-                ))}
-              </>
-            )}
+            {formatMenus.map((menu, index) => (
+              <DropdownMenuItem key={index} onClick={menu.onClick}>
+                {menu.icon}
+                {menu.label}
+              </DropdownMenuItem>
+            ))}
 
             {/* 公共菜单：删除（仅根节点） */}
             {isRoot && (
               <>
-                <DropdownMenuSeparator />
+                {formatMenus.length > 0 && <DropdownMenuSeparator />}
                 <DropdownMenuItem onClick={handleRemove} variant="destructive">
                   <Trash2 className="w-4 h-4 mr-2" />
                   删除
@@ -199,22 +231,30 @@ function TreeNode({ node, depth, isRoot = false }: TreeNodeProps) {
             )}
           </DropdownMenuContent>
         </DropdownMenu>
-      </div>
-
-      {/* 子节点 */}
-      {hasChildren && isExpanded && (
-        <div>
-          {node.children.map((child) => (
-            <TreeNode key={child.id} node={child} depth={depth + 1} />
-          ))}
-        </div>
       )}
     </div>
   );
 }
 
+const ROW_HEIGHT = 28; // h-7 = 1.75rem = 28px
+
 export default function SceneTreePanel() {
   const rootNodes = useStore((s) => s.rootNodes);
+  const expandedNodeIds = useStore((s) => s.expandedNodeIds);
+  const parentRef = useRef<HTMLDivElement>(null);
+
+  // 扁平化树结构
+  const flatNodes = useMemo(
+    () => flattenTree(rootNodes as MapNode[], expandedNodeIds),
+    [rootNodes, expandedNodeIds]
+  );
+
+  const virtualizer = useVirtualizer({
+    count: flatNodes.length,
+    getScrollElement: () => parentRef.current,
+    estimateSize: () => ROW_HEIGHT,
+    overscan: 5,
+  });
 
   if (rootNodes.length === 0) {
     return (
@@ -225,12 +265,27 @@ export default function SceneTreePanel() {
   }
 
   return (
-    <ScrollArea className="w-full h-full">
-      <div className="py-1">
-        {rootNodes.map((node) => (
-          <TreeNode key={node.id} node={node as MapNode} depth={0} isRoot />
-        ))}
+    <div ref={parentRef} className="w-full h-full overflow-auto">
+      <div
+        className="relative w-full"
+        style={{ height: virtualizer.getTotalSize() }}
+      >
+        {virtualizer.getVirtualItems().map((virtualRow) => {
+          const flatNode = flatNodes[virtualRow.index];
+          return (
+            <div
+              key={flatNode.node.id}
+              className="absolute left-0 w-full"
+              style={{
+                height: virtualRow.size,
+                transform: `translateY(${virtualRow.start}px)`,
+              }}
+            >
+              <TreeNodeRow flatNode={flatNode} />
+            </div>
+          );
+        })}
       </div>
-    </ScrollArea>
+    </div>
   );
 }

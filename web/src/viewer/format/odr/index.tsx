@@ -25,6 +25,7 @@ import type {
 } from "./elements";
 import { OdrMapRenderer } from "./renderer";
 import { generateId, type Id } from "@/utils/id";
+import { Map, FolderOpen, Route, Layers, RectangleHorizontal } from "lucide-react";
 
 /**
  * OpenDRIVE 地图格式实现
@@ -74,12 +75,25 @@ export const OpenDriveFormat: MapFormat<"opendrive", OdrElement, "map"> = {
   /**
    * 提供场景树信息
    */
-  provideTreeInfo(_node: MapNode<"opendrive">): TreeInfo {
-    // TODO: 实现场景树信息（图标、右键菜单等）
-    return {
-      icon: null,
-      menus: [],
-    };
+  provideTreeInfo(node: MapNode<"opendrive">): TreeInfo {
+    const element = node as OdrElement;
+
+    const iconClass = "w-4 h-4 shrink-0 text-muted-foreground";
+
+    switch (element.type) {
+      case "map":
+        return { icon: <Map className={iconClass} />, menus: [] };
+      case "roads":
+        return { icon: <FolderOpen className={iconClass} />, menus: [] };
+      case "road":
+        return { icon: <Route className={iconClass} />, menus: [] };
+      case "lane-section":
+        return { icon: <Layers className={iconClass} />, menus: [] };
+      case "lane":
+        return { icon: <RectangleHorizontal className={iconClass} />, menus: [] };
+      default:
+        return { icon: null, menus: [] };
+    }
   },
 };
 

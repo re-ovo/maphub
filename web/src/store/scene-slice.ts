@@ -1,7 +1,7 @@
 import type { Id } from "@/utils/id";
 import type { StateCreator } from "zustand";
 import type { ViewportRenderer } from "@/viewer/viewport-renderer";
-import type { MapRenderer } from "@/viewer/types/renderer";
+import { MapRenderer } from "@/viewer/types/renderer";
 import type { MapNode } from "@/viewer/types/map-node";
 import type { HoverInfo } from "@/viewer/types/format";
 import { Files, File } from "core";
@@ -33,6 +33,18 @@ export interface SceneSlice {
   /** Hover 数据 */
   hoverData: HoverData | null;
   setHoverData: (data: HoverData | null) => void;
+
+  /** 选中的节点 ID */
+  selectedNodeId: Id | null;
+  selectNode: (nodeId: Id | null) => void;
+
+  /** 展开的节点 ID 集合 */
+  expandedNodeIds: Set<Id>;
+  toggleNodeExpanded: (nodeId: Id) => void;
+  setNodeExpanded: (nodeId: Id, expanded: boolean) => void;
+
+  /** 切换节点可见性 */
+  toggleNodeVisibility: (nodeId: Id) => void;
 }
 
 export const createSceneSlice: StateCreator<SceneSlice, [], [], SceneSlice> = (
@@ -178,6 +190,60 @@ export const createSceneSlice: StateCreator<SceneSlice, [], [], SceneSlice> = (
 
   hoverData: null,
   setHoverData: (data) => set({ hoverData: data }),
+
+  selectedNodeId: null,
+  selectNode: (nodeId) => set({ selectedNodeId: nodeId }),
+
+  expandedNodeIds: new Set<Id>(),
+  toggleNodeExpanded: (nodeId) => {
+    const { expandedNodeIds } = get();
+    const newSet = new Set(expandedNodeIds);
+    if (newSet.has(nodeId)) {
+      newSet.delete(nodeId);
+    } else {
+      newSet.add(nodeId);
+    }
+    set({ expandedNodeIds: newSet });
+  },
+  setNodeExpanded: (nodeId, expanded) => {
+    const { expandedNodeIds } = get();
+    const newSet = new Set(expandedNodeIds);
+    if (expanded) {
+      newSet.add(nodeId);
+    } else {
+      newSet.delete(nodeId);
+    }
+    set({ expandedNodeIds: newSet });
+  },
+
+  toggleNodeVisibility: (nodeId) => {
+    const { rootNodes, rootRenderers } = get();
+
+    // 递归在渲染器树中查找并切换可见性
+    const findAndToggle = (renderers: MapRenderer[]): boolean => {
+      for (const renderer of renderers) {
+        if (renderer.node.id === nodeId) {
+          // 找到目标渲染器，切换可见性
+          renderer.node.visible = !renderer.node.visible;
+          renderer.visible = renderer.node.visible;
+          return true;
+        }
+
+        // 递归查找子渲染器
+        const childRenderers = renderer.children.filter(
+          (child): child is MapRenderer => child instanceof MapRenderer
+        );
+        if (childRenderers.length > 0 && findAndToggle(childRenderers)) {
+          return true;
+        }
+      }
+      return false;
+    };
+
+    findAndToggle(rootRenderers);
+    // 触发重新渲染
+    set({ rootNodes: [...rootNodes] });
+  },
 });
 
 interface HoverData {

@@ -15,7 +15,10 @@ export function MenuBar() {
   return (
     <div className="flex items-center border-b px-4 py-1 bg-background gap-2">
       {/* 左侧标题 */}
-      <div className="font-bold text-sm">MapHub</div>
+      <div className="font-bold text-sm flex items-center gap-2">
+        <img src="/icon.svg" alt="MapHub" className="w-6 h-6" />
+        MapHub
+      </div>
 
       {/* 左侧菜单 */}
       <Menubar className="border-none shadow-none">

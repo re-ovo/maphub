@@ -1,0 +1,14 @@
+<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <!-- 道路主体 (透视梯形) -->
+  <path d="M160 100 L352 100 L440 450 L72 450 Z" fill="#334155"/>
+  <!-- 左侧车道线 (实线) -->
+  <line x1="160" y1="100" x2="72" y2="450" stroke="#94a3b8" stroke-width="12" stroke-linecap="round"/>
+  <!-- 右侧车道线 (实线) -->
+  <line x1="352" y1="100" x2="440" y2="450" stroke="#94a3b8" stroke-width="12" stroke-linecap="round"/>
+  <!-- 中间车道线 (虚线) -->
+  <line x1="256" y1="100" x2="256" y2="450" stroke="#64748b" stroke-width="8" stroke-dasharray="30 20"/>
+  <!-- 路径规划轨迹 (贝塞尔曲线 - 亮绿色) -->
+  <path d="M256 450 C 256 350, 320 300, 280 100" stroke="#10b981" stroke-width="16" fill="none" stroke-linecap="round"/>
+  <!-- 自车位置 (简单的三角形图标) -->
+  <path d="M256 410 L236 460 L276 460 Z" fill="#38bdf8"/>
+</svg>

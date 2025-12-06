@@ -10,8 +10,10 @@ export function HoverTooltip({ info, position }: HoverTooltipProps) {
     <div
       className="pointer-events-none fixed z-50 max-w-xs rounded-lg border bg-popover px-3 py-2 text-popover-foreground shadow-md"
       style={{
-        left: position.x + 12,
-        top: position.y + 12,
+        left: 0,
+        top: 0,
+        transform: `translate(${position.x + 12}px, ${position.y + 12}px)`,
+        willChange: "transform",
       }}
     >
       {/* 标题区域 */}

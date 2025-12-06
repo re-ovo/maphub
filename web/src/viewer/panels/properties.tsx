@@ -13,9 +13,7 @@ interface PropertyGroupProps {
 function PropertyGroup({ group }: PropertyGroupProps) {
   return (
     <div className="border-b border-border last:border-b-0">
-      <div className="px-3 py-2 bg-muted/30 text-sm font-medium text-foreground">
-        {group.label}
-      </div>
+      <div className="px-3 py-2 bg-muted/30 text-sm font-medium text-foreground">{group.label}</div>
       <div className="divide-y divide-border">
         {group.items.map((item, index) => (
           <div key={index} className="px-3 py-1.5 flex items-center justify-between gap-2">

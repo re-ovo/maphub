@@ -6,10 +6,7 @@ import type { MapRenderer } from "@/viewer/types/renderer";
  * @param renderers 要导出的渲染器列表
  * @param filename 导出的文件名（不含扩展名），默认使用时间戳
  */
-export async function exportGLB(
-  renderers: MapRenderer[],
-  filename?: string,
-): Promise<void> {
+export async function exportGLB(renderers: MapRenderer[], filename?: string): Promise<void> {
   // 检查是否有可用的渲染器
   if (renderers.length === 0) {
     console.warn("No renderers to export");

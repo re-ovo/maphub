@@ -1,10 +1,4 @@
-import {
-  BufferAttribute,
-  BufferGeometry,
-  DoubleSide,
-  Mesh,
-  MeshStandardMaterial,
-} from "three";
+import { BufferAttribute, BufferGeometry, DoubleSide, Mesh, MeshStandardMaterial } from "three";
 import { LaneMeshBuilder, OdrLane } from "core";
 import { MapRenderer } from "@/viewer/types/renderer";
 import type { OdrLaneElement } from "../elements";

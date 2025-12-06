@@ -93,10 +93,17 @@ export const createSceneSlice: StateCreator<SceneSlice, [], [], SceneSlice> = (s
       newRenderers.push(renderer);
     }
 
-    // 更新状态
+    // 更新状态并展开新添加的根节点
+    const { expandedNodeIds } = get();
+    const newExpandedIds = new Set(expandedNodeIds);
+    for (const node of newNodes) {
+      newExpandedIds.add(node.id);
+    }
+
     set({
       rootNodes: [...rootNodes, ...newNodes],
       rootRenderers: [...rootRenderers, ...newRenderers],
+      expandedNodeIds: newExpandedIds,
     });
 
     // 自动聚焦到第一个新添加的渲染器

@@ -1,23 +1,23 @@
-import { Moon, Sun, Monitor } from "lucide-react"
-import { useTheme } from "@/components/theme-provider"
-import { motion } from "motion/react"
-import { cn } from "@/lib/utils"
+import { Moon, Sun, Monitor } from "lucide-react";
+import { useTheme } from "@/components/theme-provider";
+import { motion } from "motion/react";
+import { cn } from "@/lib/utils";
 
-const themes = ["light", "system", "dark"] as const
+const themes = ["light", "system", "dark"] as const;
 
 interface ThemeSwitchProps {
-  className?: string
+  className?: string;
 }
 
 export function ThemeSwitch({ className }: ThemeSwitchProps) {
-  const { theme, setTheme } = useTheme()
+  const { theme, setTheme } = useTheme();
 
-  const currentIndex = themes.indexOf(theme)
+  const currentIndex = themes.indexOf(theme);
 
   const toggleTheme = () => {
-    const nextIndex = (currentIndex + 1) % themes.length
-    setTheme(themes[nextIndex])
-  }
+    const nextIndex = (currentIndex + 1) % themes.length;
+    setTheme(themes[nextIndex]);
+  };
 
   return (
     <button
@@ -25,7 +25,7 @@ export function ThemeSwitch({ className }: ThemeSwitchProps) {
       aria-label={`当前主题: ${theme === "light" ? "浅色" : theme === "dark" ? "深色" : "跟随系统"}`}
       className={cn(
         "relative inline-flex items-center gap-0.5 rounded-full bg-muted p-0.5 transition-colors hover:bg-muted/80",
-        className
+        className,
       )}
     >
       {/* 滑动背景指示器 */}
@@ -65,5 +65,5 @@ export function ThemeSwitch({ className }: ThemeSwitchProps) {
         />
       </div>
     </button>
-  )
+  );
 }

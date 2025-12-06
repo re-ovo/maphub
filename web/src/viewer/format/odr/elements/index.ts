@@ -20,8 +20,7 @@ export interface OdrRoadElement extends MapNode<"opendrive", "road"> {
   children: OdrLaneSectionElement[];
 }
 
-export interface OdrLaneSectionElement
-  extends MapNode<"opendrive", "lane-section"> {
+export interface OdrLaneSectionElement extends MapNode<"opendrive", "lane-section"> {
   road: OdrRoad; // 父 road 引用，用于网格构建
   section: OdrLaneSection;
   sStart: number; // lane section 起始位置

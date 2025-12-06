@@ -18,8 +18,8 @@ export const useStore = create<StoreState>()(
       partialize: (state) => ({
         mosaicLayout: state.mosaicLayout,
       }),
-    }
-  )
+    },
+  ),
 );
 
 // Export slices for convenience

@@ -8,7 +8,7 @@ import type { MapFormatNodeType, MapFormatType } from "../format";
 export interface MapFormat<
   F extends MapFormatType = MapFormatType, // 格式类型
   E extends MapNode<F> = MapNode<F>, // 所有节点类型的联合类型
-  R extends MapFormatNodeType[F] = MapFormatNodeType[F] // 根节点类型
+  R extends MapFormatNodeType[F] = MapFormatNodeType[F], // 根节点类型
 > {
   format: F;
   rootNodeType: R;

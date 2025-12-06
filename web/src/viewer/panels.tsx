@@ -36,13 +36,7 @@ interface TileProps {
   onLayoutChange: (layout: MosaicNode<ViewId>) => void;
 }
 
-function Tile({
-  id,
-  path,
-  currentLayout,
-  defaultLayout,
-  onLayoutChange,
-}: TileProps) {
+function Tile({ id, path, currentLayout, defaultLayout, onLayoutChange }: TileProps) {
   const isExpanded = typeof currentLayout === "string" && currentLayout === id;
   const mosaicContext = useContext(MosaicContext);
 
@@ -71,12 +65,7 @@ function Tile({
         >
           {isExpanded ? <Minimize2 size={14} /> : <Maximize2 size={14} />}
         </button>,
-        <button
-          key="close"
-          className="mosaic-window-control"
-          onClick={handleClose}
-          title="关闭"
-        >
+        <button key="close" className="mosaic-window-control" onClick={handleClose} title="关闭">
           <X size={14} />
         </button>,
       ]}
@@ -99,7 +88,7 @@ export default function Panels() {
         console.error("Failed to load files:", error);
       }
     },
-    [loadFiles]
+    [loadFiles],
   );
 
   return (

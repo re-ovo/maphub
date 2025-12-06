@@ -37,7 +37,7 @@ export default function ViewportPanel() {
         info,
       });
     },
-    [setHoverData]
+    [setHoverData],
   );
 
   useEffect(() => {
@@ -76,9 +76,7 @@ export default function ViewportPanel() {
           display: "block",
         }}
       />
-      {hoverData && (
-        <HoverTooltip info={hoverData.info} position={hoverData.pos} />
-      )}
+      {hoverData && <HoverTooltip info={hoverData.info} position={hoverData.pos} />}
     </div>
   );
 }

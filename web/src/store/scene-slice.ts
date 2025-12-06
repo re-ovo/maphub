@@ -47,10 +47,7 @@ export interface SceneSlice {
   toggleNodeVisibility: (nodeId: Id) => void;
 }
 
-export const createSceneSlice: StateCreator<SceneSlice, [], [], SceneSlice> = (
-  set,
-  get
-) => ({
+export const createSceneSlice: StateCreator<SceneSlice, [], [], SceneSlice> = (set, get) => ({
   viewportRenderer: null,
   setViewportRenderer: (renderer) => set({ viewportRenderer: renderer }),
 
@@ -169,7 +166,7 @@ export const createSceneSlice: StateCreator<SceneSlice, [], [], SceneSlice> = (
           (error) => {
             reject(error);
           },
-          { binary: true }
+          { binary: true },
         );
       });
 
@@ -231,7 +228,7 @@ export const createSceneSlice: StateCreator<SceneSlice, [], [], SceneSlice> = (
 
         // 递归查找子渲染器
         const childRenderers = renderer.children.filter(
-          (child): child is MapRenderer => child instanceof MapRenderer
+          (child): child is MapRenderer => child instanceof MapRenderer,
         );
         if (childRenderers.length > 0 && findAndToggle(childRenderers)) {
           return true;

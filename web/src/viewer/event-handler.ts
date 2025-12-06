@@ -73,7 +73,7 @@ export class ViewerEventHandler {
   constructor(
     viewportRenderer: ViewportRenderer,
     canvas: HTMLCanvasElement,
-    options: ViewerEventHandlerOptions = {}
+    options: ViewerEventHandlerOptions = {},
   ) {
     this.viewportRenderer = viewportRenderer;
     this.canvas = canvas;
@@ -105,11 +105,7 @@ export class ViewerEventHandler {
     this.canvas.removeEventListener("contextmenu", this.boundOnContextMenu);
 
     if (this.hoveredRenderer) {
-      this.dispatchRendererEvent(
-        this.hoveredRenderer,
-        "hoverOff",
-        this.lastHoverPos
-      );
+      this.dispatchRendererEvent(this.hoveredRenderer, "hoverOff", this.lastHoverPos);
       this.hoveredRenderer = null;
     }
   }
@@ -146,10 +142,7 @@ export class ViewerEventHandler {
   private raycast(): { renderer: MapRenderer; point: Vector3 } | null {
     this.raycaster.setFromCamera(this.pointer, this.viewportRenderer.camera);
 
-    const intersects = this.raycaster.intersectObjects(
-      this.viewportRenderer.scene.children,
-      true
-    );
+    const intersects = this.raycaster.intersectObjects(this.viewportRenderer.scene.children, true);
 
     for (const intersect of intersects) {
       const renderer = this.findMapRenderer(intersect.object);
@@ -181,7 +174,7 @@ export class ViewerEventHandler {
   private dispatchRendererEvent(
     renderer: MapRenderer,
     type: keyof MapRendererEventMap,
-    pos: Vector3
+    pos: Vector3,
   ): void {
     renderer.dispatchEvent({ type, pos } as any);
   }
@@ -202,11 +195,7 @@ export class ViewerEventHandler {
     if (newRenderer !== this.hoveredRenderer) {
       // 离开旧的渲染器
       if (this.hoveredRenderer) {
-        this.dispatchRendererEvent(
-          this.hoveredRenderer,
-          "hoverOff",
-          this.lastHoverPos
-        );
+        this.dispatchRendererEvent(this.hoveredRenderer, "hoverOff", this.lastHoverPos);
       }
       // 进入新的渲染器
       if (newRenderer) {

@@ -12,15 +12,7 @@ import type { MapNode } from "@/viewer/types/map-node";
 import type { MapRenderer } from "@/viewer/types/renderer";
 import { formatRegistry } from "@/viewer/format";
 import { cn } from "@/lib/utils";
-import {
-  ChevronRight,
-  Eye,
-  EyeOff,
-  Layers,
-  Trash2,
-  Focus,
-  MoreHorizontal,
-} from "lucide-react";
+import { ChevronRight, Eye, EyeOff, Layers, Trash2, Focus, MoreHorizontal } from "lucide-react";
 
 interface FlatNode {
   node: MapNode;
@@ -33,7 +25,7 @@ function flattenTree(
   nodes: MapNode[],
   expandedIds: Set<string>,
   depth = 0,
-  isRoot = true
+  isRoot = true,
 ): FlatNode[] {
   const result: FlatNode[] = [];
 
@@ -41,9 +33,7 @@ function flattenTree(
     result.push({ node, depth, isRoot });
 
     if (expandedIds.has(node.id) && node.children.length > 0) {
-      result.push(
-        ...flattenTree(node.children as MapNode[], expandedIds, depth + 1, false)
-      );
+      result.push(...flattenTree(node.children as MapNode[], expandedIds, depth + 1, false));
     }
   }
 
@@ -51,17 +41,14 @@ function flattenTree(
 }
 
 // 递归在渲染器树中查找目标节点
-function findRenderer(
-  targetId: string,
-  renderers: MapRenderer[]
-): MapRenderer | null {
+function findRenderer(targetId: string, renderers: MapRenderer[]): MapRenderer | null {
   for (const renderer of renderers) {
     if (renderer.node.id === targetId) {
       return renderer;
     }
 
     const childRenderers = renderer.children.filter(
-      (child): child is MapRenderer => "node" in child
+      (child): child is MapRenderer => "node" in child,
     );
     if (childRenderers.length > 0) {
       const found = findRenderer(targetId, childRenderers);
@@ -96,9 +83,7 @@ function TreeNodeRow({ flatNode }: TreeNodeRowProps) {
   // 通过格式处理器获取图标和菜单
   const formatHandler = formatRegistry[node.format];
   const treeInfo = formatHandler?.provideTreeInfo(node as any);
-  const icon = treeInfo?.icon ?? (
-    <Layers className="w-4 h-4 shrink-0 text-muted-foreground" />
-  );
+  const icon = treeInfo?.icon ?? <Layers className="w-4 h-4 shrink-0 text-muted-foreground" />;
   const formatMenus = treeInfo?.menus ?? [];
 
   const handleToggleExpand = (e: React.MouseEvent) => {
@@ -137,7 +122,7 @@ function TreeNodeRow({ flatNode }: TreeNodeRowProps) {
       className={cn(
         "flex items-center h-7 px-1 pr-4 cursor-pointer select-none rounded-sm group",
         "hover:bg-accent/50",
-        isSelected && "bg-accent text-accent-foreground"
+        isSelected && "bg-accent text-accent-foreground",
       )}
       style={{ paddingLeft: `${depth * 16 + 4}px` }}
       onClick={handleSelect}
@@ -146,16 +131,11 @@ function TreeNodeRow({ flatNode }: TreeNodeRowProps) {
       <button
         className={cn(
           "w-4 h-4 flex items-center justify-center shrink-0",
-          !hasChildren && "invisible"
+          !hasChildren && "invisible",
         )}
         onClick={handleToggleExpand}
       >
-        <ChevronRight
-          className={cn(
-            "w-3 h-3 transition-transform",
-            isExpanded && "rotate-90"
-          )}
-        />
+        <ChevronRight className={cn("w-3 h-3 transition-transform", isExpanded && "rotate-90")} />
       </button>
 
       {/* 图标 */}
@@ -168,7 +148,7 @@ function TreeNodeRow({ flatNode }: TreeNodeRowProps) {
       <button
         className={cn(
           "w-5 h-5 flex items-center justify-center shrink-0 rounded-sm",
-          "opacity-0 group-hover:opacity-100 hover:bg-accent"
+          "opacity-0 group-hover:opacity-100 hover:bg-accent",
         )}
         onClick={(e) => {
           e.stopPropagation();
@@ -184,7 +164,7 @@ function TreeNodeRow({ flatNode }: TreeNodeRowProps) {
         className={cn(
           "w-5 h-5 flex items-center justify-center shrink-0 rounded-sm",
           "opacity-0 group-hover:opacity-100 hover:bg-accent",
-          !node.visible && "opacity-100"
+          !node.visible && "opacity-100",
         )}
         onClick={handleToggleVisibility}
         title={node.visible ? "隐藏" : "显示"}
@@ -203,7 +183,7 @@ function TreeNodeRow({ flatNode }: TreeNodeRowProps) {
             <button
               className={cn(
                 "w-5 h-5 flex items-center justify-center shrink-0 rounded-sm",
-                "opacity-0 group-hover:opacity-100 hover:bg-accent"
+                "opacity-0 group-hover:opacity-100 hover:bg-accent",
               )}
               onClick={(e) => e.stopPropagation()}
             >
@@ -246,7 +226,7 @@ export default function SceneTreePanel() {
   // 扁平化树结构
   const flatNodes = useMemo(
     () => flattenTree(rootNodes as MapNode[], expandedNodeIds),
-    [rootNodes, expandedNodeIds]
+    [rootNodes, expandedNodeIds],
   );
 
   const virtualizer = useVirtualizer({
@@ -266,10 +246,7 @@ export default function SceneTreePanel() {
 
   return (
     <div ref={parentRef} className="w-full h-full overflow-auto">
-      <div
-        className="relative w-full"
-        style={{ height: virtualizer.getTotalSize() }}
-      >
+      <div className="relative w-full" style={{ height: virtualizer.getTotalSize() }}>
         {virtualizer.getVirtualItems().map((virtualRow) => {
           const flatNode = flatNodes[virtualRow.index];
           return (

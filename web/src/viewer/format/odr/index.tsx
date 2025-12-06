@@ -1,9 +1,4 @@
-import type {
-  MapFormat,
-  HoverInfo,
-  PropertiyGroup,
-  TreeInfo,
-} from "@/viewer/types/format";
+import type { MapFormat, HoverInfo, PropertiyGroup, TreeInfo } from "@/viewer/types/format";
 import type { MapNode } from "@/viewer/types/map-node";
 import type { MapRenderer } from "@/viewer/types/renderer";
 import {
@@ -106,7 +101,7 @@ function buildLaneElement(
   section: OdrLaneSection,
   lane: OdrLane,
   sStart: number,
-  sEnd: number
+  sEnd: number,
 ): OdrLaneElement {
   return {
     id: generateId(),
@@ -133,7 +128,7 @@ function buildLaneSectionElement(
   section: OdrLaneSection,
   sectionIndex: number,
   sStart: number,
-  sEnd: number
+  sEnd: number,
 ): OdrLaneSectionElement {
   const sectionId = generateId();
 
@@ -142,7 +137,7 @@ function buildLaneSectionElement(
 
   // 构建车道子节点
   const laneElements: OdrLaneElement[] = allLanes.map((lane) =>
-    buildLaneElement(sectionId, road, section, lane, sStart, sEnd)
+    buildLaneElement(sectionId, road, section, lane, sStart, sEnd),
   );
 
   return {
@@ -168,26 +163,14 @@ function buildRoadElement(parentId: Id, road: OdrRoad): OdrRoadElement {
   const laneSections = road.lanes;
 
   // 构建车道段子节点
-  const laneSectionElements: OdrLaneSectionElement[] = laneSections.map(
-    (section, index) => {
-      // 计算当前 lane section 的 s 范围
-      const sStart = section.s;
-      // 下一个 lane section 的起始位置，或者道路的长度
-      const sEnd =
-        index < laneSections.length - 1
-          ? laneSections[index + 1].s
-          : road.length;
+  const laneSectionElements: OdrLaneSectionElement[] = laneSections.map((section, index) => {
+    // 计算当前 lane section 的 s 范围
+    const sStart = section.s;
+    // 下一个 lane section 的起始位置，或者道路的长度
+    const sEnd = index < laneSections.length - 1 ? laneSections[index + 1].s : road.length;
 
-      return buildLaneSectionElement(
-        roadId,
-        road,
-        section,
-        index,
-        sStart,
-        sEnd
-      );
-    }
-  );
+    return buildLaneSectionElement(roadId, road, section, index, sStart, sEnd);
+  });
 
   return {
     id: roadId,
@@ -208,9 +191,7 @@ function buildRoadsElement(parentId: Id, roads: OdrRoad[]): OdrRoadsElement {
   const roadsId = generateId();
 
   // 构建道路子节点
-  const roadElements: OdrRoadElement[] = roads.map((road) =>
-    buildRoadElement(roadsId, road)
-  );
+  const roadElements: OdrRoadElement[] = roads.map((road) => buildRoadElement(roadsId, road));
 
   return {
     id: roadsId,

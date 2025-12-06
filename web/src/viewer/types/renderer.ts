@@ -11,7 +11,7 @@ import type { MapFormatNodeType, MapFormatType } from "../format";
  */
 export abstract class MapRenderer<
   F extends MapFormatType = MapFormatType,
-  T extends MapFormatNodeType[F] = MapFormatNodeType[F]
+  T extends MapFormatNodeType[F] = MapFormatNodeType[F],
 > extends Object3D<MapRendererEventMap> {
   /** 关联的地图节点 */
   abstract readonly node: MapNode<F, T>;

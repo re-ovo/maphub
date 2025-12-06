@@ -1,10 +1,4 @@
-import {
-  BufferAttribute,
-  BufferGeometry,
-  DoubleSide,
-  Mesh,
-  MeshStandardMaterial,
-} from "three";
+import { BufferAttribute, BufferGeometry, DoubleSide, Mesh, MeshStandardMaterial } from "three";
 import { LaneMeshBuilder, OdrLane } from "core";
 import { MapRenderer } from "@/viewer/types/renderer";
 import type {
@@ -64,10 +58,7 @@ export class OdrRoadRenderer extends MapRenderer<"opendrive", "road"> {
   }
 }
 
-export class OdrLaneSectionRenderer extends MapRenderer<
-  "opendrive",
-  "lane-section"
-> {
+export class OdrLaneSectionRenderer extends MapRenderer<"opendrive", "lane-section"> {
   readonly node: OdrLaneSectionElement;
 
   constructor(node: OdrLaneSectionElement) {
@@ -109,13 +100,7 @@ export class OdrLaneRenderer extends MapRenderer<"opendrive", "lane"> {
     const { road, section, lane, sStart, sEnd } = this.node;
 
     // 构建单个车道的网格数据
-    const meshData = meshBuilder.buildLaneMesh(
-      road,
-      section,
-      lane,
-      sStart,
-      sEnd
-    );
+    const meshData = meshBuilder.buildLaneMesh(road, section, lane, sStart, sEnd);
 
     // 如果网格数据为空，跳过渲染
     if (meshData.vertices.length === 0) {
@@ -128,10 +113,7 @@ export class OdrLaneRenderer extends MapRenderer<"opendrive", "lane"> {
     const geometry = new BufferGeometry();
 
     // 设置顶点位置（每3个值一组，表示 x, y, z）
-    geometry.setAttribute(
-      "position",
-      new BufferAttribute(meshData.vertices, 3)
-    );
+    geometry.setAttribute("position", new BufferAttribute(meshData.vertices, 3));
 
     // 设置法线（用于光照计算）
     geometry.setAttribute("normal", new BufferAttribute(meshData.normals, 3));

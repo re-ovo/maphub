@@ -18,9 +18,7 @@ export function HoverTooltip({ info, position }: HoverTooltipProps) {
     >
       {/* 标题区域 */}
       <div className="flex items-center gap-2 mb-1">
-        {info.icon && (
-          <span className="text-muted-foreground">{info.icon}</span>
-        )}
+        {info.icon && <span className="text-muted-foreground">{info.icon}</span>}
         <span className="font-medium text-sm">{info.title}</span>
       </div>
 

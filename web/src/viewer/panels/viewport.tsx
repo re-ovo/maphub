@@ -46,7 +46,6 @@ export default function ViewportPanel() {
     // 创建渲染器
     const renderer = new ViewportRenderer({
       canvas: canvasRef.current,
-      showGrid: true,
       eventHandlerOptions: {
         onHover: handleHover,
       },

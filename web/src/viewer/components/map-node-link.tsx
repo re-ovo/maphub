@@ -3,15 +3,15 @@ import { useStore } from "@/store";
 import type { Id } from "@/utils/id";
 
 interface MapNodeLinkProps {
-  id: Id;
+  id: Id | Id[];
   children: ReactNode;
 }
 
 export function MapNodeLink({ id, children }: MapNodeLinkProps) {
-  const selectNode = useStore((s) => s.selectNode);
+  const selectNode = useStore((s) => s.selectNodes);
 
   const handleClick = () => {
-    selectNode(id);
+    selectNode(Array.isArray(id) ? id : [id]);
   };
 
   return (

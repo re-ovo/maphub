@@ -1,5 +1,6 @@
 import { BufferAttribute, BufferGeometry, DoubleSide, Mesh, MeshStandardMaterial } from "three";
-import { LaneMeshBuilder, OdrLane } from "@maphub/core";
+import type { OdrRoadMarkColor } from "@maphub/core";
+import { LaneMeshBuilder, OdrLane, RoadMarkMeshBuilder } from "@maphub/core";
 import { MapRenderer } from "@/viewer/types/renderer";
 import type { OdrLaneElement } from "../elements";
 
@@ -14,6 +15,7 @@ export class OdrLaneRenderer extends MapRenderer<"opendrive", "lane"> {
     this.visible = node.visible;
 
     this.createMesh();
+    this.createRoadMarkMesh();
   }
 
   private createMesh() {
@@ -92,5 +94,94 @@ export class OdrLaneRenderer extends MapRenderer<"opendrive", "lane"> {
       metalness: 0.2,
       side: DoubleSide,
     });
+  }
+
+  private createRoadMarkMesh() {
+    // 创建车道标线网格构建器(采样间隔 0.2 米)
+    const roadMarkBuilder = new RoadMarkMeshBuilder(0.1);
+
+    // 从节点中获取必要的数据
+    const { road, section, lane, sStart, sEnd } = this.node;
+
+    // 构建车道标线网格
+    const meshData = roadMarkBuilder.buildLaneRoadMarks(road, section, lane, sStart, sEnd);
+
+    // 如果网格数据为空,跳过渲染
+    if (meshData.vertices.length === 0) {
+      meshData.free();
+      roadMarkBuilder.free();
+      return;
+    }
+
+    // 创建 Three.js 几何体
+    const geometry = new BufferGeometry();
+
+    // 设置顶点位置
+    geometry.setAttribute("position", new BufferAttribute(meshData.vertices, 3));
+
+    // 设置法线
+    geometry.setAttribute("normal", new BufferAttribute(meshData.normals, 3));
+
+    // 设置索引
+    geometry.setIndex(new BufferAttribute(meshData.indices, 1));
+
+    // 获取标线颜色(使用第一个有效 road mark 的颜色)
+    const markColor = this.getRoadMarkColor(lane);
+
+    // 创建材质
+    const material = new MeshStandardMaterial({
+      color: markColor,
+      roughness: 0.4,
+      metalness: 0.1,
+      side: DoubleSide,
+      polygonOffset: true,
+      polygonOffsetFactor: -2,
+      polygonOffsetUnits: -2,
+    });
+
+    // 创建网格对象
+    const mesh = new Mesh(geometry, material);
+    mesh.name = `RoadMarkMesh-${lane.id}`;
+
+    this.add(mesh);
+
+    // 清理 WASM 对象
+    meshData.free();
+    roadMarkBuilder.free();
+  }
+
+  private getRoadMarkColor(lane: OdrLane): number {
+    // 获取第一个有效 road mark 的颜色
+    const roadMarks = lane.roadMarks;
+    if (roadMarks.length > 0) {
+      const color = roadMarks[0].color;
+      return this.colorToHex(color);
+    }
+    // 默认白色
+    return 0xffffff;
+  }
+
+  private colorToHex(color: OdrRoadMarkColor): number {
+    switch (color) {
+      case "white":
+      case "standard":
+        return 0xffffff;
+      case "yellow":
+        return 0xffcc00;
+      case "blue":
+        return 0x0066cc;
+      case "green":
+        return 0x00aa00;
+      case "red":
+        return 0xcc0000;
+      case "orange":
+        return 0xff8800;
+      case "violet":
+        return 0x8800cc;
+      case "black":
+        return 0x222222;
+      default:
+        return 0xffffff;
+    }
   }
 }

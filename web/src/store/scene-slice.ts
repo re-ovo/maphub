@@ -109,7 +109,7 @@ export const createSceneSlice: StateCreator<SceneSlice, [], [], SceneSlice> = (s
 
     // 自动聚焦到第一个新添加的渲染器
     if (newRenderers.length > 0) {
-      viewportRenderer.fitTo(newRenderers[0]);
+      setTimeout(() => viewportRenderer.fitTo(newRenderers[0]), 0);
     }
   },
 

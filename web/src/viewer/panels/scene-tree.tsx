@@ -1,4 +1,4 @@
-import { useRef, useMemo } from "react";
+import { useRef, useMemo, useState } from "react";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { useStore } from "@/store";
 import {
@@ -8,32 +8,58 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Input } from "@/components/ui/input";
+import { HighlightedText } from "@/components/highlighted-text";
 import type { MapNode } from "@/viewer/types/map-node";
 import type { MapRenderer } from "@/viewer/types/renderer";
 import { formatRegistry } from "@/viewer/format";
 import { cn } from "@/lib/utils";
-import { ChevronRight, Eye, EyeOff, Layers, Trash2, Focus, MoreHorizontal } from "lucide-react";
+import { fuzzyMatch } from "@/utils/fuzzy-match";
+import { ChevronRight, Eye, EyeOff, Layers, Trash2, Focus, MoreHorizontal, Search, X } from "lucide-react";
 
 interface FlatNode {
   node: MapNode;
   depth: number;
   isRoot: boolean;
+  matchesSearch?: boolean;
+}
+
+// 检查节点或其子节点是否匹配搜索
+function nodeMatchesSearch(node: MapNode, searchQuery: string): boolean {
+  if (fuzzyMatch(node.name, searchQuery)) return true;
+  for (const child of node.children) {
+    if (nodeMatchesSearch(child as MapNode, searchQuery)) return true;
+  }
+  return false;
 }
 
 // 将树结构扁平化为列表，只包含展开的节点
 function flattenTree(
   nodes: MapNode[],
   expandedIds: Set<string>,
+  searchQuery = "",
   depth = 0,
   isRoot = true,
 ): FlatNode[] {
   const result: FlatNode[] = [];
+  const hasSearch = searchQuery.length > 0;
 
   for (const node of nodes) {
-    result.push({ node, depth, isRoot });
+    const selfMatches = hasSearch && fuzzyMatch(node.name, searchQuery);
+    const childrenMatch = hasSearch && !selfMatches && nodeMatchesSearch(node, searchQuery);
 
-    if (expandedIds.has(node.id) && node.children.length > 0) {
-      result.push(...flattenTree(node.children as MapNode[], expandedIds, depth + 1, false));
+    // 如果有搜索词，只显示匹配的节点及其祖先/后代
+    if (hasSearch && !selfMatches && !childrenMatch) {
+      continue;
+    }
+
+    result.push({ node, depth, isRoot, matchesSearch: selfMatches });
+
+    // 搜索模式下自动展开有匹配子节点的节点，否则按正常展开状态
+    const shouldExpand = hasSearch ? (selfMatches || childrenMatch) : expandedIds.has(node.id);
+
+    if (shouldExpand && node.children.length > 0) {
+      result.push(...flattenTree(node.children as MapNode[], expandedIds, searchQuery, depth + 1, false));
     }
   }
 
@@ -60,9 +86,10 @@ function findRenderer(targetId: string, renderers: MapRenderer[]): MapRenderer |
 
 interface TreeNodeRowProps {
   flatNode: FlatNode;
+  searchQuery: string;
 }
 
-function TreeNodeRow({ flatNode }: TreeNodeRowProps) {
+function TreeNodeRow({ flatNode, searchQuery }: TreeNodeRowProps) {
   const { node, depth, isRoot } = flatNode;
 
   const {
@@ -142,7 +169,9 @@ function TreeNodeRow({ flatNode }: TreeNodeRowProps) {
       <span className="mr-1.5">{icon}</span>
 
       {/* 节点名称 */}
-      <span className="truncate flex-1 text-sm">{node.name}</span>
+      <span className="truncate flex-1 text-sm">
+        {searchQuery ? <HighlightedText text={node.name} pattern={searchQuery} /> : node.name}
+      </span>
 
       {/* 聚焦按钮 */}
       <button
@@ -222,11 +251,12 @@ export default function SceneTreePanel() {
   const rootNodes = useStore((s) => s.rootNodes);
   const expandedNodeIds = useStore((s) => s.expandedNodeIds);
   const parentRef = useRef<HTMLDivElement>(null);
+  const [searchQuery, setSearchQuery] = useState("");
 
   // 扁平化树结构
   const flatNodes = useMemo(
-    () => flattenTree(rootNodes as MapNode[], expandedNodeIds),
-    [rootNodes, expandedNodeIds],
+    () => flattenTree(rootNodes as MapNode[], expandedNodeIds, searchQuery),
+    [rootNodes, expandedNodeIds, searchQuery],
   );
 
   const virtualizer = useVirtualizer({
@@ -245,23 +275,54 @@ export default function SceneTreePanel() {
   }
 
   return (
-    <div ref={parentRef} className="w-full h-full overflow-auto">
-      <div className="relative w-full" style={{ height: virtualizer.getTotalSize() }}>
-        {virtualizer.getVirtualItems().map((virtualRow) => {
-          const flatNode = flatNodes[virtualRow.index];
-          return (
-            <div
-              key={flatNode.node.id}
-              className="absolute left-0 w-full"
-              style={{
-                height: virtualRow.size,
-                transform: `translateY(${virtualRow.start}px)`,
-              }}
+    <div className="w-full h-full flex flex-col">
+      {/* 搜索框 */}
+      <div className="px-2 py-1.5 border-b shrink-0">
+        <div className="relative">
+          <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
+          <Input
+            type="text"
+            placeholder="搜索节点..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="h-7 pl-7 pr-7 text-sm"
+          />
+          {searchQuery && (
+            <button
+              onClick={() => setSearchQuery("")}
+              className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
             >
-              <TreeNodeRow flatNode={flatNode} />
-            </div>
-          );
-        })}
+              <X className="w-3.5 h-3.5" />
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* 树列表 */}
+      <div ref={parentRef} className="flex-1 overflow-auto">
+        {flatNodes.length === 0 && searchQuery ? (
+          <div className="w-full h-full flex items-center justify-center text-muted-foreground text-sm">
+            未找到匹配的节点
+          </div>
+        ) : (
+          <div className="relative w-full" style={{ height: virtualizer.getTotalSize() }}>
+            {virtualizer.getVirtualItems().map((virtualRow) => {
+              const flatNode = flatNodes[virtualRow.index];
+              return (
+                <div
+                  key={flatNode.node.id}
+                  className="absolute left-0 w-full"
+                  style={{
+                    height: virtualRow.size,
+                    transform: `translateY(${virtualRow.start}px)`,
+                  }}
+                >
+                  <TreeNodeRow flatNode={flatNode} searchQuery={searchQuery} />
+                </div>
+              );
+            })}
+          </div>
+        )}
       </div>
     </div>
   );

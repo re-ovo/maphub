@@ -15,9 +15,9 @@ export function MenuBar() {
   return (
     <div className="flex items-center border-b px-4 py-1 bg-background gap-2">
       {/* 左侧标题 */}
-      <div className="font-bold text-sm flex items-center gap-2">
+      <div className="font-bold text-sm flex flex-row items-center gap-2">
         <img src="/icon.svg" alt="MapHub" className="w-6 h-6" />
-        MapHub
+        <h1>MapHub</h1>
       </div>
 
       {/* 左侧菜单 */}
@@ -51,7 +51,12 @@ export function MenuBar() {
       </Menubar>
 
       {/* 右侧主题切换 */}
-      <ThemeSwitch className="ml-auto [app-region:no-drag]" />
+      <div className="flex flex-row items-center gap-4 ml-auto [app-region:no-drag]">
+        <span className="text-xs text-muted-foreground font-normal leading-none">
+          {__GIT_HASH__}
+        </span>
+        <ThemeSwitch />
+      </div>
     </div>
   );
 }

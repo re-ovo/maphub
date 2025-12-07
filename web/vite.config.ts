@@ -4,9 +4,21 @@ import wasm from "vite-plugin-wasm";
 import tailwindcss from "@tailwindcss/vite";
 import { VitePWA } from "vite-plugin-pwa";
 import path from "path";
+import { execSync } from "child_process";
+
+function getGitHash() {
+  try {
+    return execSync("git rev-parse --short HEAD").toString().trim();
+  } catch {
+    return "unknown";
+  }
+}
 
 // https://vite.dev/config/
 export default defineConfig({
+  define: {
+    __GIT_HASH__: JSON.stringify(getGitHash()),
+  },
   plugins: [
     react({
       babel: {

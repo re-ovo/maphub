@@ -23,10 +23,16 @@ export interface PrefSlice {
   mosaicLayout: MosaicNode<ViewId> | null;
   setMosaicLayout: (layout: MosaicNode<ViewId> | null) => void;
   resetLayout: () => void;
+
+  // Viewport preferences
+  showSky: boolean;
+  setShowSky: (show: boolean) => void;
 }
 
 export const createPrefSlice: StateCreator<PrefSlice> = (set) => ({
   mosaicLayout: null,
   setMosaicLayout: (layout) => set({ mosaicLayout: layout }),
   resetLayout: () => set({ mosaicLayout: DEFAULT_MOSAIC_LAYOUT }),
+  showSky: false,
+  setShowSky: (show) => set({ showSky: show }),
 });

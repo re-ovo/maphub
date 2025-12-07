@@ -17,6 +17,7 @@ export const useStore = create<StoreState>()(
       // Only persist preference slice
       partialize: (state) => ({
         mosaicLayout: state.mosaicLayout,
+        showSky: state.showSky,
       }),
     },
   ),

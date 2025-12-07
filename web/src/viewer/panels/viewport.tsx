@@ -6,6 +6,7 @@ import type { HoverCallbackParams, ClickCallbackParams } from "../event-handler"
 import { HoverTooltip } from "@/components/viewer/hover-tooltip";
 import type { MapNode } from "../types/map-node";
 import type { HoverInfo } from "../types/format";
+import { CloudSun, CloudOff } from "lucide-react";
 
 export default function ViewportPanel() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -15,6 +16,7 @@ export default function ViewportPanel() {
   const setHoverData = useStore((s) => s.setHoverData);
   const selectNodes = useStore((s) => s.selectNodes);
   const rootNodes = useStore((s) => s.rootNodes);
+  const showSky = useStore((s) => s.showSky);
 
   const handleHover = useCallback(
     ({ renderers, hitPoints, screenPos }: HoverCallbackParams) => {
@@ -114,6 +116,26 @@ export default function ViewportPanel() {
           <span>支持格式: OpenDrive, Apollo</span>
         </div>
       )}
+
+      {/* 工具栏 */}
+      <Toolbar />
+    </div>
+  );
+}
+
+function Toolbar() {
+  const showSky = useStore((s) => s.showSky);
+  const setShowSky = useStore((s) => s.setShowSky);
+
+  return (
+    <div className="absolute top-4 right-4 flex gap-2">
+      <button
+        className="bg-background/50 hover:bg-background/80 p-1 rounded-sm"
+        onClick={() => setShowSky(!showSky)}
+        title={showSky ? "隐藏天空" : "显示天空"}
+      >
+        {showSky ? <CloudSun className="w-4 h-4" /> : <CloudOff className="w-4 h-4" />}
+      </button>
     </div>
   );
 }

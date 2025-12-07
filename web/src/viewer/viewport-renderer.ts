@@ -5,6 +5,7 @@ import {
   Clock,
   Color,
   DirectionalLight,
+  EquirectangularReflectionMapping,
   Matrix4,
   Object3D,
   OrthographicCamera,
@@ -14,13 +15,16 @@ import {
   Scene,
   Sphere,
   Spherical,
+  Texture,
   Vector2,
   Vector3,
   Vector4,
   WebGLRenderer,
   type Intersection,
 } from "three";
+import { RGBELoader } from "three/examples/jsm/loaders/RGBELoader.js";
 import { ViewerEventHandler, type ViewerEventHandlerOptions } from "./event-handler";
+import { useStore } from "@/store";
 
 // 安装 camera-controls 所需的 THREE 子模块
 CameraControls.install({
@@ -70,6 +74,9 @@ export class ViewportRenderer {
   private resizeObserver: ResizeObserver | null = null;
   private disposed = false;
 
+  private envMap: Texture | null = null;
+  private _showSky = true;
+
   constructor(options: ViewportRendererOptions) {
     this.canvas = options.canvas;
 
@@ -114,8 +121,11 @@ export class ViewportRenderer {
     directionalLight.castShadow = true;
     this.scene.add(directionalLight);
 
+    this.loadSkyHDR();
+
     this.startRenderLoop();
     this.setupResizeObserver();
+    this.initStoreSubscriptions();
 
     this.eventHandler = new ViewerEventHandler(this, this.canvas, options.eventHandlerOptions);
   }
@@ -179,9 +189,14 @@ export class ViewportRenderer {
     await this.controls.fitToBox(box, enableTransition);
   }
 
-  /**
-   * 销毁渲染器
-   */
+  setShowSky(show: boolean): void {
+    this._showSky = show;
+    if (this.envMap) {
+      this.scene.background = show ? this.envMap : null;
+      this.scene.environment = show ? this.envMap : null;
+    }
+  }
+
   dispose(): void {
     if (this.disposed) return;
     this.disposed = true;
@@ -191,6 +206,7 @@ export class ViewportRenderer {
     this.eventHandler?.dispose();
     this.controls.dispose();
     this.renderer.dispose();
+    this.envMap?.dispose();
   }
 
   private getSize(): { width: number; height: number } {
@@ -234,5 +250,37 @@ export class ViewportRenderer {
       this.renderer.render(this.scene, this._camera);
     });
     this.resizeObserver.observe(this.canvas);
+  }
+
+  private initStoreSubscriptions(): void {
+    this.setShowSky(useStore.getState().showSky);
+    useStore.subscribe((state, prevState) => {
+      if (state.showSky !== prevState.showSky) {
+        this.setShowSky(state.showSky);
+      }
+    });
+  }
+
+  private loadSkyHDR(): void {
+    const loader = new RGBELoader();
+    loader.load(
+      "/hdr/puresky.hdr",
+      (texture) => {
+        if (this.disposed) {
+          texture.dispose();
+          return;
+        }
+        texture.mapping = EquirectangularReflectionMapping;
+        this.envMap = texture;
+        if (this._showSky) {
+          this.scene.background = texture;
+          this.scene.environment = texture;
+        }
+      },
+      undefined,
+      (error) => {
+        console.error("Failed to load sky HDR:", error);
+      },
+    );
   }
 }

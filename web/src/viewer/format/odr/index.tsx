@@ -102,8 +102,9 @@ function buildLaneSectionElement(
 ): OdrLaneSectionElement {
   const sectionId = generateId();
 
-  // 收集所有车道（左侧 + 右侧，不包含中心线 id=0）
-  const allLanes: OdrLane[] = [...section.left, ...section.right];
+  // 收集所有车道（左侧 + 中心 + 右侧）
+  // 中心车道宽度为 0，但可携带 road mark（中心线标线）
+  const allLanes: OdrLane[] = [...section.left, section.center, ...section.right];
 
   // 构建车道子节点
   const laneElements: OdrLaneElement[] = allLanes.map((lane) =>

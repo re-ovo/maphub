@@ -47,6 +47,11 @@ impl LaneMeshBuilder {
         s_start: f64,
         s_end: f64,
     ) -> MeshData {
+        // 中心线不渲染
+        if lane.id == 0 {
+            return MeshData::new(Vec::new(), Vec::new(), Vec::new());
+        }
+
         // 计算采样点数量
         let length = s_end - s_start;
         let num_samples = ((length / self.sample_step).ceil() as usize).max(2);

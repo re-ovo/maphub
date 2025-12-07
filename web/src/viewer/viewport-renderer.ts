@@ -103,7 +103,7 @@ export class ViewportRenderer {
     this.controls.mouseButtons.right = CameraControls.ACTION.ROTATE;
 
     // 设置初始相机位置
-    this.controls.setLookAt(50, 50, 50, 0, 0, 0, false);
+    this.controls.setLookAt(0, 50, 0, 0, 0, 0, false);
 
     // 创建灯光
     const ambientLight = new AmbientLight(0xffffff, 0.6);

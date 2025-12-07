@@ -65,13 +65,13 @@ export class OdrLaneRenderer extends MapRenderer<"opendrive", "lane"> {
 
     switch (lane.type) {
       case "driving":
-        color = 0x444444; // 深灰色 - 行车道
+        color = 0x555555; // 深灰色 - 行车道
         break;
       case "sidewalk":
         color = 0xcccccc; // 浅灰色 - 人行道
         break;
       case "shoulder":
-        color = 0x666666; // 中灰色 - 路肩
+        color = 0x777777; // 中灰色 - 路肩
         break;
       case "border":
         color = 0x888888; // 边界
@@ -83,12 +83,12 @@ export class OdrLaneRenderer extends MapRenderer<"opendrive", "lane"> {
         color = 0x88aa77; // 绿色 - 自行车道
         break;
       default:
-        color = 0x555555;
+        color = 0x666666;
     }
 
     return new MeshStandardMaterial({
       color,
-      roughness: 0.8,
+      roughness: 0.6,
       metalness: 0.2,
       side: DoubleSide,
     });

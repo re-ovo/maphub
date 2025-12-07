@@ -1,21 +1,13 @@
 import type { HoverInfo } from "@/viewer/types/format";
 
 interface HoverTooltipProps {
-  info: HoverInfo;
+  infos: HoverInfo[];
   position: { x: number; y: number };
 }
 
-export function HoverTooltip({ info, position }: HoverTooltipProps) {
+function HoverInfoItem({ info }: { info: HoverInfo }) {
   return (
-    <div
-      className="pointer-events-none fixed z-50 max-w-xs rounded-lg border bg-popover px-3 py-2 text-popover-foreground shadow-md"
-      style={{
-        left: 0,
-        top: 0,
-        transform: `translate(${position.x + 12}px, ${position.y + 12}px)`,
-        willChange: "transform",
-      }}
-    >
+    <div>
       {/* 标题区域 */}
       <div className="flex items-center gap-2 mb-1">
         {info.icon && <span className="text-muted-foreground">{info.icon}</span>}
@@ -42,6 +34,27 @@ export function HoverTooltip({ info, position }: HoverTooltipProps) {
           ))}
         </div>
       )}
+    </div>
+  );
+}
+
+export function HoverTooltip({ infos, position }: HoverTooltipProps) {
+  return (
+    <div
+      className="pointer-events-none fixed z-50 max-w-xs rounded-lg border bg-popover px-3 py-2 text-popover-foreground shadow-md"
+      style={{
+        left: 0,
+        top: 0,
+        transform: `translate(${position.x + 12}px, ${position.y + 12}px)`,
+        willChange: "transform",
+      }}
+    >
+      {infos.map((info, index) => (
+        <div key={index}>
+          {index > 0 && <hr className="my-2 border-border" />}
+          <HoverInfoItem info={info} />
+        </div>
+      ))}
     </div>
   );
 }

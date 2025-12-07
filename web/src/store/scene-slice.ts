@@ -211,5 +211,5 @@ interface HoverData {
     x: number;
     y: number;
   };
-  info: HoverInfo;
+  infos: HoverInfo[];
 }

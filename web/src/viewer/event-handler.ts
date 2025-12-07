@@ -10,22 +10,32 @@ import {
   ContextMenuEvent,
 } from "./types/renderer";
 
+/** 射线命中结果 */
+export interface RaycastHit {
+  /** 命中的渲染器 */
+  renderer: MapRenderer;
+  /** 3D 空间中的命中点 */
+  point: Vector3;
+  /** 距离相机的距离 */
+  distance: number;
+}
+
 /** Hover 事件回调参数 */
 export interface HoverCallbackParams {
-  /** 当前悬停的渲染器，null 表示离开 */
-  renderer: MapRenderer | null;
-  /** 3D 空间中的命中点 */
-  hitPoint: Vector3;
+  /** 当前悬停的渲染器列表（距离相同的多个物体） */
+  renderers: MapRenderer[];
+  /** 3D 空间中的命中点列表 */
+  hitPoints: Vector3[];
   /** 屏幕坐标 */
   screenPos: { x: number; y: number };
 }
 
 /** 点击事件回调参数 */
 export interface ClickCallbackParams {
-  /** 点击的渲染器 */
-  renderer: MapRenderer;
-  /** 3D 空间中的命中点 */
-  hitPoint: Vector3;
+  /** 点击的渲染器列表（距离相同的多个物体） */
+  renderers: MapRenderer[];
+  /** 3D 空间中的命中点列表 */
+  hitPoints: Vector3[];
   /** 屏幕坐标 */
   screenPos: { x: number; y: number };
 }
@@ -37,6 +47,8 @@ export interface ViewerEventHandlerOptions {
   enableClick?: boolean;
   /** 是否启用右键点击检测 */
   enableRightClick?: boolean;
+  /** 距离阈值，距离差在此范围内的物体视为同一层（默认 0.01） */
+  distanceThreshold?: number;
   /** Hover 事件回调 */
   onHover?: (params: HoverCallbackParams) => void;
   /** 点击事件回调 */
@@ -58,16 +70,17 @@ export class ViewerEventHandler {
   private readonly enableHover: boolean;
   private readonly enableClick: boolean;
   private readonly enableRightClick: boolean;
+  private readonly distanceThreshold: number;
 
   /** 回调函数 */
   private readonly onHoverCallback?: (params: HoverCallbackParams) => void;
   private readonly onClickCallback?: (params: ClickCallbackParams) => void;
   private readonly onRightClickCallback?: (params: ClickCallbackParams) => void;
 
-  /** 当前悬停的渲染器 */
-  private hoveredRenderer: MapRenderer | null = null;
+  /** 当前悬停的渲染器列表 */
+  private hoveredRenderers: MapRenderer[] = [];
   /** 上一次悬停的位置 */
-  private lastHoverPos = new Vector3();
+  private lastHoverPoint = new Vector3();
   /** 上一次鼠标的屏幕坐标 */
   private lastScreenPos = { x: 0, y: 0 };
 
@@ -89,6 +102,7 @@ export class ViewerEventHandler {
     this.enableHover = options.enableHover ?? true;
     this.enableClick = options.enableClick ?? true;
     this.enableRightClick = options.enableRightClick ?? true;
+    this.distanceThreshold = options.distanceThreshold ?? 0.01;
 
     this.onHoverCallback = options.onHover;
     this.onClickCallback = options.onClick;
@@ -101,9 +115,6 @@ export class ViewerEventHandler {
     this.setupEventListeners();
   }
 
-  /**
-   * 销毁事件处理器
-   */
   dispose(): void {
     if (this.disposed) return;
     this.disposed = true;
@@ -112,10 +123,11 @@ export class ViewerEventHandler {
     this.canvas.removeEventListener("click", this.boundOnClick);
     this.canvas.removeEventListener("contextmenu", this.boundOnContextMenu);
 
-    if (this.hoveredRenderer) {
-      this.dispatchRendererEvent(this.hoveredRenderer, "hoverOff", this.lastHoverPos);
-      this.hoveredRenderer = null;
+    // 对所有悬停的渲染器触发 hoverOff 事件
+    for (const renderer of this.hoveredRenderers) {
+      this.dispatchRendererEvent(renderer, "hoverOff", this.lastHoverPoint);
     }
+    this.hoveredRenderers = [];
   }
 
   /**
@@ -145,21 +157,41 @@ export class ViewerEventHandler {
   }
 
   /**
-   * 执行射线检测，返回第一个命中的 MapRenderer
+   * 执行射线检测，返回所有距离相近的 MapRenderer
    */
-  private raycast(): { renderer: MapRenderer; point: Vector3 } | null {
+  private raycast(): RaycastHit[] {
     this.raycaster.setFromCamera(this.pointer, this.viewportRenderer.camera);
 
     const intersects = this.raycaster.intersectObjects(this.viewportRenderer.scene.children, true);
 
+    const hits: RaycastHit[] = [];
+    const seenRenderers = new Set<MapRenderer>();
+    let minDistance: number | null = null;
+
     for (const intersect of intersects) {
       const renderer = this.findMapRenderer(intersect.object);
-      if (renderer) {
-        return { renderer, point: intersect.point.clone() };
+      if (renderer && !seenRenderers.has(renderer)) {
+        // 第一个命中的物体确定基准距离
+        if (minDistance === null) {
+          minDistance = intersect.distance;
+        }
+
+        // 只收集距离在阈值范围内的物体
+        if (intersect.distance - minDistance <= this.distanceThreshold) {
+          seenRenderers.add(renderer);
+          hits.push({
+            renderer,
+            point: intersect.point.clone(),
+            distance: intersect.distance,
+          });
+        } else {
+          // 超出阈值范围，停止收集
+          break;
+        }
       }
     }
 
-    return null;
+    return hits;
   }
 
   /**
@@ -229,41 +261,52 @@ export class ViewerEventHandler {
     if (this.disposed) return;
 
     this.updatePointer(event);
-    const hit = this.raycast();
+    const hits = this.raycast();
 
-    const newRenderer = hit?.renderer ?? null;
-    const hitPoint = hit?.point ?? new Vector3();
+    const newRenderers = hits.map((h) => h.renderer);
+    const hitPoints = hits.map((h) => h.point);
+    const firstHitPoint = hitPoints[0] ?? new Vector3();
 
-    // 检测悬停状态变化
-    if (newRenderer !== this.hoveredRenderer) {
-      // 离开旧的渲染器
-      if (this.hoveredRenderer) {
-        this.dispatchRendererEvent(this.hoveredRenderer, "hoverOff", this.lastHoverPos);
+    // 计算新增和离开的渲染器
+    const oldSet = new Set(this.hoveredRenderers);
+    const newSet = new Set(newRenderers);
+
+    // 离开的渲染器：在旧列表中但不在新列表中
+    for (const renderer of this.hoveredRenderers) {
+      if (!newSet.has(renderer)) {
+        this.dispatchRendererEvent(renderer, "hoverOff", this.lastHoverPoint);
       }
-      // 进入新的渲染器
-      if (newRenderer) {
-        this.dispatchRendererEvent(newRenderer, "hoverOn", hitPoint);
-      }
-      this.hoveredRenderer = newRenderer;
-
-      // 调用 hover 回调
-      this.onHoverCallback?.({
-        renderer: newRenderer,
-        hitPoint,
-        screenPos: this.lastScreenPos,
-      });
-    } else if (newRenderer) {
-      // 同一个渲染器上持续移动，触发 hover 事件
-      this.dispatchRendererEvent(newRenderer, "hover", hitPoint);
-      this.onHoverCallback?.({
-        renderer: newRenderer,
-        hitPoint,
-        screenPos: this.lastScreenPos,
-      });
     }
 
-    if (hit) {
-      this.lastHoverPos.copy(hitPoint);
+    // 新进入的渲染器：在新列表中但不在旧列表中
+    for (let i = 0; i < newRenderers.length; i++) {
+      const renderer = newRenderers[i];
+      if (!oldSet.has(renderer)) {
+        this.dispatchRendererEvent(renderer, "hoverOn", hitPoints[i]);
+      }
+    }
+
+    // 持续悬停的渲染器触发 hover 事件
+    for (let i = 0; i < newRenderers.length; i++) {
+      const renderer = newRenderers[i];
+      if (oldSet.has(renderer)) {
+        this.dispatchRendererEvent(renderer, "hover", hitPoints[i]);
+      }
+    }
+
+    // 更新状态
+    this.hoveredRenderers = newRenderers;
+    if (hits.length > 0) {
+      this.lastHoverPoint.copy(firstHitPoint);
+    }
+
+    // 调用回调（无论是否有变化，只要有命中或状态变化就调用）
+    if (newRenderers.length > 0 || oldSet.size > 0) {
+      this.onHoverCallback?.({
+        renderers: newRenderers,
+        hitPoints,
+        screenPos: this.lastScreenPos,
+      });
     }
   }
 
@@ -274,13 +317,16 @@ export class ViewerEventHandler {
     if (this.disposed) return;
 
     this.updatePointer(event);
-    const hit = this.raycast();
+    const hits = this.raycast();
 
-    if (hit) {
-      this.dispatchRendererEvent(hit.renderer, "click", hit.point);
+    if (hits.length > 0) {
+      // 对所有命中的渲染器触发点击事件
+      for (const hit of hits) {
+        this.dispatchRendererEvent(hit.renderer, "click", hit.point);
+      }
       this.onClickCallback?.({
-        renderer: hit.renderer,
-        hitPoint: hit.point,
+        renderers: hits.map((h) => h.renderer),
+        hitPoints: hits.map((h) => h.point),
         screenPos: this.lastScreenPos,
       });
     }
@@ -293,14 +339,17 @@ export class ViewerEventHandler {
     if (this.disposed) return;
 
     this.updatePointer(event);
-    const hit = this.raycast();
+    const hits = this.raycast();
 
-    if (hit) {
+    if (hits.length > 0) {
       event.preventDefault();
-      this.dispatchRendererEvent(hit.renderer, "contextMenu", hit.point);
+      // 对所有命中的渲染器触发右键菜单事件
+      for (const hit of hits) {
+        this.dispatchRendererEvent(hit.renderer, "contextMenu", hit.point);
+      }
       this.onRightClickCallback?.({
-        renderer: hit.renderer,
-        hitPoint: hit.point,
+        renderers: hits.map((h) => h.renderer),
+        hitPoints: hits.map((h) => h.point),
         screenPos: this.lastScreenPos,
       });
     }

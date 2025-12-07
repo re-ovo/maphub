@@ -4,6 +4,8 @@ import { useStore } from "@/store";
 import { formatRegistry } from "@/viewer/format";
 import type { HoverCallbackParams } from "../event-handler";
 import { HoverTooltip } from "@/components/viewer/hover-tooltip";
+import type { MapNode } from "../types/map-node";
+import type { HoverInfo } from "../types/format";
 
 export default function ViewportPanel() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -13,28 +15,33 @@ export default function ViewportPanel() {
   const setHoverData = useStore((s) => s.setHoverData);
 
   const handleHover = useCallback(
-    ({ renderer, hitPoint, screenPos }: HoverCallbackParams) => {
-      if (!renderer) {
+    ({ renderers, hitPoints, screenPos }: HoverCallbackParams) => {
+      if (renderers.length === 0) {
         setHoverData(null);
         return;
       }
 
-      const node = renderer.node;
-      const formatHandler = formatRegistry[node.format];
-      if (!formatHandler) {
+      // 收集所有渲染器的 hover 信息
+      const infos: Array<{ node: MapNode; info: HoverInfo }> = [];
+      for (let i = 0; i < renderers.length; i++) {
+        const renderer = renderers[i];
+        const hitPoint = hitPoints[i];
+        const node = renderer.node;
+        const formatHandler = formatRegistry[node.format];
+        if (formatHandler) {
+          const info = formatHandler.provideHoverInfo(node as any, hitPoint);
+          if (info) {
+            infos.push({ node, info });
+          }
+        }
+      }
+      if (infos.length === 0) {
         setHoverData(null);
         return;
       }
-
-      const info = formatHandler.provideHoverInfo(node as any, hitPoint);
-      if (!info) {
-        setHoverData(null);
-        return;
-      }
-
       setHoverData({
         pos: screenPos,
-        info,
+        infos: infos.map((i) => i.info),
       });
     },
     [setHoverData],
@@ -75,7 +82,7 @@ export default function ViewportPanel() {
           display: "block",
         }}
       />
-      {hoverData && <HoverTooltip info={hoverData.info} position={hoverData.pos} />}
+      {hoverData && <HoverTooltip infos={hoverData.infos} position={hoverData.pos} />}
     </div>
   );
 }

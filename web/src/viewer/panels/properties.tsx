@@ -2,11 +2,7 @@ import { useMemo } from "react";
 import { useSelectedNodes } from "@/hooks/use-selected-nodes";
 import { formatRegistry } from "@/viewer/format";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import type { PropertiyGroup } from "@/viewer/types/format";
 import type { MapNode } from "@/viewer/types/map-node";
 import { Info, ChevronRight } from "lucide-react";
@@ -47,9 +43,7 @@ function NodeProperties({ node, showTitle = false }: NodePropertiesProps) {
     return null;
   }
 
-  const content = properties.map((group, index) => (
-    <PropertyGroup key={index} group={group} />
-  ));
+  const content = properties.map((group, index) => <PropertyGroup key={index} group={group} />);
 
   if (!showTitle) {
     return <div>{content}</div>;

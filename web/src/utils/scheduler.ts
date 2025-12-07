@@ -4,7 +4,7 @@
  * 类似 requestIdleCallback，但确保即使浏览器持续繁忙，任务也会在指定的超时时间后执行
  */
 
-import { useSyncExternalStore } from 'react';
+import { useSyncExternalStore } from "react";
 
 export interface TaskOptions {
   /** 最大等待时间（毫秒），超过此时间后强制执行任务 */
@@ -35,7 +35,7 @@ class IdleTaskScheduler {
   private tasks = new Map<number, ScheduledTask>();
   private taskIdCounter = 0;
   private isProcessing = false;
-  private hasIdleCallback = typeof requestIdleCallback !== 'undefined';
+  private hasIdleCallback = typeof requestIdleCallback !== "undefined";
   private listeners = new Set<Listener>();
 
   /**
@@ -61,10 +61,7 @@ class IdleTaskScheduler {
    * @param options 调度选项
    * @returns 任务 ID，用于取消任务
    */
-  scheduleTask(
-    callback: (deadline: IdleDeadline) => void,
-    options: TaskOptions = {}
-  ): number {
+  scheduleTask(callback: (deadline: IdleDeadline) => void, options: TaskOptions = {}): number {
     const taskId = ++this.taskIdCounter;
     const timeout = options.timeout ?? 2000; // 默认 2 秒超时
     const priority = options.priority ?? 0;
@@ -158,9 +155,7 @@ class IdleTaskScheduler {
 
   private processIdleTasks(deadline: IdleDeadline): void {
     // 按优先级排序任务
-    const sortedTasks = Array.from(this.tasks.values()).sort(
-      (a, b) => a.priority - b.priority
-    );
+    const sortedTasks = Array.from(this.tasks.values()).sort((a, b) => a.priority - b.priority);
 
     for (const task of sortedTasks) {
       // 如果没有剩余时间，停止处理
@@ -194,7 +189,7 @@ class IdleTaskScheduler {
       // 执行回调
       task.callback(deadline);
     } catch (error) {
-      console.error('执行任务时出错:', error);
+      console.error("执行任务时出错:", error);
     } finally {
       // 移除任务
       this.tasks.delete(taskId);
@@ -236,7 +231,7 @@ export const scheduler = new IdleTaskScheduler();
  */
 export function scheduleIdleTask(
   callback: (deadline: IdleDeadline) => void,
-  options?: TaskOptions
+  options?: TaskOptions,
 ): number {
   return scheduler.scheduleTask(callback, options);
 }
@@ -264,6 +259,6 @@ export function usePendingTaskCount(): number {
   return useSyncExternalStore(
     (onStoreChange) => scheduler.subscribe(onStoreChange),
     () => scheduler.getPendingTaskCount(),
-    () => 0
+    () => 0,
   );
 }

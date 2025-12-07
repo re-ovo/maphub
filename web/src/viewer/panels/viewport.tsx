@@ -14,6 +14,7 @@ export default function ViewportPanel() {
   const hoverData = useStore((s) => s.hoverData);
   const setHoverData = useStore((s) => s.setHoverData);
   const selectNodes = useStore((s) => s.selectNodes);
+  const rootNodes = useStore((s) => s.rootNodes);
 
   const handleHover = useCallback(
     ({ renderers, hitPoints, screenPos }: HoverCallbackParams) => {
@@ -84,7 +85,16 @@ export default function ViewportPanel() {
   }, [setViewportRenderer, handleHover, handleClick]);
 
   return (
-    <div style={{ width: "100%", height: "100%", position: "relative" }}>
+    <div
+      style={{
+        width: "100%",
+        height: "100%",
+        position: "relative",
+        alignItems: "center",
+        display: "flex",
+        flexDirection: "column",
+      }}
+    >
       <canvas
         ref={canvasRef}
         style={{
@@ -93,7 +103,17 @@ export default function ViewportPanel() {
           display: "block",
         }}
       />
+
+      {/* 悬浮提示 */}
       {hoverData && <HoverTooltip infos={hoverData.infos} position={hoverData.pos} />}
+
+      {/* 顶部提示 */}
+      {rootNodes.length === 0 && (
+        <div className="absolute top-1 text-sm text-white/30 flex flex-col gap-1 items-center">
+          <span>本查看器完全在浏览器端侧运行，不会上传任何数据</span>
+          <span>支持格式: OpenDrive, Apollo</span>
+        </div>
+      )}
     </div>
   );
 }

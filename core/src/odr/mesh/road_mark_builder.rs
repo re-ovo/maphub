@@ -5,13 +5,55 @@ use crate::{
     odr::models::{
         lane::{
             lane_geometry::OdrLaneWidth,
-            lane_road_mark::{OdrRoadMark, OdrRoadMarkSway, OdrRoadMarkType},
+            lane_road_mark::{OdrRoadMark, OdrRoadMarkColor, OdrRoadMarkSway, OdrRoadMarkType},
             lane_section::OdrLaneSection,
             OdrLane,
         },
         road::OdrRoad,
     },
 };
+
+/// Single road mark mesh with its color
+#[wasm_bindgen]
+#[derive(Clone, Debug)]
+pub struct RoadMarkMeshItem {
+    mesh: MeshData,
+    color: OdrRoadMarkColor,
+}
+
+#[wasm_bindgen]
+impl RoadMarkMeshItem {
+    #[wasm_bindgen(getter)]
+    pub fn mesh(&self) -> MeshData {
+        self.mesh.clone()
+    }
+
+    #[wasm_bindgen(getter)]
+    pub fn color(&self) -> OdrRoadMarkColor {
+        self.color.clone()
+    }
+}
+
+/// List of road mark meshes
+///
+/// wasm-bindgen doesn't fully support `Vec<T>` for custom types,
+/// so we use this wrapper to provide array-like access from JS.
+#[wasm_bindgen]
+pub struct RoadMarkMeshList {
+    items: Vec<RoadMarkMeshItem>,
+}
+
+#[wasm_bindgen]
+impl RoadMarkMeshList {
+    #[wasm_bindgen(getter)]
+    pub fn length(&self) -> usize {
+        self.items.len()
+    }
+
+    pub fn get(&self, index: usize) -> Option<RoadMarkMeshItem> {
+        self.items.get(index).cloned()
+    }
+}
 
 /// Default line width when not specified (meters)
 const DEFAULT_LINE_WIDTH: f64 = 0.15;
@@ -60,6 +102,9 @@ impl RoadMarkMeshBuilder {
 
     /// Build road mark meshes for a single lane
     ///
+    /// Returns a list of meshes, each with its own color, allowing proper
+    /// multi-color rendering when a lane has multiple road marks.
+    ///
     /// # Arguments
     /// - `road`: Road object
     /// - `lane_section`: Lane section
@@ -74,10 +119,8 @@ impl RoadMarkMeshBuilder {
         lane: &OdrLane,
         s_start: f64,
         s_end: f64,
-    ) -> MeshData {
-        let mut all_vertices = Vec::new();
-        let mut all_indices = Vec::new();
-        let mut all_normals = Vec::new();
+    ) -> RoadMarkMeshList {
+        let mut items = Vec::new();
 
         // Process each road mark definition
         for (i, road_mark) in lane.road_marks.iter().enumerate() {
@@ -122,10 +165,16 @@ impl RoadMarkMeshBuilder {
                 )
             };
 
-            self.merge_mesh(&mut all_vertices, &mut all_indices, &mut all_normals, mesh);
+            // Only add non-empty meshes
+            if !mesh.vertices.is_empty() {
+                items.push(RoadMarkMeshItem {
+                    mesh,
+                    color: road_mark.color.clone(),
+                });
+            }
         }
 
-        MeshData::new(all_vertices, all_indices, all_normals)
+        RoadMarkMeshList { items }
     }
 }
 

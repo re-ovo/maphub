@@ -12,5 +12,6 @@
     "lint": {
       "dependsOn": ["^build"]
     }
-  }
+  },
+  "ui": "tui"
 }

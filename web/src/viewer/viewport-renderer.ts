@@ -25,6 +25,7 @@ import {
 import { RGBELoader } from "three/examples/jsm/loaders/RGBELoader.js";
 import { ViewerEventHandler, type ViewerEventHandlerOptions } from "./event-handler";
 import { useStore } from "@/store";
+import { RenderLayer } from "./enums";
 
 // 安装 camera-controls 所需的 THREE 子模块
 CameraControls.install({
@@ -96,6 +97,7 @@ export class ViewportRenderer {
     const { width, height } = this.getSize();
     this.renderer.setSize(width, height, false);
     this._camera = new PerspectiveCamera(60, width / height, 0.1, 10000);
+    this._camera.layers.enable(RenderLayer.Helper);
 
     // 创建控制器
     this.controls = new CameraControls(this._camera, this.canvas);

@@ -1,3 +1,4 @@
+import { RenderLayer } from "@/viewer/enums";
 import {
   Box3,
   BufferGeometry,
@@ -42,6 +43,7 @@ export class AdaptiveGrid extends LineSegments {
     super(geometry, material);
 
     this.name = "AdaptiveGrid";
+    this.layers.set(RenderLayer.Helper);
 
     this.options = {
       primaryColor: options.primaryColor ?? 0x444444,

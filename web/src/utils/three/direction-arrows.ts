@@ -1,3 +1,4 @@
+import { RenderLayer } from "@/viewer/enums";
 import { ArrowHelper, Color, Group, Vector3 } from "three";
 
 export interface DirectionArrowsOptions {
@@ -29,7 +30,6 @@ export class DirectionArrows extends Group {
     super();
 
     this.name = "DirectionArrows";
-
     this.options = {
       color: options.color ?? 0xffff00,
       spacing: options.spacing ?? 10,
@@ -41,6 +41,10 @@ export class DirectionArrows extends Group {
     };
 
     this.createArrows(points);
+
+    this.traverse((child) => {
+      child.layers.set(RenderLayer.Helper);
+    });
   }
 
   /**

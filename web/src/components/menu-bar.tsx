@@ -9,6 +9,8 @@ import {
 } from "@/components/ui/menubar";
 import { useStore } from "@/store";
 import { useRef, useState } from "react";
+import { Button } from "./ui/button";
+import { SiGithub } from "@icons-pack/react-simple-icons";
 
 export function MenuBar() {
   const { resetLayout } = useStore();
@@ -76,9 +78,7 @@ export function MenuBar() {
         <MenubarMenu>
           <MenubarTrigger>帮助</MenubarTrigger>
           <MenubarContent>
-            <MenubarItem onClick={() => setShowAboutDialog(true)}>
-              关于
-            </MenubarItem>
+            <MenubarItem onClick={() => setShowAboutDialog(true)}>关于</MenubarItem>
             <MenubarItem asChild>
               <a href="https://github.com/re-ovo/" target="_blank">
                 Github
@@ -90,17 +90,16 @@ export function MenuBar() {
 
       {/* 右侧主题切换 */}
       <div className="flex flex-row items-center gap-4 ml-auto [app-region:no-drag]">
-        <span className="text-xs text-muted-foreground font-normal leading-none">
-          {__GIT_HASH__}
-        </span>
+        <Button variant="ghost" size="icon" asChild>
+          <a href="https://github.com/re-ovo/" target="_blank">
+            <SiGithub className="w-4 h-4" />
+          </a>
+        </Button>
         <ThemeSwitch />
       </div>
 
       {/* 关于对话框 */}
-      <AboutDialog
-        open={showAboutDialog}
-        onOpenChange={setShowAboutDialog}
-      />
+      <AboutDialog open={showAboutDialog} onOpenChange={setShowAboutDialog} />
     </div>
   );
 }

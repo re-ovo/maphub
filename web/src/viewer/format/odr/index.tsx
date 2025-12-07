@@ -43,8 +43,8 @@ export const OpenDriveFormat: MapFormat<"opendrive", OdrElement, "map"> = {
   /**
    * 提供鼠标悬停信息
    */
-  provideHoverInfo(node: MapNode<"opendrive">, _pos: Vector3) {
-    return provideHoverInfo(node as OdrElement);
+  provideHoverInfo(node: MapNode<"opendrive">, pos: Vector3) {
+    return provideHoverInfo(node as OdrElement, pos);
   },
 
   /**

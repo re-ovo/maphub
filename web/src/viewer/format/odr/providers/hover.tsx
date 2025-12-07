@@ -5,15 +5,21 @@ import type {
   OdrRoadElement,
   OdrElement,
 } from "../elements";
+import type { Vector3 } from "three";
+import { threePositionToOdr } from "../math";
 
 /**
  * 提供车道的 hover 信息
  */
-export function provideLaneHoverInfo(element: OdrLaneElement): HoverInfo {
+export function provideLaneHoverInfo(element: OdrLaneElement, pos: Vector3): HoverInfo {
   const { lane, road, sStart, sEnd } = element;
 
   // 获取第一个宽度定义的 a 值作为基础宽度
   const baseWidth = lane.width.length > 0 ? lane.width[0].a : 0;
+
+  // 将世界坐标转换为 st 坐标
+  const odrXyz = threePositionToOdr(pos);
+  const sth = road.xyzToSth(odrXyz.x, odrXyz.y, odrXyz.z);
 
   return {
     title: `Lane ${lane.id}`,
@@ -23,6 +29,7 @@ export function provideLaneHoverInfo(element: OdrLaneElement): HoverInfo {
       { label: "Type", value: lane.type },
       { label: "Width", value: `${baseWidth.toFixed(2)} m` },
       { label: "S Range", value: `${sStart.toFixed(1)} - ${sEnd.toFixed(1)} m` },
+      { label: "ST Coords", value: `s: ${sth.x.toFixed(2)} m, t: ${sth.y.toFixed(2)} m` },
     ],
   };
 }
@@ -74,10 +81,10 @@ export function provideRoadHoverInfo(element: OdrRoadElement): HoverInfo {
 /**
  * 提供 hover 信息的统一入口
  */
-export function provideHoverInfo(element: OdrElement): HoverInfo | null {
+export function provideHoverInfo(element: OdrElement, pos: Vector3): HoverInfo | null {
   switch (element.type) {
     case "lane":
-      return provideLaneHoverInfo(element);
+      return provideLaneHoverInfo(element, pos);
     case "lane-section":
       return provideLaneSectionHoverInfo(element);
     case "road":

@@ -1,3 +1,4 @@
+import { AboutDialog } from "@/components/about-dialog";
 import { ThemeSwitch } from "@/components/theme-switch";
 import {
   Menubar,
@@ -7,13 +8,14 @@ import {
   MenubarTrigger,
 } from "@/components/ui/menubar";
 import { useStore } from "@/store";
-import { useRef } from "react";
+import { useRef, useState } from "react";
 
 export function MenuBar() {
   const { resetLayout } = useStore();
   const exportGLB = useStore((s) => s.exportGLB);
   const loadFiles = useStore((s) => s.loadFiles);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [showAboutDialog, setShowAboutDialog] = useState(false);
 
   const handleOpenClick = () => {
     fileInputRef.current?.click();
@@ -74,7 +76,9 @@ export function MenuBar() {
         <MenubarMenu>
           <MenubarTrigger>帮助</MenubarTrigger>
           <MenubarContent>
-            <MenubarItem>关于</MenubarItem>
+            <MenubarItem onClick={() => setShowAboutDialog(true)}>
+              关于
+            </MenubarItem>
             <MenubarItem asChild>
               <a href="https://github.com/re-ovo/" target="_blank">
                 Github
@@ -91,6 +95,12 @@ export function MenuBar() {
         </span>
         <ThemeSwitch />
       </div>
+
+      {/* 关于对话框 */}
+      <AboutDialog
+        open={showAboutDialog}
+        onOpenChange={setShowAboutDialog}
+      />
     </div>
   );
 }

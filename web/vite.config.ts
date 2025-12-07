@@ -5,6 +5,7 @@ import tailwindcss from "@tailwindcss/vite";
 import { VitePWA } from "vite-plugin-pwa";
 import path from "path";
 import { execSync } from "child_process";
+import { readFileSync } from "fs";
 
 function getGitHash() {
   try {
@@ -14,10 +15,22 @@ function getGitHash() {
   }
 }
 
+function getVersion() {
+  try {
+    const pkg = JSON.parse(
+      readFileSync(path.join(__dirname, "package.json"), "utf-8")
+    );
+    return pkg.version;
+  } catch {
+    return "0.0.0";
+  }
+}
+
 // https://vite.dev/config/
 export default defineConfig({
   define: {
     __GIT_HASH__: JSON.stringify(getGitHash()),
+    __VERSION__: JSON.stringify(getVersion()),
   },
   plugins: [
     react({

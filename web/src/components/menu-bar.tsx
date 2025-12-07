@@ -8,6 +8,7 @@ import {
   MenubarTrigger,
 } from "@/components/ui/menubar";
 import { useStore } from "@/store";
+import { usePendingTaskCount } from "@/utils/scheduler";
 import { useRef, useState } from "react";
 import { Button } from "./ui/button";
 import { SiGithub } from "@icons-pack/react-simple-icons";
@@ -18,6 +19,7 @@ export function MenuBar() {
   const loadFiles = useStore((s) => s.loadFiles);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [showAboutDialog, setShowAboutDialog] = useState(false);
+  const pendingTaskCount = usePendingTaskCount();
 
   const handleOpenClick = () => {
     fileInputRef.current?.click();
@@ -90,6 +92,12 @@ export function MenuBar() {
 
       {/* 右侧主题切换 */}
       <div className="flex flex-row items-center gap-4 ml-auto [app-region:no-drag]">
+        {pendingTaskCount > 0 && (
+          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+            <span className="inline-block w-2 h-2 bg-blue-500 rounded-full animate-pulse" />
+            <span>{pendingTaskCount} 个任务</span>
+          </div>
+        )}
         <Button variant="ghost" size="icon" asChild>
           <a href="https://github.com/re-ovo/" target="_blank">
             <SiGithub className="w-4 h-4" />

@@ -12,11 +12,11 @@ export function provideTreeInfo(element: OdrElement): TreeInfo {
     case "map":
       return { icon: <MapIcon className={iconClass} />, menus: [] };
     case "roads":
-      return { icon: <FolderOpen className={iconClass} />, menus: [] };
+      return { icon: <FolderOpen className={iconClass} />, menus: [], virtual: true };
     case "road":
       return { icon: <Route className={iconClass} />, menus: [] };
     case "lane-section":
-      return { icon: <Layers className={iconClass} />, menus: [] };
+      return { icon: <Layers className={iconClass} />, menus: [], virtual: true };
     case "lane":
       return { icon: <RectangleHorizontal className={iconClass} />, menus: [] };
     default:

@@ -15,7 +15,17 @@ import type { MapRenderer } from "@/viewer/types/renderer";
 import { formatRegistry } from "@/viewer/format";
 import { cn } from "@/lib/utils";
 import { fuzzyMatch } from "@/utils/fuzzy-match";
-import { ChevronRight, Eye, EyeOff, Layers, Trash2, Focus, MoreHorizontal, Search, X } from "lucide-react";
+import {
+  ChevronRight,
+  Eye,
+  EyeOff,
+  Layers,
+  Trash2,
+  Focus,
+  MoreHorizontal,
+  Search,
+  X,
+} from "lucide-react";
 
 interface FlatNode {
   node: MapNode;
@@ -56,10 +66,12 @@ function flattenTree(
     result.push({ node, depth, isRoot, matchesSearch: selfMatches });
 
     // 搜索模式下自动展开有匹配子节点的节点，否则按正常展开状态
-    const shouldExpand = hasSearch ? (selfMatches || childrenMatch) : expandedIds.has(node.id);
+    const shouldExpand = hasSearch ? selfMatches || childrenMatch : expandedIds.has(node.id);
 
     if (shouldExpand && node.children.length > 0) {
-      result.push(...flattenTree(node.children as MapNode[], expandedIds, searchQuery, depth + 1, false));
+      result.push(
+        ...flattenTree(node.children as MapNode[], expandedIds, searchQuery, depth + 1, false),
+      );
     }
   }
 
@@ -112,6 +124,7 @@ function TreeNodeRow({ flatNode, searchQuery }: TreeNodeRowProps) {
   const treeInfo = formatHandler?.provideTreeInfo(node as any);
   const icon = treeInfo?.icon ?? <Layers className="w-4 h-4 shrink-0 text-muted-foreground" />;
   const formatMenus = treeInfo?.menus ?? [];
+  const isVirtual = treeInfo?.virtual ?? false;
 
   const handleToggleExpand = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -175,39 +188,43 @@ function TreeNodeRow({ flatNode, searchQuery }: TreeNodeRowProps) {
       </span>
 
       {/* 聚焦按钮 */}
-      <button
-        className={cn(
-          "w-5 h-5 flex items-center justify-center shrink-0 rounded-sm",
-          "opacity-0 group-hover:opacity-100 hover:bg-accent",
-        )}
-        onClick={(e) => {
-          e.stopPropagation();
-          handleFocus();
-        }}
-        title="聚焦"
-      >
-        <Focus className="w-3.5 h-3.5 text-muted-foreground" />
-      </button>
+      {!isVirtual && (
+        <button
+          className={cn(
+            "w-5 h-5 flex items-center justify-center shrink-0 rounded-sm",
+            "opacity-0 group-hover:opacity-100 hover:bg-accent",
+          )}
+          onClick={(e) => {
+            e.stopPropagation();
+            handleFocus();
+          }}
+          title="聚焦"
+        >
+          <Focus className="w-3.5 h-3.5 text-muted-foreground" />
+        </button>
+      )}
 
       {/* 可见性切换按钮 */}
-      <button
-        className={cn(
-          "w-5 h-5 flex items-center justify-center shrink-0 rounded-sm",
-          "opacity-0 group-hover:opacity-100 hover:bg-accent",
-          !node.visible && "opacity-100",
-        )}
-        onClick={handleToggleVisibility}
-        title={node.visible ? "隐藏" : "显示"}
-      >
-        {node.visible ? (
-          <Eye className="w-3.5 h-3.5 text-muted-foreground" />
-        ) : (
-          <EyeOff className="w-3.5 h-3.5 text-muted-foreground/50" />
-        )}
-      </button>
+      {!isVirtual && (
+        <button
+          className={cn(
+            "w-5 h-5 flex items-center justify-center shrink-0 rounded-sm",
+            "opacity-0 group-hover:opacity-100 hover:bg-accent",
+            !node.visible && "opacity-100",
+          )}
+          onClick={handleToggleVisibility}
+          title={node.visible ? "隐藏" : "显示"}
+        >
+          {node.visible ? (
+            <Eye className="w-3.5 h-3.5 text-muted-foreground" />
+          ) : (
+            <EyeOff className="w-3.5 h-3.5 text-muted-foreground/50" />
+          )}
+        </button>
+      )}
 
       {/* 更多菜单 */}
-      {(formatMenus.length > 0 || isRoot) && (
+      {!isVirtual && (formatMenus.length > 0 || isRoot) && (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <button

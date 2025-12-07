@@ -49,6 +49,7 @@ export interface PropertyItem {
 export interface TreeInfo {
   icon: ReactNode; // 在场景树内的图标
   menus: TreeMenu[]; // 在场景树内的菜单
+  virtual?: boolean; // 是否为虚拟节点 (default: false)
 }
 
 export interface TreeMenu {

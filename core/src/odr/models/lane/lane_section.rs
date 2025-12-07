@@ -1,6 +1,6 @@
 use wasm_bindgen::prelude::*;
 
-use crate::odr::models::lane::OdrLane;
+use crate::odr::models::lane::{lane_geometry::OdrLaneWidth, OdrLane};
 
 /// OpenDrive 车道分段 (Lane Section)
 ///
@@ -57,5 +57,37 @@ impl OdrLaneSection {
             center,
             single_side,
         }
+    }
+}
+
+impl OdrLaneSection {
+    /// 计算车道内侧边界的累计偏移
+    ///
+    /// 通过累加从中心线到目标车道之间所有车道的宽度来计算偏移
+    ///
+    /// # 参数
+    /// * `lane_id` - 目标车道 ID
+    /// * `s` - 道路参考线上的 s 坐标
+    pub fn calculate_inner_offset(&self, lane_id: i32, s: f64) -> f64 {
+        let ds = s - self.s;
+        let mut offset = 0.0;
+
+        if lane_id > 0 {
+            // 左侧车道：累加所有更靠近中心线的车道宽度（ID 更小）
+            for other_lane in &self.left {
+                if other_lane.id > 0 && other_lane.id < lane_id {
+                    offset += OdrLaneWidth::eval_widths(&other_lane.width, ds);
+                }
+            }
+        } else if lane_id < 0 {
+            // 右侧车道：累加所有更靠近中心线的车道宽度（数值更大）
+            for other_lane in &self.right {
+                if other_lane.id < 0 && other_lane.id > lane_id {
+                    offset -= OdrLaneWidth::eval_widths(&other_lane.width, ds);
+                }
+            }
+        }
+
+        offset
     }
 }

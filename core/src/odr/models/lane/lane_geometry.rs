@@ -37,6 +37,39 @@ impl OdrLaneWidth {
             d,
         }
     }
+
+    /// 计算当前 width 在 local_ds 处的多项式值
+    ///
+    /// # 参数
+    /// * `local_ds` - 相对于当前 width 起点的距离 (ds - s_offset)
+    pub fn eval(&self, local_ds: f64) -> f64 {
+        self.a
+            + self.b * local_ds
+            + self.c * local_ds.powi(2)
+            + self.d * local_ds.powi(3)
+    }
+}
+
+impl OdrLaneWidth {
+    /// 从 widths 列表中计算指定 ds 处的宽度值
+    ///
+    /// # 参数
+    /// * `widths` - 宽度定义列表
+    /// * `ds` - 相对于 LaneSection 起点的距离
+    pub fn eval_widths(widths: &[OdrLaneWidth], ds: f64) -> f64 {
+        if widths.is_empty() {
+            return 0.0;
+        }
+
+        let width = widths
+            .iter()
+            .filter(|w| w.s_offset <= ds)
+            .last()
+            .unwrap_or_else(|| widths.first().unwrap());
+
+        let local_ds = ds - width.s_offset;
+        width.eval(local_ds)
+    }
 }
 
 /// OpenDrive 车道边界定义

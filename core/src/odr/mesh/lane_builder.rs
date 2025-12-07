@@ -1,7 +1,7 @@
 use wasm_bindgen::prelude::*;
 
 use crate::{
-    math::{mesh::MeshData, vec3::Vec3},
+    math::mesh::MeshData,
     odr::models::{
         lane::{lane_geometry::OdrLaneWidth, lane_section::OdrLaneSection, OdrLane},
         road::OdrRoad,
@@ -86,10 +86,10 @@ impl LaneMeshBuilder {
         }
 
         // 生成索引（三角形带）
-        let indices = self.generate_indices(num_samples);
+        let indices = MeshData::generate_strip_indices(num_samples);
 
         // 计算法线
-        let normals = self.calculate_normals(&vertices, &indices);
+        let normals = MeshData::calculate_normals(&vertices, &indices);
 
         MeshData::new(vertices, indices, normals)
     }
@@ -100,9 +100,7 @@ impl LaneMeshBuilder {
     /// - `road`: 道路对象
     #[wasm_bindgen(js_name = "buildRoadMesh")]
     pub fn build_road_mesh(&self, road: &OdrRoad) -> MeshData {
-        let mut all_vertices = Vec::new();
-        let mut all_indices = Vec::new();
-        let mut all_normals = Vec::new();
+        let mut result = MeshData::empty();
 
         for (section_idx, lane_section) in road.lanes.iter().enumerate() {
             let s_start = lane_section.s;
@@ -115,17 +113,17 @@ impl LaneMeshBuilder {
             // 构建左侧车道
             for lane in &lane_section.left {
                 let mesh = self.build_lane_mesh(road, lane_section, lane, s_start, s_end);
-                self.merge_mesh(&mut all_vertices, &mut all_indices, &mut all_normals, mesh);
+                result.merge(mesh);
             }
 
             // 构建右侧车道
             for lane in &lane_section.right {
                 let mesh = self.build_lane_mesh(road, lane_section, lane, s_start, s_end);
-                self.merge_mesh(&mut all_vertices, &mut all_indices, &mut all_normals, mesh);
+                result.merge(mesh);
             }
         }
 
-        MeshData::new(all_vertices, all_indices, all_normals)
+        result
     }
 }
 
@@ -150,13 +148,13 @@ impl LaneMeshBuilder {
         let ds = s - section.s;
 
         // 计算当前车道的宽度
-        let width = Self::eval_lane_width(&lane.width, ds);
+        let width = OdrLaneWidth::eval_widths(&lane.width, ds);
 
         // 计算 lane offset（道路级别的横向偏移）
         let lane_offset = road.eval_lane_offset(s);
 
         // 计算内侧车道的累积宽度
-        let t_inner = self.calculate_inner_offset(lane.id, section, s) + lane_offset;
+        let t_inner = section.calculate_inner_offset(lane.id, s) + lane_offset;
 
         // 外边界 = 内边界 + 宽度（考虑正负方向）
         let t_outer = if lane.id > 0 {
@@ -168,169 +166,6 @@ impl LaneMeshBuilder {
         };
 
         (t_inner, t_outer)
-    }
-
-    /// 计算车道内侧边界的 t 坐标
-    ///
-    /// 通过累加所有内侧车道的宽度来计算
-    fn calculate_inner_offset(&self, lane_id: i32, section: &OdrLaneSection, s: f64) -> f64 {
-        let ds = s - section.s;
-        let mut offset = 0.0;
-
-        if lane_id > 0 {
-            // 左侧车道：累加所有更靠近中心线的车道宽度（ID 更小）
-            for other_lane in &section.left {
-                if other_lane.id > 0 && other_lane.id < lane_id {
-                    offset += Self::eval_lane_width(&other_lane.width, ds);
-                }
-            }
-        } else if lane_id < 0 {
-            // 右侧车道：累加所有更靠近中心线的车道宽度（数值更大）
-            for other_lane in &section.right {
-                if other_lane.id < 0 && other_lane.id > lane_id {
-                    offset -= Self::eval_lane_width(&other_lane.width, ds);
-                }
-            }
-        }
-
-        offset
-    }
-
-    /// 计算车道宽度的多项式值
-    ///
-    /// # 参数
-    /// - `widths`: 车道宽度定义数组
-    /// - `ds`: 相对于车道段起点的距离
-    ///
-    /// # 返回值
-    /// 计算得到的车道宽度
-    fn eval_lane_width(widths: &Vec<OdrLaneWidth>, ds: f64) -> f64 {
-        // 找到适用的 width 定义（最后一个 s_offset <= ds 的）
-        let width = widths
-            .iter()
-            .filter(|w| w.s_offset <= ds)
-            .last()
-            .unwrap_or_else(|| widths.first().unwrap());
-
-        let local_ds = ds - width.s_offset;
-
-        // 计算三次多项式：a + b*ds + c*ds² + d*ds³
-        width.a
-            + width.b * local_ds
-            + width.c * local_ds.powi(2)
-            + width.d * local_ds.powi(3)
-    }
-
-    /// 生成三角形索引（三角形带模式）
-    ///
-    /// # 参数
-    /// - `num_samples`: 采样点数量
-    ///
-    /// # 返回值
-    /// 三角形索引数组
-    fn generate_indices(&self, num_samples: usize) -> Vec<u16> {
-        let mut indices = Vec::new();
-
-        for i in 0..(num_samples - 1) {
-            let base = (i * 2) as u16;
-
-            // 每个四边形分成两个三角形
-            // Triangle 1: inner[i], outer[i], inner[i+1]
-            indices.push(base);
-            indices.push(base + 1);
-            indices.push(base + 2);
-
-            // Triangle 2: outer[i], outer[i+1], inner[i+1]
-            indices.push(base + 1);
-            indices.push(base + 3);
-            indices.push(base + 2);
-        }
-
-        indices
-    }
-
-    /// 计算顶点法线
-    ///
-    /// 使用面法线的平均值作为顶点法线
-    fn calculate_normals(&self, vertices: &[f32], indices: &[u16]) -> Vec<f32> {
-        let mut normals = vec![0.0f32; vertices.len()];
-
-        // 遍历每个三角形，累加面法线到顶点
-        for triangle in indices.chunks(3) {
-            let i0 = triangle[0] as usize * 3;
-            let i1 = triangle[1] as usize * 3;
-            let i2 = triangle[2] as usize * 3;
-
-            // 获取三角形的三个顶点
-            let v0 = Vec3::new(
-                vertices[i0] as f64,
-                vertices[i0 + 1] as f64,
-                vertices[i0 + 2] as f64,
-            );
-            let v1 = Vec3::new(
-                vertices[i1] as f64,
-                vertices[i1 + 1] as f64,
-                vertices[i1 + 2] as f64,
-            );
-            let v2 = Vec3::new(
-                vertices[i2] as f64,
-                vertices[i2 + 1] as f64,
-                vertices[i2 + 2] as f64,
-            );
-
-            // 计算面法线
-            let edge1 = v1 - v0;
-            let edge2 = v2 - v0;
-            let normal = edge1.cross(&edge2);
-
-            // 累加到三个顶点
-            for &idx in &[i0, i1, i2] {
-                normals[idx] += normal.x as f32;
-                normals[idx + 1] += normal.y as f32;
-                normals[idx + 2] += normal.z as f32;
-            }
-        }
-
-        // 归一化所有法线
-        for i in (0..normals.len()).step_by(3) {
-            let len = (normals[i].powi(2) + normals[i + 1].powi(2) + normals[i + 2].powi(2)).sqrt();
-            if len > 1e-6 {
-                normals[i] /= len;
-                normals[i + 1] /= len;
-                normals[i + 2] /= len;
-            } else {
-                // 如果法线长度太小，使用默认向上方向（Y 轴）
-                normals[i] = 0.0;
-                normals[i + 1] = 1.0;
-                normals[i + 2] = 0.0;
-            }
-        }
-
-        normals
-    }
-
-    /// 合并网格数据
-    ///
-    /// 将新的网格数据添加到已有的网格中
-    fn merge_mesh(
-        &self,
-        all_vertices: &mut Vec<f32>,
-        all_indices: &mut Vec<u16>,
-        all_normals: &mut Vec<f32>,
-        mesh: MeshData,
-    ) {
-        let vertex_offset = (all_vertices.len() / 3) as u16;
-
-        // 添加顶点
-        all_vertices.extend_from_slice(&mesh.vertices);
-
-        // 添加索引（需要加上偏移量）
-        for idx in mesh.indices {
-            all_indices.push(idx + vertex_offset);
-        }
-
-        // 添加法线
-        all_normals.extend_from_slice(&mesh.normals);
     }
 }
 
@@ -344,9 +179,9 @@ mod tests {
         // 测试常数宽度
         let widths = vec![OdrLaneWidth::new(0.0, 3.5, 0.0, 0.0, 0.0)];
 
-        assert_eq!(LaneMeshBuilder::eval_lane_width(&widths, 0.0), 3.5);
-        assert_eq!(LaneMeshBuilder::eval_lane_width(&widths, 10.0), 3.5);
-        assert_eq!(LaneMeshBuilder::eval_lane_width(&widths, 100.0), 3.5);
+        assert_eq!(OdrLaneWidth::eval_widths(&widths, 0.0), 3.5);
+        assert_eq!(OdrLaneWidth::eval_widths(&widths, 10.0), 3.5);
+        assert_eq!(OdrLaneWidth::eval_widths(&widths, 100.0), 3.5);
     }
 
     #[test]
@@ -354,9 +189,9 @@ mod tests {
         // 测试线性变化的宽度：width = 3.0 + 0.1*ds
         let widths = vec![OdrLaneWidth::new(0.0, 3.0, 0.1, 0.0, 0.0)];
 
-        assert_eq!(LaneMeshBuilder::eval_lane_width(&widths, 0.0), 3.0);
-        assert_eq!(LaneMeshBuilder::eval_lane_width(&widths, 10.0), 4.0);
-        assert_eq!(LaneMeshBuilder::eval_lane_width(&widths, 20.0), 5.0);
+        assert_eq!(OdrLaneWidth::eval_widths(&widths, 0.0), 3.0);
+        assert_eq!(OdrLaneWidth::eval_widths(&widths, 10.0), 4.0);
+        assert_eq!(OdrLaneWidth::eval_widths(&widths, 20.0), 5.0);
     }
 
     #[test]
@@ -368,17 +203,15 @@ mod tests {
             OdrLaneWidth::new(20.0, 3.0, 0.1, 0.0, 0.0),
         ];
 
-        assert_eq!(LaneMeshBuilder::eval_lane_width(&widths, 5.0), 3.5);
-        assert_eq!(LaneMeshBuilder::eval_lane_width(&widths, 15.0), 4.0);
-        assert_eq!(LaneMeshBuilder::eval_lane_width(&widths, 25.0), 3.5); // 3.0 + 0.1*5
+        assert_eq!(OdrLaneWidth::eval_widths(&widths, 5.0), 3.5);
+        assert_eq!(OdrLaneWidth::eval_widths(&widths, 15.0), 4.0);
+        assert_eq!(OdrLaneWidth::eval_widths(&widths, 25.0), 3.5); // 3.0 + 0.1*5
     }
 
     #[test]
     fn test_generate_indices() {
-        let builder = LaneMeshBuilder::new(None);
-
         // 3 个采样点应该生成 4 个三角形（12个索引）
-        let indices = builder.generate_indices(3);
+        let indices = MeshData::generate_strip_indices(3);
         assert_eq!(indices.len(), 12);
 
         // 验证第一个四边形的索引
@@ -387,8 +220,6 @@ mod tests {
 
     #[test]
     fn test_calculate_normals_flat_surface() {
-        let builder = LaneMeshBuilder::new(None);
-
         // 创建一个水平面（y=0，即 XZ 平面）
         let vertices = vec![
             0.0, 0.0, 0.0, // 顶点 0
@@ -399,7 +230,7 @@ mod tests {
         // 单个三角形
         let indices = vec![0, 1, 2];
 
-        let normals = builder.calculate_normals(&vertices, &indices);
+        let normals = MeshData::calculate_normals(&vertices, &indices);
 
         // 水平面的法线应该指向 Y 轴正方向
         assert_eq!(normals.len(), 9);
@@ -440,17 +271,16 @@ mod tests {
         ];
 
         let section = OdrLaneSection::new(0.0, left, right, build_lane(0, 0.0), None);
-        let builder = LaneMeshBuilder::new(None);
         let s = 5.0; // 任意 s，宽度恒定
 
-        assert!((builder.calculate_inner_offset(1, &section, s) - 0.0).abs() < 1e-6);
-        assert!((builder.calculate_inner_offset(2, &section, s) - 1.0).abs() < 1e-6);
-        assert!((builder.calculate_inner_offset(3, &section, s) - 3.0).abs() < 1e-6);
-        assert!((builder.calculate_inner_offset(4, &section, s) - 6.0).abs() < 1e-6);
+        assert!((section.calculate_inner_offset(1, s) - 0.0).abs() < 1e-6);
+        assert!((section.calculate_inner_offset(2, s) - 1.0).abs() < 1e-6);
+        assert!((section.calculate_inner_offset(3, s) - 3.0).abs() < 1e-6);
+        assert!((section.calculate_inner_offset(4, s) - 6.0).abs() < 1e-6);
 
-        assert!((builder.calculate_inner_offset(-1, &section, s) - 0.0).abs() < 1e-6);
-        assert!((builder.calculate_inner_offset(-2, &section, s) + 1.0).abs() < 1e-6);
-        assert!((builder.calculate_inner_offset(-3, &section, s) + 3.0).abs() < 1e-6);
-        assert!((builder.calculate_inner_offset(-4, &section, s) + 6.0).abs() < 1e-6);
+        assert!((section.calculate_inner_offset(-1, s) - 0.0).abs() < 1e-6);
+        assert!((section.calculate_inner_offset(-2, s) + 1.0).abs() < 1e-6);
+        assert!((section.calculate_inner_offset(-3, s) + 3.0).abs() < 1e-6);
+        assert!((section.calculate_inner_offset(-4, s) + 6.0).abs() < 1e-6);
     }
 }

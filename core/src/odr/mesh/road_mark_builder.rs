@@ -1,7 +1,7 @@
 use wasm_bindgen::prelude::*;
 
 use crate::{
-    math::{mesh::MeshData, vec3::Vec3},
+    math::mesh::MeshData,
     odr::models::{
         lane::{
             lane_geometry::OdrLaneWidth,
@@ -190,9 +190,7 @@ impl RoadMarkMeshBuilder {
         mark_s_end: f64,
     ) -> MeshData {
         let type_detail = road_mark.type_detail.as_ref().unwrap();
-        let mut all_vertices = Vec::new();
-        let mut all_indices = Vec::new();
-        let mut all_normals = Vec::new();
+        let mut result = MeshData::empty();
 
         let default_width = road_mark.width.unwrap_or(DEFAULT_LINE_WIDTH);
 
@@ -215,7 +213,7 @@ impl RoadMarkMeshBuilder {
                         line.t_offset,
                         line_width,
                     );
-                    self.merge_mesh(&mut all_vertices, &mut all_indices, &mut all_normals, mesh);
+                    result.merge(mesh);
                 }
             } else {
                 // Dashed line - repeat pattern
@@ -235,12 +233,7 @@ impl RoadMarkMeshBuilder {
                             line.t_offset,
                             line_width,
                         );
-                        self.merge_mesh(
-                            &mut all_vertices,
-                            &mut all_indices,
-                            &mut all_normals,
-                            mesh,
-                        );
+                        result.merge(mesh);
                     }
 
                     s += pattern_length;
@@ -248,7 +241,7 @@ impl RoadMarkMeshBuilder {
             }
         }
 
-        MeshData::new(all_vertices, all_indices, all_normals)
+        result
     }
 
     /// Build mesh for <explicit> defined road marks (no repetition)
@@ -261,9 +254,7 @@ impl RoadMarkMeshBuilder {
         mark_s_start: f64,
     ) -> MeshData {
         let explicit = road_mark.explicit.as_ref().unwrap();
-        let mut all_vertices = Vec::new();
-        let mut all_indices = Vec::new();
-        let mut all_normals = Vec::new();
+        let mut result = MeshData::empty();
 
         let default_width = road_mark.width.unwrap_or(DEFAULT_LINE_WIDTH);
 
@@ -282,10 +273,10 @@ impl RoadMarkMeshBuilder {
                 line.t_offset,
                 line_width,
             );
-            self.merge_mesh(&mut all_vertices, &mut all_indices, &mut all_normals, mesh);
+            result.merge(mesh);
         }
 
-        MeshData::new(all_vertices, all_indices, all_normals)
+        result
     }
 
     /// Build mesh using default patterns based on mark_type
@@ -301,12 +292,10 @@ impl RoadMarkMeshBuilder {
         let default_lines = self.get_default_lines_for_type(road_mark);
 
         if default_lines.is_empty() {
-            return MeshData::new(vec![], vec![], vec![]);
+            return MeshData::empty();
         }
 
-        let mut all_vertices = Vec::new();
-        let mut all_indices = Vec::new();
-        let mut all_normals = Vec::new();
+        let mut result = MeshData::empty();
 
         for line in default_lines {
             if line.space <= 0.0 {
@@ -321,7 +310,7 @@ impl RoadMarkMeshBuilder {
                     line.t_offset,
                     line.width,
                 );
-                self.merge_mesh(&mut all_vertices, &mut all_indices, &mut all_normals, mesh);
+                result.merge(mesh);
             } else {
                 // Dashed line
                 let pattern_length = line.length + line.space;
@@ -341,12 +330,7 @@ impl RoadMarkMeshBuilder {
                             line.t_offset,
                             line.width,
                         );
-                        self.merge_mesh(
-                            &mut all_vertices,
-                            &mut all_indices,
-                            &mut all_normals,
-                            mesh,
-                        );
+                        result.merge(mesh);
                     }
 
                     s += pattern_length;
@@ -354,7 +338,7 @@ impl RoadMarkMeshBuilder {
             }
         }
 
-        MeshData::new(all_vertices, all_indices, all_normals)
+        result
     }
 
     /// Get default line patterns based on road mark type
@@ -523,8 +507,8 @@ impl RoadMarkMeshBuilder {
             vertices.push(-outer_pt.y as f32);
         }
 
-        let indices = self.generate_indices(num_samples);
-        let normals = self.calculate_normals(&vertices, &indices);
+        let indices = MeshData::generate_strip_indices(num_samples);
+        let normals = MeshData::calculate_normals(&vertices, &indices);
 
         MeshData::new(vertices, indices, normals)
     }
@@ -540,13 +524,13 @@ impl RoadMarkMeshBuilder {
         let ds = s - section.s;
 
         // Calculate current lane width
-        let width = Self::eval_lane_width(&lane.width, ds);
+        let width = OdrLaneWidth::eval_widths(&lane.width, ds);
 
         // Get lane offset (road-level lateral offset)
         let lane_offset = road.eval_lane_offset(s);
 
         // Calculate inner offset (accumulated width of inner lanes)
-        let t_inner = self.calculate_inner_offset(lane.id, section, s) + lane_offset;
+        let t_inner = section.calculate_inner_offset(lane.id, s) + lane_offset;
 
         // Outer border = inner + width (considering direction)
         if lane.id > 0 {
@@ -557,51 +541,6 @@ impl RoadMarkMeshBuilder {
             // Center lane (id=0): return lane offset
             lane_offset
         }
-    }
-
-    /// Calculate inner offset by accumulating widths of inner lanes
-    fn calculate_inner_offset(&self, lane_id: i32, section: &OdrLaneSection, s: f64) -> f64 {
-        let ds = s - section.s;
-        let mut offset = 0.0;
-
-        if lane_id > 0 {
-            // Left lanes: accumulate widths of lanes closer to center (smaller IDs)
-            for other_lane in &section.left {
-                if other_lane.id > 0 && other_lane.id < lane_id {
-                    offset += Self::eval_lane_width(&other_lane.width, ds);
-                }
-            }
-        } else if lane_id < 0 {
-            // Right lanes: accumulate widths of lanes closer to center (larger negative IDs)
-            for other_lane in &section.right {
-                if other_lane.id < 0 && other_lane.id > lane_id {
-                    offset -= Self::eval_lane_width(&other_lane.width, ds);
-                }
-            }
-        }
-
-        offset
-    }
-
-    /// Evaluate lane width polynomial
-    fn eval_lane_width(widths: &[OdrLaneWidth], ds: f64) -> f64 {
-        // Handle empty widths (e.g., center lane with id=0)
-        if widths.is_empty() {
-            return 0.0;
-        }
-
-        let width = widths
-            .iter()
-            .filter(|w| w.s_offset <= ds)
-            .last()
-            .unwrap_or_else(|| widths.first().unwrap());
-
-        let local_ds = ds - width.s_offset;
-
-        width.a
-            + width.b * local_ds
-            + width.c * local_ds.powi(2)
-            + width.d * local_ds.powi(3)
     }
 
     /// Evaluate sway offset polynomial
@@ -615,106 +554,6 @@ impl RoadMarkMeshBuilder {
             }
             None => 0.0,
         }
-    }
-
-    /// Generate triangle indices (triangle strip pattern)
-    fn generate_indices(&self, num_samples: usize) -> Vec<u16> {
-        let mut indices = Vec::new();
-
-        for i in 0..(num_samples - 1) {
-            let base = (i * 2) as u16;
-
-            // Two triangles per quad
-            // Triangle 1: inner[i], outer[i], inner[i+1]
-            indices.push(base);
-            indices.push(base + 1);
-            indices.push(base + 2);
-
-            // Triangle 2: outer[i], outer[i+1], inner[i+1]
-            indices.push(base + 1);
-            indices.push(base + 3);
-            indices.push(base + 2);
-        }
-
-        indices
-    }
-
-    /// Calculate vertex normals
-    fn calculate_normals(&self, vertices: &[f32], indices: &[u16]) -> Vec<f32> {
-        let mut normals = vec![0.0f32; vertices.len()];
-
-        // Accumulate face normals to vertices
-        for triangle in indices.chunks(3) {
-            let i0 = triangle[0] as usize * 3;
-            let i1 = triangle[1] as usize * 3;
-            let i2 = triangle[2] as usize * 3;
-
-            let v0 = Vec3::new(
-                vertices[i0] as f64,
-                vertices[i0 + 1] as f64,
-                vertices[i0 + 2] as f64,
-            );
-            let v1 = Vec3::new(
-                vertices[i1] as f64,
-                vertices[i1 + 1] as f64,
-                vertices[i1 + 2] as f64,
-            );
-            let v2 = Vec3::new(
-                vertices[i2] as f64,
-                vertices[i2 + 1] as f64,
-                vertices[i2 + 2] as f64,
-            );
-
-            let edge1 = v1 - v0;
-            let edge2 = v2 - v0;
-            let normal = edge1.cross(&edge2);
-
-            for &idx in &[i0, i1, i2] {
-                normals[idx] += normal.x as f32;
-                normals[idx + 1] += normal.y as f32;
-                normals[idx + 2] += normal.z as f32;
-            }
-        }
-
-        // Normalize all normals
-        for i in (0..normals.len()).step_by(3) {
-            let len = (normals[i].powi(2) + normals[i + 1].powi(2) + normals[i + 2].powi(2)).sqrt();
-            if len > 1e-6 {
-                normals[i] /= len;
-                normals[i + 1] /= len;
-                normals[i + 2] /= len;
-            } else {
-                // Default to up direction (Y axis in WebGL)
-                normals[i] = 0.0;
-                normals[i + 1] = 1.0;
-                normals[i + 2] = 0.0;
-            }
-        }
-
-        normals
-    }
-
-    /// Merge mesh data
-    fn merge_mesh(
-        &self,
-        all_vertices: &mut Vec<f32>,
-        all_indices: &mut Vec<u16>,
-        all_normals: &mut Vec<f32>,
-        mesh: MeshData,
-    ) {
-        if mesh.vertices.is_empty() {
-            return;
-        }
-
-        let vertex_offset = (all_vertices.len() / 3) as u16;
-
-        all_vertices.extend_from_slice(&mesh.vertices);
-
-        for idx in mesh.indices {
-            all_indices.push(idx + vertex_offset);
-        }
-
-        all_normals.extend_from_slice(&mesh.normals);
     }
 }
 
@@ -843,8 +682,7 @@ mod tests {
 
     #[test]
     fn test_generate_indices() {
-        let builder = RoadMarkMeshBuilder::new(None);
-        let indices = builder.generate_indices(3);
+        let indices = MeshData::generate_strip_indices(3);
 
         // 3 samples -> 2 quads -> 4 triangles -> 12 indices
         assert_eq!(indices.len(), 12);

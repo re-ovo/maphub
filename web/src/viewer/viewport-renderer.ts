@@ -96,7 +96,7 @@ export class ViewportRenderer {
     // 创建相机
     const { width, height } = this.getSize();
     this.renderer.setSize(width, height, false);
-    this._camera = new PerspectiveCamera(60, width / height, 0.1, 2000);
+    this._camera = new PerspectiveCamera(60, width / height, 0.1, 5000);
     this._camera.layers.enable(RenderLayer.Helper);
 
     // 创建控制器

@@ -3,6 +3,7 @@ import type { OdrRoadMarkColor } from "@maphub/core";
 import { LaneMeshBuilder, OdrLane, RoadMarkMeshBuilder } from "@maphub/core";
 import { MapRenderer } from "@/viewer/types/renderer";
 import type { OdrLaneElement } from "../elements";
+import { scheduleIdleTask } from "@/utils/scheduler";
 
 export class OdrLaneRenderer extends MapRenderer<"opendrive", "lane"> {
   readonly node: OdrLaneElement;
@@ -14,8 +15,12 @@ export class OdrLaneRenderer extends MapRenderer<"opendrive", "lane"> {
     this.name = node.name;
     this.visible = node.visible;
 
+    // 创建车道网格
     this.createMesh();
-    this.createRoadMarkMesh();
+    // 在浏览器空闲时创建道路标线网格
+    scheduleIdleTask(() => {
+      this.createRoadMarkMesh();
+    });
   }
 
   private createMesh() {

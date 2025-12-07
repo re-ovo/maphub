@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef } from "react";
 import { ViewportRenderer } from "../viewport-renderer";
 import { useStore } from "@/store";
 import { formatRegistry } from "@/viewer/format";
-import type { HoverCallbackParams } from "../event-handler";
+import type { HoverCallbackParams, ClickCallbackParams } from "../event-handler";
 import { HoverTooltip } from "@/components/viewer/hover-tooltip";
 import type { MapNode } from "../types/map-node";
 import type { HoverInfo } from "../types/format";
@@ -13,6 +13,7 @@ export default function ViewportPanel() {
   const setViewportRenderer = useStore((s) => s.setViewportRenderer);
   const hoverData = useStore((s) => s.hoverData);
   const setHoverData = useStore((s) => s.setHoverData);
+  const selectNodes = useStore((s) => s.selectNodes);
 
   const handleHover = useCallback(
     ({ renderers, hitPoints, screenPos }: HoverCallbackParams) => {
@@ -47,6 +48,15 @@ export default function ViewportPanel() {
     [setHoverData],
   );
 
+  const handleClick = useCallback(
+    ({ renderers }: ClickCallbackParams) => {
+      // 选中所有点击到的物体
+      const nodeIds = renderers.map((r) => r.node.id);
+      selectNodes(nodeIds);
+    },
+    [selectNodes],
+  );
+
   useEffect(() => {
     if (!canvasRef.current) return;
 
@@ -55,6 +65,7 @@ export default function ViewportPanel() {
       canvas: canvasRef.current,
       eventHandlerOptions: {
         onHover: handleHover,
+        onClick: handleClick,
       },
     });
     rendererRef.current = renderer;
@@ -70,7 +81,7 @@ export default function ViewportPanel() {
         rendererRef.current = null;
       }
     };
-  }, [setViewportRenderer, handleHover]);
+  }, [setViewportRenderer, handleHover, handleClick]);
 
   return (
     <div style={{ width: "100%", height: "100%", position: "relative" }}>

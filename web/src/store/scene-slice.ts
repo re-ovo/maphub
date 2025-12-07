@@ -34,9 +34,10 @@ export interface SceneSlice {
   hoverData: HoverData | null;
   setHoverData: (data: HoverData | null) => void;
 
-  /** 选中的节点 ID */
-  selectedNodeId: Id | null;
-  selectNode: (nodeId: Id | null) => void;
+  /** 选中的节点 ID 列表（支持多选） */
+  selectedNodeIds: Id[];
+  selectNodes: (nodeIds: Id[]) => void;
+  toggleNodeSelected: (nodeId: Id) => void;
 
   /** 展开的节点 ID 集合 */
   expandedNodeIds: Set<Id>;
@@ -151,8 +152,17 @@ export const createSceneSlice: StateCreator<SceneSlice, [], [], SceneSlice> = (s
   hoverData: null,
   setHoverData: (data) => set({ hoverData: data }),
 
-  selectedNodeId: null,
-  selectNode: (nodeId) => set({ selectedNodeId: nodeId }),
+  selectedNodeIds: [],
+  selectNodes: (nodeIds) => set({ selectedNodeIds: nodeIds }),
+  toggleNodeSelected: (nodeId) => {
+    const { selectedNodeIds } = get();
+    const index = selectedNodeIds.indexOf(nodeId);
+    if (index === -1) {
+      set({ selectedNodeIds: [...selectedNodeIds, nodeId] });
+    } else {
+      set({ selectedNodeIds: selectedNodeIds.filter((id) => id !== nodeId) });
+    }
+  },
 
   expandedNodeIds: new Set<Id>(),
   toggleNodeExpanded: (nodeId) => {

@@ -1,10 +1,15 @@
 import { useMemo } from "react";
-import { useStore } from "@/store";
-import { selectSelectedNode } from "@/store/selectors";
+import { useSelectedNodes } from "@/hooks/use-selected-nodes";
 import { formatRegistry } from "@/viewer/format";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 import type { PropertiyGroup } from "@/viewer/types/format";
-import { Info } from "lucide-react";
+import type { MapNode } from "@/viewer/types/map-node";
+import { Info, ChevronRight } from "lucide-react";
 
 interface PropertyGroupProps {
   group: PropertiyGroup;
@@ -26,19 +31,45 @@ function PropertyGroup({ group }: PropertyGroupProps) {
   );
 }
 
-export default function PropertiesPanel() {
-  const selectedNode = useStore(selectSelectedNode);
+interface NodePropertiesProps {
+  node: MapNode;
+  showTitle?: boolean;
+}
 
-  // 获取属性数据
+function NodeProperties({ node, showTitle = false }: NodePropertiesProps) {
   const properties = useMemo<PropertiyGroup[] | null>(() => {
-    if (!selectedNode) return null;
-    const formatHandler = formatRegistry[selectedNode.format];
+    const formatHandler = formatRegistry[node.format];
     if (!formatHandler) return null;
-    return formatHandler.provideProperties(selectedNode as any);
-  }, [selectedNode]);
+    return formatHandler.provideProperties(node as any);
+  }, [node]);
 
-  // 未选中节点
-  if (!selectedNode) {
+  if (!properties || properties.length === 0) {
+    return null;
+  }
+
+  const content = properties.map((group, index) => (
+    <PropertyGroup key={index} group={group} />
+  ));
+
+  if (!showTitle) {
+    return <div>{content}</div>;
+  }
+
+  return (
+    <Collapsible defaultOpen>
+      <CollapsibleTrigger className="w-full px-3 py-2 bg-accent/50 text-sm font-medium text-accent-foreground border-b border-border flex items-center gap-1 hover:bg-accent/70 transition-colors [&[data-state=open]>svg]:rotate-90">
+        <ChevronRight className="w-4 h-4 shrink-0 transition-transform" />
+        <span className="truncate">{node.name}</span>
+      </CollapsibleTrigger>
+      <CollapsibleContent>{content}</CollapsibleContent>
+    </Collapsible>
+  );
+}
+
+export default function PropertiesPanel() {
+  const selectedNodes = useSelectedNodes();
+
+  if (selectedNodes.length === 0) {
     return (
       <div className="w-full h-full flex flex-col items-center justify-center text-muted-foreground text-sm gap-2">
         <Info className="w-5 h-5" />
@@ -47,21 +78,14 @@ export default function PropertiesPanel() {
     );
   }
 
-  // 没有属性数据
-  if (!properties || properties.length === 0) {
-    return (
-      <div className="w-full h-full flex flex-col items-center justify-center text-muted-foreground text-sm gap-2">
-        <Info className="w-5 h-5" />
-        <span>无可用属性</span>
-      </div>
-    );
-  }
-
   return (
     <ScrollArea className="w-full h-full">
       <div className="py-1 pr-2">
-        {properties.map((group, index) => (
-          <PropertyGroup key={index} group={group} />
+        {selectedNodes.map((node, index) => (
+          <div key={node.id}>
+            {index > 0 && <hr className="my-2 border-border" />}
+            <NodeProperties node={node} showTitle={selectedNodes.length > 1} />
+          </div>
         ))}
       </div>
     </ScrollArea>

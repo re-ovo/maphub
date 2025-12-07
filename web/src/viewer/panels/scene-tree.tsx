@@ -93,8 +93,8 @@ function TreeNodeRow({ flatNode, searchQuery }: TreeNodeRowProps) {
   const { node, depth, isRoot } = flatNode;
 
   const {
-    selectedNodeId,
-    selectNode,
+    selectedNodeIds,
+    selectNodes,
     expandedNodeIds,
     toggleNodeExpanded,
     toggleNodeVisibility,
@@ -103,7 +103,7 @@ function TreeNodeRow({ flatNode, searchQuery }: TreeNodeRowProps) {
     rootRenderers,
   } = useStore();
 
-  const isSelected = selectedNodeId === node.id;
+  const isSelected = selectedNodeIds.includes(node.id);
   const isExpanded = expandedNodeIds.has(node.id);
   const hasChildren = node.children.length > 0;
 
@@ -121,7 +121,8 @@ function TreeNodeRow({ flatNode, searchQuery }: TreeNodeRowProps) {
   };
 
   const handleSelect = () => {
-    selectNode(node.id);
+    // 单击选择单个节点
+    selectNodes([node.id]);
   };
 
   const handleToggleVisibility = (e: React.MouseEvent) => {

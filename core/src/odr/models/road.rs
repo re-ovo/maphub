@@ -380,8 +380,8 @@ mod tests {
     fn test_eval_lane_offset_multiple_segments() {
         // 测试多段 lane offset
         let lane_offsets = vec![
-            OdrLaneOffset::new(0.0, 0.0, 0.0, 0.0, 0.0),    // s=0: offset=0
-            OdrLaneOffset::new(25.0, 2.0, 0.0, 0.0, 0.0),   // s=25: offset=2
+            OdrLaneOffset::new(0.0, 0.0, 0.0, 0.0, 0.0), // s=0: offset=0
+            OdrLaneOffset::new(25.0, 2.0, 0.0, 0.0, 0.0), // s=25: offset=2
             OdrLaneOffset::new(75.0, 2.0, -0.04, 0.0, 0.0), // s=75: offset=2-0.04*ds
         ];
 

@@ -43,10 +43,7 @@ impl OdrLaneWidth {
     /// # 参数
     /// * `local_ds` - 相对于当前 width 起点的距离 (ds - s_offset)
     pub fn eval(&self, local_ds: f64) -> f64 {
-        self.a
-            + self.b * local_ds
-            + self.c * local_ds.powi(2)
-            + self.d * local_ds.powi(3)
+        self.a + self.b * local_ds + self.c * local_ds.powi(2) + self.d * local_ds.powi(3)
     }
 }
 

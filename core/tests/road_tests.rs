@@ -1,8 +1,8 @@
 use maphub_core::odr::models::{
-    lane::{lane_link::OdrLaneLink, lane_section::OdrLaneSection, OdrLane},
+    lane::{OdrLane, lane_link::OdrLaneLink, lane_section::OdrLaneSection},
     road::{
-        road_elevation::OdrRoadElevation, road_geometry::OdrRoadGeometry,
-        superelevation::OdrSuperelevation, OdrRoad,
+        OdrRoad, road_elevation::OdrRoadElevation, road_geometry::OdrRoadGeometry,
+        superelevation::OdrSuperelevation,
     },
 };
 
@@ -92,11 +92,7 @@ fn test_sth_to_xyz_on_reference_line() {
     );
 
     // y 应该等于 0（直线沿 x 轴）
-    assert!(
-        result.y.abs() < 1e-10,
-        "y should be 0.0, got {}",
-        result.y
-    );
+    assert!(result.y.abs() < 1e-10, "y should be 0.0, got {}", result.y);
 
     // z = 10 + 0.1 * 50 = 15
     assert!(
@@ -149,11 +145,7 @@ fn test_sth_to_xyz_with_height_offset() {
         "x should be 50.0, got {}",
         result.x
     );
-    assert!(
-        result.y.abs() < 1e-10,
-        "y should be 0.0, got {}",
-        result.y
-    );
+    assert!(result.y.abs() < 1e-10, "y should be 0.0, got {}", result.y);
 
     // z = 基础高程 + h = 15 + 3 = 18
     assert!(

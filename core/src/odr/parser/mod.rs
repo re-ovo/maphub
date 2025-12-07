@@ -11,8 +11,8 @@ pub use header::parse_header;
 pub use lane::parse_lanes;
 pub use road::parse_road;
 
-use crate::odr::models::opendrive::OpenDrive;
 use crate::fs::Files;
+use crate::odr::models::opendrive::OpenDrive;
 
 /// 解析 OpenDrive XML
 #[wasm_bindgen(js_name = parseOpendrive)]
@@ -33,8 +33,7 @@ pub fn parse_opendrive_from_files(files: &Files) -> Result<Vec<OpenDrive>, Strin
     // 解析所有文件
     let mut opendrives = Vec::new();
     for file in xodr_files {
-        let opendrive =
-            parse_opendrive_internal(file.get_data()).map_err(|e| e.to_string())?;
+        let opendrive = parse_opendrive_internal(file.get_data()).map_err(|e| e.to_string())?;
         opendrives.push(opendrive);
     }
 

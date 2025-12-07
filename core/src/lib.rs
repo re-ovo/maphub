@@ -3,9 +3,9 @@ mod utils;
 use wasm_bindgen::prelude::*;
 
 pub mod apollo;
+pub mod fs;
 pub mod math;
 pub mod odr;
-pub mod fs;
 
 #[wasm_bindgen]
 extern "C" {

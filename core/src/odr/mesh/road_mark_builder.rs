@@ -4,10 +4,10 @@ use crate::{
     math::mesh::MeshData,
     odr::models::{
         lane::{
+            OdrLane,
             lane_geometry::OdrLaneWidth,
             lane_road_mark::{OdrRoadMark, OdrRoadMarkColor, OdrRoadMarkSway, OdrRoadMarkType},
             lane_section::OdrLaneSection,
-            OdrLane,
         },
         road::OdrRoad,
     },

@@ -3,7 +3,7 @@ use wasm_bindgen::prelude::*;
 use crate::{
     math::mesh::MeshData,
     odr::models::{
-        lane::{lane_geometry::OdrLaneWidth, lane_section::OdrLaneSection, OdrLane},
+        lane::{OdrLane, lane_geometry::OdrLaneWidth, lane_section::OdrLaneSection},
         road::OdrRoad,
     },
 };
@@ -262,7 +262,12 @@ mod tests {
             }
         }
 
-        let left = vec![build_lane(4, 4.0), build_lane(3, 3.0), build_lane(2, 2.0), build_lane(1, 1.0)];
+        let left = vec![
+            build_lane(4, 4.0),
+            build_lane(3, 3.0),
+            build_lane(2, 2.0),
+            build_lane(1, 1.0),
+        ];
         let right = vec![
             build_lane(-1, 1.0),
             build_lane(-2, 2.0),

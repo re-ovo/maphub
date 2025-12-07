@@ -26,7 +26,7 @@ use wasm_bindgen::prelude::wasm_bindgen;
 ///     <shape s="0.0" t="3.0" a="0.0" b="-0.02" c="0.0" d="0.0"/>
 /// </lateralProfile>
 /// ```
-/// 
+///
 /// 注意: shape只会影响路面相当于参考平面的高度偏移，不会参考系本身
 #[wasm_bindgen]
 #[derive(Clone, Debug)]

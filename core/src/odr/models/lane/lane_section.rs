@@ -1,6 +1,6 @@
 use wasm_bindgen::prelude::*;
 
-use crate::odr::models::lane::{lane_geometry::OdrLaneWidth, OdrLane};
+use crate::odr::models::lane::{OdrLane, lane_geometry::OdrLaneWidth};
 
 /// OpenDrive 车道分段 (Lane Section)
 ///

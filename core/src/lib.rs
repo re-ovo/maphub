@@ -18,3 +18,8 @@ pub enum MapFormatType {
     OpenDrive = "opendrive",
     Apollo = "apollo",
 }
+
+#[wasm_bindgen]
+pub fn hellp() {
+    alert("Hello, world!");
+}

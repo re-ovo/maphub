@@ -8,7 +8,7 @@ import {
   type OdrRoad,
   type OdrLaneSection,
   type OdrLane,
-} from "core";
+} from "@maphub/core";
 import type { Vector3 } from "three";
 import type {
   OdrElement,

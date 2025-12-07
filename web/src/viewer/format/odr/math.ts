@@ -9,7 +9,7 @@
  * - Three.js (x, y, z) -> OpenDRIVE (x, -z, y)
  */
 
-import { Vec3 } from "core";
+import { Vec3 } from "@maphub/core";
 import { Vector3 } from "three";
 
 /**

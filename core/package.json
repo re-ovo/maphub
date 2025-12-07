@@ -1,0 +1,12 @@
+{
+  "name": "@maphub/core",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "build": "wasm-pack build --release",
+    "dev": "cargo watch -i pkg -s 'wasm-pack build'"
+  },
+  "files": ["pkg"],
+  "main": "pkg/maphub_core.js",
+  "types": "pkg/maphub_core.d.ts"
+}

@@ -1,5 +1,5 @@
 import { BufferAttribute, BufferGeometry, DoubleSide, Mesh, MeshStandardMaterial } from "three";
-import { LaneMeshBuilder, OdrLane } from "core";
+import { LaneMeshBuilder, OdrLane } from "@maphub/core";
 import { MapRenderer } from "@/viewer/types/renderer";
 import type { OdrLaneElement } from "../elements";
 

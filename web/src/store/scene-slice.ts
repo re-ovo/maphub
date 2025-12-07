@@ -4,7 +4,7 @@ import type { ViewportRenderer } from "@/viewer/viewport-renderer";
 import { MapRenderer } from "@/viewer/types/renderer";
 import type { MapNode } from "@/viewer/types/map-node";
 import type { HoverInfo } from "@/viewer/types/format";
-import { Files, File } from "core";
+import { Files, File } from "@maphub/core";
 import { formatRegistry, type MapFormatType } from "@/viewer/format";
 import { exportGLB as exportToGLB } from "@/utils/three/export-glb";
 

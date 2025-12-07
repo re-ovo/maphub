@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import type { MapNode } from "./map-node";
 import type { Vector3 } from "three";
-import type { Files } from "core";
+import type { Files } from "@maphub/core";
 import type { MapRenderer } from "./renderer";
 import type { MapFormatNodeType, MapFormatType } from "../format";
 

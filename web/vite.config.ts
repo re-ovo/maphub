@@ -17,9 +17,7 @@ function getGitHash() {
 
 function getVersion() {
   try {
-    const pkg = JSON.parse(
-      readFileSync(path.join(__dirname, "package.json"), "utf-8")
-    );
+    const pkg = JSON.parse(readFileSync(path.join(__dirname, "package.json"), "utf-8"));
     return pkg.version;
   } catch {
     return "0.0.0";
@@ -47,8 +45,8 @@ export default defineConfig({
         name: "MapHub - 自动驾驶地图查看器",
         short_name: "MapHub",
         description: "超快的在线自动驾驶地图查看器，支持 OpenDRIVE、Apollo 等多种地图格式",
-        theme_color: "#ffffff",
-        background_color: "#ffffff",
+        theme_color: "#000000",
+        background_color: "#000000",
         display: "standalone",
         display_override: ["window-controls-overlay"],
         start_url: "/",

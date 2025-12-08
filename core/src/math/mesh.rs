@@ -138,3 +138,24 @@ impl MeshData {
         normals
     }
 }
+
+#[wasm_bindgen]
+#[derive(Clone, Debug)]
+pub struct LineMeshData {
+    #[wasm_bindgen(getter_with_clone)]
+    pub vertices: Vec<f32>,
+}
+
+#[wasm_bindgen]
+impl LineMeshData {
+    #[wasm_bindgen(constructor)]
+    pub fn new(vertices: Vec<f32>) -> Self {
+        Self { vertices }
+    }
+
+    pub fn empty() -> Self {
+        Self {
+            vertices: Vec::new(),
+        }
+    }
+}

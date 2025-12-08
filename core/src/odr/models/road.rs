@@ -245,7 +245,8 @@ impl OdrRoad {
     }
 
     /// 计算 s 位置的基础高程
-    fn eval_elevation(&self, s: f64) -> f64 {
+    #[wasm_bindgen(js_name = "evalElevation")]
+    pub fn eval_elevation(&self, s: f64) -> f64 {
         let elev = self.elevations.iter().filter(|e| e.s <= s).last();
 
         match elev {
@@ -258,7 +259,8 @@ impl OdrRoad {
     }
 
     /// 计算 s 位置的超高角度（弧度）
-    fn eval_superelevation(&self, s: f64) -> f64 {
+    #[wasm_bindgen(js_name = "evalSuperelevation")]
+    pub fn eval_superelevation(&self, s: f64) -> f64 {
         let se = self.superelevations.iter().filter(|e| e.s <= s).last();
 
         match se {
@@ -281,6 +283,7 @@ impl OdrRoad {
     ///
     /// # 返回值
     /// 高程偏移量（米）
+    #[wasm_bindgen(js_name = "evalShape")]
     pub fn eval_shape(&self, s: f64, t: f64) -> f64 {
         // 找到适用于该 s 位置且 t 值最接近（但不超过）查询 t 的 shape
         let shape = self
@@ -310,7 +313,8 @@ impl OdrRoad {
     ///
     /// # 返回值
     /// 横向偏移量（米），正值表示向左偏移，负值表示向右偏移
-    pub(crate) fn eval_lane_offset(&self, s: f64) -> f64 {
+    #[wasm_bindgen(js_name = "evalLaneOffset")]
+    pub fn eval_lane_offset(&self, s: f64) -> f64 {
         let offset = self.lane_offsets.iter().filter(|o| o.s <= s).last();
 
         match offset {

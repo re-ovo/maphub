@@ -1,69 +1,56 @@
 import { Moon, Sun, Monitor } from "lucide-react";
-import { useTheme } from "@/components/theme-provider";
-import { motion } from "motion/react";
+import { useTheme, type Theme } from "@/components/theme-provider";
 import { cn } from "@/lib/utils";
-
-const themes = ["light", "system", "dark"] as const;
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface ThemeSwitchProps {
   className?: string;
 }
 
+const themeConfig = {
+  light: { icon: Sun, label: "浅色" },
+  system: { icon: Monitor, label: "跟随系统" },
+  dark: { icon: Moon, label: "深色" },
+} as const;
+
 export function ThemeSwitch({ className }: ThemeSwitchProps) {
   const { theme, setTheme } = useTheme();
 
-  const currentIndex = themes.indexOf(theme);
-
-  const toggleTheme = () => {
-    const nextIndex = (currentIndex + 1) % themes.length;
-    setTheme(themes[nextIndex]);
-  };
+  const CurrentIcon = themeConfig[theme].icon;
 
   return (
-    <button
-      onClick={toggleTheme}
-      aria-label={`当前主题: ${theme === "light" ? "浅色" : theme === "dark" ? "深色" : "跟随系统"}`}
-      className={cn(
-        "relative inline-flex items-center gap-0.5 rounded-full bg-muted p-0.5 transition-colors hover:bg-muted/80",
-        className,
-      )}
-    >
-      {/* 滑动背景指示器 */}
-      <motion.div
-        className="absolute h-6 w-6 rounded-full bg-primary"
-        initial={false}
-        animate={{
-          x: currentIndex * 26, // 24px (icon) + 2px (gap)
-        }}
-        transition={{
-          type: "spring",
-          stiffness: 300,
-          damping: 30,
-        }}
-      />
-
-      {/* 图标 */}
-      <div className="relative z-10 flex h-6 w-6 items-center justify-center">
-        <Sun
-          className={`h-3.5 w-3.5 transition-colors ${
-            theme === "light" ? "text-primary-foreground" : "text-muted-foreground"
-          }`}
-        />
-      </div>
-      <div className="relative z-10 flex h-6 w-6 items-center justify-center">
-        <Monitor
-          className={`h-3.5 w-3.5 transition-colors ${
-            theme === "system" ? "text-primary-foreground" : "text-muted-foreground"
-          }`}
-        />
-      </div>
-      <div className="relative z-10 flex h-6 w-6 items-center justify-center">
-        <Moon
-          className={`h-3.5 w-3.5 transition-colors ${
-            theme === "dark" ? "text-primary-foreground" : "text-muted-foreground"
-          }`}
-        />
-      </div>
-    </button>
+    <DropdownMenu>
+      <DropdownMenuTrigger
+        className={cn(
+          "inline-flex h-8 w-8 items-center justify-center rounded-md transition-colors hover:bg-muted/80",
+          className,
+        )}
+        aria-label={`当前主题: ${themeConfig[theme].label}`}
+      >
+        <CurrentIcon className="h-4 w-4" />
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end">
+        <DropdownMenuRadioGroup value={theme} onValueChange={(value) => setTheme(value as Theme)}>
+          <DropdownMenuRadioItem value="light">
+            <Sun className="mr-2 h-4 w-4" />
+            浅色
+          </DropdownMenuRadioItem>
+          <DropdownMenuRadioItem value="system">
+            <Monitor className="mr-2 h-4 w-4" />
+            跟随系统
+          </DropdownMenuRadioItem>
+          <DropdownMenuRadioItem value="dark">
+            <Moon className="mr-2 h-4 w-4" />
+            深色
+          </DropdownMenuRadioItem>
+        </DropdownMenuRadioGroup>
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }

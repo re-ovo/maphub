@@ -1,7 +1,7 @@
 use wasm_bindgen::prelude::*;
 
 use crate::{
-    math::mesh::MeshData,
+    math::{mesh::MeshData, vec3::Vec3},
     odr::models::{
         lane::{OdrLane, lane_geometry::OdrLaneWidth, lane_section::OdrLaneSection},
         road::OdrRoad,
@@ -15,6 +15,8 @@ use crate::{
 pub struct LaneMeshBuilder {
     /// 沿 s 方向的采样步长（米）
     sample_step: f64,
+    /// 地图中心点，用于解决大坐标精度问题，从 OpenDrive.center 获取
+    center: Vec3,
 }
 
 #[wasm_bindgen]
@@ -23,10 +25,12 @@ impl LaneMeshBuilder {
     ///
     /// # 参数
     /// - `sample_step`: 沿参考线方向的采样间隔（米），默认 1.0
+    /// - `center`: 地图中心点，用于解决大坐标精度问题，从 OpenDrive.center 获取
     #[wasm_bindgen(constructor)]
-    pub fn new(sample_step: Option<f64>) -> Self {
+    pub fn new(sample_step: Option<f64>, center: Option<Vec3>) -> Self {
         Self {
             sample_step: sample_step.unwrap_or(1.0),
+            center: center.unwrap_or_default(),
         }
     }
 
@@ -75,14 +79,14 @@ impl LaneMeshBuilder {
 
             // 添加顶点（内边界和外边界各一个）
             // 坐标系转换：OpenDRIVE (x, y, z) -> WebGL (x, z, -y)
-            // X_webgl = x_od, Y_webgl = z_od, Z_webgl = -y_od
-            vertices.push(inner_point.x as f32);
-            vertices.push(inner_point.z as f32);
-            vertices.push(-inner_point.y as f32);
+            // 减去 center 解决大坐标精度问题
+            vertices.push((inner_point.x - self.center.x) as f32);
+            vertices.push((inner_point.z - self.center.z) as f32);
+            vertices.push(-(inner_point.y - self.center.y) as f32);
 
-            vertices.push(outer_point.x as f32);
-            vertices.push(outer_point.z as f32);
-            vertices.push(-outer_point.y as f32);
+            vertices.push((outer_point.x - self.center.x) as f32);
+            vertices.push((outer_point.z - self.center.z) as f32);
+            vertices.push(-(outer_point.y - self.center.y) as f32);
         }
 
         // 生成索引（三角形带）

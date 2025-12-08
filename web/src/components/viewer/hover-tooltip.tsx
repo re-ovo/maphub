@@ -41,7 +41,7 @@ function HoverInfoItem({ info }: { info: HoverInfo }) {
 export function HoverTooltip({ infos, position }: HoverTooltipProps) {
   return (
     <div
-      className="pointer-events-none fixed z-50 max-w-xs rounded-lg border bg-popover px-3 py-2 text-popover-foreground shadow-md"
+      className="pointer-events-none fixed z-50 max-w-md rounded-lg border bg-popover px-3 py-2 text-popover-foreground shadow-md"
       style={{
         left: 0,
         top: 0,

@@ -48,7 +48,7 @@ export class OdrRoadRenderer extends MapRenderer<"opendrive", "road"> {
       // 使用 sthToXyz 将道路坐标转为 OpenDRIVE 坐标
       // t=0 (在参考线上), h=0 (无高度偏移)
       const odr = road.sthToXyz(s, 0, 0);
-      points.push(odrPositionToThree(odr));
+      points.push(odrPositionToThree(odr, this.node.opendrive.center));
     }
 
     // 创建方向箭头

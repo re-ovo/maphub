@@ -1,7 +1,7 @@
 use wasm_bindgen::prelude::*;
 
 use crate::{
-    math::mesh::MeshData,
+    math::{mesh::MeshData, vec3::Vec3},
     odr::models::{
         lane::{
             OdrLane,
@@ -85,6 +85,8 @@ struct DefaultLine {
 pub struct RoadMarkMeshBuilder {
     /// Sample step along s direction (meters)
     sample_step: f64,
+    /// Map center point for solving large coordinate precision issues, from OpenDrive.center
+    center: Vec3,
 }
 
 #[wasm_bindgen]
@@ -93,10 +95,12 @@ impl RoadMarkMeshBuilder {
     ///
     /// # Arguments
     /// - `sample_step`: Sampling interval along reference line (meters), default 0.2
+    /// - `center`: Map center point for solving large coordinate precision issues, from OpenDrive.center
     #[wasm_bindgen(constructor)]
-    pub fn new(sample_step: Option<f64>) -> Self {
+    pub fn new(sample_step: Option<f64>, center: Option<Vec3>) -> Self {
         Self {
             sample_step: sample_step.unwrap_or(0.2),
+            center: center.unwrap_or_default(),
         }
     }
 
@@ -497,14 +501,14 @@ impl RoadMarkMeshBuilder {
             let outer_pt = road.sth_to_xyz(s, t_outer, height);
 
             // Coordinate system conversion: OpenDRIVE -> WebGL
-            // X_webgl = x_od, Y_webgl = z_od, Z_webgl = -y_od
-            vertices.push(inner_pt.x as f32);
-            vertices.push(inner_pt.z as f32);
-            vertices.push(-inner_pt.y as f32);
+            // Subtract center to solve large coordinate precision issues
+            vertices.push((inner_pt.x - self.center.x) as f32);
+            vertices.push((inner_pt.z - self.center.z) as f32);
+            vertices.push(-(inner_pt.y - self.center.y) as f32);
 
-            vertices.push(outer_pt.x as f32);
-            vertices.push(outer_pt.z as f32);
-            vertices.push(-outer_pt.y as f32);
+            vertices.push((outer_pt.x - self.center.x) as f32);
+            vertices.push((outer_pt.z - self.center.z) as f32);
+            vertices.push(-(outer_pt.y - self.center.y) as f32);
         }
 
         let indices = MeshData::generate_strip_indices(num_samples);

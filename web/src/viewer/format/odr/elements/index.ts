@@ -7,6 +7,7 @@ export interface OdrMapElement extends MapNode<"opendrive", "map"> {
 }
 
 export interface OdrRoadsElement extends MapNode<"opendrive", "roads"> {
+  opendrive: OpenDrive;
   roads: OdrRoad[];
   children: OdrRoadElement[];
 }
@@ -16,11 +17,13 @@ export interface OdrRoadsElement extends MapNode<"opendrive", "roads"> {
 // }
 
 export interface OdrRoadElement extends MapNode<"opendrive", "road"> {
+  opendrive: OpenDrive;
   road: OdrRoad;
   children: OdrLaneSectionElement[];
 }
 
 export interface OdrLaneSectionElement extends MapNode<"opendrive", "lane-section"> {
+  opendrive: OpenDrive;
   road: OdrRoad; // 父 road 引用，用于网格构建
   section: OdrLaneSection;
   sStart: number; // lane section 起始位置
@@ -29,6 +32,7 @@ export interface OdrLaneSectionElement extends MapNode<"opendrive", "lane-sectio
 }
 
 export interface OdrLaneElement extends MapNode<"opendrive", "lane"> {
+  opendrive: OpenDrive;
   road: OdrRoad; // 父 road 引用，用于网格构建
   section: OdrLaneSection; // 父 lane section 引用
   lane: OdrLane;

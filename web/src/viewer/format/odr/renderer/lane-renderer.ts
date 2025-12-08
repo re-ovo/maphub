@@ -25,7 +25,7 @@ export class OdrLaneRenderer extends MapRenderer<"opendrive", "lane"> {
 
   private createMesh() {
     // 创建车道网格构建器(采样间隔 1 米)
-    const meshBuilder = new LaneMeshBuilder(0.1);
+    const meshBuilder = new LaneMeshBuilder(0.1, this.node.opendrive.center);
 
     // 从节点中获取必要的数据
     const { road, section, lane, sStart, sEnd } = this.node;
@@ -103,7 +103,7 @@ export class OdrLaneRenderer extends MapRenderer<"opendrive", "lane"> {
 
   private createRoadMarkMesh() {
     // 创建车道标线网格构建器(采样间隔 0.1 米)
-    const roadMarkBuilder = new RoadMarkMeshBuilder(0.1);
+    const roadMarkBuilder = new RoadMarkMeshBuilder(0.1, this.node.opendrive.center);
 
     // 从节点中获取必要的数据
     const { road, section, lane, sStart, sEnd } = this.node;

@@ -66,6 +66,7 @@ export const OpenDriveFormat: MapFormat<"opendrive", OdrElement, "map"> = {
  * 构建单个车道的 Element
  */
 function buildLaneElement(
+  opendrive: OpenDrive,
   parentId: Id,
   road: OdrRoad,
   section: OdrLaneSection,
@@ -81,6 +82,7 @@ function buildLaneElement(
     visible: true,
     format: "opendrive",
     type: "lane",
+    opendrive,
     road,
     section,
     lane,
@@ -93,6 +95,7 @@ function buildLaneElement(
  * 构建车道段的 Element（包含所有车道）
  */
 function buildLaneSectionElement(
+  opendrive: OpenDrive,
   parentId: Id,
   road: OdrRoad,
   section: OdrLaneSection,
@@ -108,7 +111,7 @@ function buildLaneSectionElement(
 
   // 构建车道子节点
   const laneElements: OdrLaneElement[] = allLanes.map((lane) =>
-    buildLaneElement(sectionId, road, section, lane, sStart, sEnd),
+    buildLaneElement(opendrive, sectionId, road, section, lane, sStart, sEnd),
   );
 
   return {
@@ -119,6 +122,7 @@ function buildLaneSectionElement(
     visible: true,
     format: "opendrive",
     type: "lane-section",
+    opendrive,
     road,
     section,
     sStart,
@@ -129,7 +133,7 @@ function buildLaneSectionElement(
 /**
  * 构建道路的 Element（包含所有车道段）
  */
-function buildRoadElement(parentId: Id, road: OdrRoad): OdrRoadElement {
+function buildRoadElement(opendrive: OpenDrive, parentId: Id, road: OdrRoad): OdrRoadElement {
   const roadId = generateId();
   const laneSections = road.lanes;
 
@@ -140,7 +144,7 @@ function buildRoadElement(parentId: Id, road: OdrRoad): OdrRoadElement {
     // 下一个 lane section 的起始位置，或者道路的长度
     const sEnd = index < laneSections.length - 1 ? laneSections[index + 1].s : road.length;
 
-    return buildLaneSectionElement(roadId, road, section, index, sStart, sEnd);
+    return buildLaneSectionElement(opendrive, roadId, road, section, index, sStart, sEnd);
   });
 
   return {
@@ -151,6 +155,7 @@ function buildRoadElement(parentId: Id, road: OdrRoad): OdrRoadElement {
     visible: true,
     format: "opendrive",
     type: "road",
+    opendrive,
     road,
   };
 }
@@ -158,11 +163,11 @@ function buildRoadElement(parentId: Id, road: OdrRoad): OdrRoadElement {
 /**
  * 构建 Roads 容器 Element
  */
-function buildRoadsElement(parentId: Id, roads: OdrRoad[]): OdrRoadsElement {
+function buildRoadsElement(opendrive: OpenDrive, parentId: Id, roads: OdrRoad[]): OdrRoadsElement {
   const roadsId = generateId();
 
   // 构建道路子节点
-  const roadElements: OdrRoadElement[] = roads.map((road) => buildRoadElement(roadsId, road));
+  const roadElements: OdrRoadElement[] = roads.map((road) => buildRoadElement(opendrive, roadsId, road));
 
   return {
     id: roadsId,
@@ -172,6 +177,7 @@ function buildRoadsElement(parentId: Id, roads: OdrRoad[]): OdrRoadsElement {
     visible: true,
     format: "opendrive",
     type: "roads",
+    opendrive,
     roads,
   };
 }
@@ -183,7 +189,7 @@ function buildMapElement(opendrive: OpenDrive): OdrMapElement {
   const mapId = generateId();
 
   // 构建 roads 容器节点
-  const roadsElement = buildRoadsElement(mapId, opendrive.roads);
+  const roadsElement = buildRoadsElement(opendrive, mapId, opendrive.roads);
 
   return {
     id: mapId,

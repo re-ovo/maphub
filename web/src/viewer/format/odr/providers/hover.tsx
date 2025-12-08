@@ -18,7 +18,7 @@ export function provideLaneHoverInfo(element: OdrLaneElement, pos: Vector3): Hov
   const baseWidth = lane.width.length > 0 ? lane.width[0].a : 0;
 
   // 将世界坐标转换为 st 坐标
-  const odrXyz = threePositionToOdr(pos);
+  const odrXyz = threePositionToOdr(pos, element.opendrive.center);
   const sth = road.xyzToSth(odrXyz.x, odrXyz.y, odrXyz.z);
 
   return {
@@ -30,6 +30,7 @@ export function provideLaneHoverInfo(element: OdrLaneElement, pos: Vector3): Hov
       { label: "Width", value: `${baseWidth.toFixed(2)} m` },
       { label: "S Range", value: `${sStart.toFixed(1)} - ${sEnd.toFixed(1)} m` },
       { label: "ST Coords", value: `s: ${sth.x.toFixed(2)} m, t: ${sth.y.toFixed(2)} m` },
+      { label: "OpenDrive Coords", value: `x: ${odrXyz.x.toFixed(2)}, y: ${odrXyz.y.toFixed(2)}, z: ${odrXyz.z.toFixed(2)}` },
     ],
   };
 }

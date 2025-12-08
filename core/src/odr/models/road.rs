@@ -270,6 +270,36 @@ impl OdrRoad {
         }
     }
 
+    /// 计算 (s, t) 位置的横断面形状高程偏移
+    ///
+    /// Shape 定义路面相对于参考平面（由 elevation + superelevation 确定）的高程偏移，
+    /// 用于描述路拱、排水坡度等横向轮廓。
+    ///
+    /// # 参数
+    /// - `s`: 沿参考线的纵向距离
+    /// - `t`: 横向位置
+    ///
+    /// # 返回值
+    /// 高程偏移量（米）
+    pub fn eval_shape(&self, s: f64, t: f64) -> f64 {
+        // 找到适用于该 s 位置且 t 值最接近（但不超过）查询 t 的 shape
+        let shape = self
+            .shapes
+            .iter()
+            .filter(|shape| shape.s <= s && shape.t <= t)
+            .max_by(|a, b| {
+                // 优先选择 s 最大的，s 相同时选择 t 最大的
+                a.s.partial_cmp(&b.s)
+                    .unwrap_or(std::cmp::Ordering::Equal)
+                    .then_with(|| a.t.partial_cmp(&b.t).unwrap_or(std::cmp::Ordering::Equal))
+            });
+
+        match shape {
+            Some(s) => s.evaluate(t),
+            None => 0.0,
+        }
+    }
+
     /// 计算 s 位置的车道偏移量
     ///
     /// 车道偏移量定义了所有车道相对于道路参考线的横向偏移

@@ -496,9 +496,13 @@ impl RoadMarkMeshBuilder {
             let t_inner = t_center - sign * half_width;
             let t_outer = t_center + sign * half_width;
 
+            // Calculate height: road mark height + shape offset
+            let h_inner = height + road.eval_shape(s, t_inner);
+            let h_outer = height + road.eval_shape(s, t_outer);
+
             // Convert to 3D coordinates (line above road surface)
-            let inner_pt = road.sth_to_xyz(s, t_inner, height);
-            let outer_pt = road.sth_to_xyz(s, t_outer, height);
+            let inner_pt = road.sth_to_xyz(s, t_inner, h_inner);
+            let outer_pt = road.sth_to_xyz(s, t_outer, h_outer);
 
             // Coordinate system conversion: OpenDRIVE -> WebGL
             // Subtract center to solve large coordinate precision issues
@@ -645,7 +649,7 @@ mod tests {
 
     #[test]
     fn test_get_default_lines_for_solid() {
-        let builder = RoadMarkMeshBuilder::new(None);
+        let builder = RoadMarkMeshBuilder::new(None, None);
         let road_mark = build_test_road_mark(OdrRoadMarkType::Solid);
         let lines = builder.get_default_lines_for_type(&road_mark);
 
@@ -655,7 +659,7 @@ mod tests {
 
     #[test]
     fn test_get_default_lines_for_broken() {
-        let builder = RoadMarkMeshBuilder::new(None);
+        let builder = RoadMarkMeshBuilder::new(None, None);
         let road_mark = build_test_road_mark(OdrRoadMarkType::Broken);
         let lines = builder.get_default_lines_for_type(&road_mark);
 
@@ -666,7 +670,7 @@ mod tests {
 
     #[test]
     fn test_get_default_lines_for_double() {
-        let builder = RoadMarkMeshBuilder::new(None);
+        let builder = RoadMarkMeshBuilder::new(None, None);
         let road_mark = build_test_road_mark(OdrRoadMarkType::SolidSolid);
         let lines = builder.get_default_lines_for_type(&road_mark);
 
@@ -677,7 +681,7 @@ mod tests {
 
     #[test]
     fn test_get_default_lines_for_none() {
-        let builder = RoadMarkMeshBuilder::new(None);
+        let builder = RoadMarkMeshBuilder::new(None, None);
         let road_mark = build_test_road_mark(OdrRoadMarkType::None);
         let lines = builder.get_default_lines_for_type(&road_mark);
 

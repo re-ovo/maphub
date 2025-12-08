@@ -70,12 +70,13 @@ impl LaneMeshBuilder {
             // 计算车道在当前 s 位置的横向边界
             let (t_inner, t_outer) = self.get_lane_t_bounds(lane, lane_section, road, s);
 
-            // 计算高度偏移（目前简化为 0）
-            let h = 0.0;
+            // 计算高度偏移：考虑横断面形状 (shape)
+            let h_inner = road.eval_shape(s, t_inner);
+            let h_outer = road.eval_shape(s, t_outer);
 
             // 转换为笛卡尔坐标
-            let inner_point = road.sth_to_xyz(s, t_inner, h);
-            let outer_point = road.sth_to_xyz(s, t_outer, h);
+            let inner_point = road.sth_to_xyz(s, t_inner, h_inner);
+            let outer_point = road.sth_to_xyz(s, t_outer, h_outer);
 
             // 添加顶点（内边界和外边界各一个）
             // 坐标系转换：OpenDRIVE (x, y, z) -> WebGL (x, z, -y)

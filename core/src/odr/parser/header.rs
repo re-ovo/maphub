@@ -105,9 +105,9 @@ pub fn parse_header(
                         }
                     } else if e.name().as_ref() == b"offset" {
                         offset = Some(parse_offset(e)?);
-                        reader
-                            .read_to_end(e.name())
-                            .map_err(|e| anyhow::anyhow!("Error skipping offset end tag: {:?}", e))?;
+                        reader.read_to_end(e.name()).map_err(|e| {
+                            anyhow::anyhow!("Error skipping offset end tag: {:?}", e)
+                        })?;
                     } else {
                         // 忽略其他子元素
                         reader

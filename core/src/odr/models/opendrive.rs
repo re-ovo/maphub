@@ -20,7 +20,11 @@ impl OpenDrive {
     #[wasm_bindgen(constructor)]
     pub fn new(header: OdrHeader, roads: Vec<OdrRoad>) -> Self {
         let center = Self::compute_center(&roads);
-        Self { header, roads, center }
+        Self {
+            header,
+            roads,
+            center,
+        }
     }
 
     /// 获取地图的中心点

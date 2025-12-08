@@ -2,7 +2,7 @@ use anyhow::{Context, Result};
 use quick_xml::Reader;
 use quick_xml::events::Event;
 
-use crate::odr::models::header::OdrHeader;
+use crate::odr::models::header::{OdrHeader, OdrOffset};
 
 /// 从 XML 元素解析 Header
 pub fn parse_header(
@@ -21,6 +21,7 @@ pub fn parse_header(
     let mut west: Option<f64> = None;
     let mut vendor: Option<String> = None;
     let mut geo_reference: Option<String> = None;
+    let mut offset: Option<OdrOffset> = None;
 
     for attr in element.attributes() {
         let attr = attr.context("读取属性错误")?;
@@ -102,12 +103,23 @@ pub fn parse_header(
                         if !content.trim().is_empty() {
                             geo_reference = Some(content.trim().to_string());
                         }
+                    } else if e.name().as_ref() == b"offset" {
+                        offset = Some(parse_offset(e)?);
+                        reader
+                            .read_to_end(e.name())
+                            .map_err(|e| anyhow::anyhow!("Error skipping offset end tag: {:?}", e))?;
                     } else {
                         // 忽略其他子元素
                         reader
                             .read_to_end(e.name())
                             .map_err(|e| anyhow::anyhow!("Error skipping tag: {:?}", e))?;
                     }
+                }
+                Ok(Event::Empty(ref e)) => {
+                    if e.name().as_ref() == b"offset" {
+                        offset = Some(parse_offset(e)?);
+                    }
+                    // 忽略其他空元素
                 }
                 Ok(Event::End(ref e)) if e.name().as_ref() == b"header" => {
                     break;
@@ -132,7 +144,32 @@ pub fn parse_header(
         west,
         vendor,
         geo_reference,
+        offset,
     ))
+}
+
+/// 从 XML 元素解析 Offset
+fn parse_offset(element: &quick_xml::events::BytesStart) -> Result<OdrOffset> {
+    let mut x = 0.0f64;
+    let mut y = 0.0f64;
+    let mut z = 0.0f64;
+    let mut hdg = 0.0f64;
+
+    for attr in element.attributes() {
+        let attr = attr.context("读取 offset 属性错误")?;
+        let key = attr.key.as_ref();
+        let value = attr.unescape_value().context("解析 offset 属性值错误")?;
+
+        match key {
+            b"x" => x = value.parse().context("解析 offset x 错误")?,
+            b"y" => y = value.parse().context("解析 offset y 错误")?,
+            b"z" => z = value.parse().context("解析 offset z 错误")?,
+            b"hdg" => hdg = value.parse().context("解析 offset hdg 错误")?,
+            _ => {}
+        }
+    }
+
+    Ok(OdrOffset::new(x, y, z, hdg))
 }
 
 #[cfg(test)]
@@ -299,6 +336,63 @@ mod tests {
                             header.geo_reference,
                             Some("+proj=tmerc +lat_0=30 +lon_0=120".to_string())
                         );
+                        break;
+                    }
+                }
+                Ok(Event::Eof) => panic!("Did not find header"),
+                _ => {}
+            }
+            buf.clear();
+        }
+    }
+
+    #[test]
+    fn test_parse_header_with_offset() {
+        let xml = r#"<header revMajor="1" revMinor="8" name="TestRoad">
+            <offset x="456789.123" y="1234567.456" z="100.0" hdg="1.5708"/>
+        </header>"#;
+        let mut reader = quick_xml::Reader::from_str(xml);
+        reader.config_mut().trim_text(true);
+        let mut buf = Vec::new();
+
+        loop {
+            match reader.read_event_into(&mut buf) {
+                Ok(Event::Start(e)) => {
+                    if e.name().as_ref() == b"header" {
+                        let result = parse_header(&mut reader, &e, false);
+                        assert!(result.is_ok());
+                        let header = result.unwrap();
+                        let offset = header.offset().expect("offset should be present");
+                        assert!((offset.x - 456789.123).abs() < 1e-6);
+                        assert!((offset.y - 1234567.456).abs() < 1e-6);
+                        assert!((offset.z - 100.0).abs() < 1e-6);
+                        assert!((offset.hdg - 1.5708).abs() < 1e-6);
+                        break;
+                    }
+                }
+                Ok(Event::Eof) => panic!("Did not find header"),
+                _ => {}
+            }
+            buf.clear();
+        }
+    }
+
+    #[test]
+    fn test_parse_header_with_empty_offset() {
+        let xml = r#"<header revMajor="1" revMinor="8" name="TestRoad"><offset x="123.0" y="456.0" z="0.0" hdg="0.0"/></header>"#;
+        let mut reader = quick_xml::Reader::from_str(xml);
+        let mut buf = Vec::new();
+
+        loop {
+            match reader.read_event_into(&mut buf) {
+                Ok(Event::Start(e)) => {
+                    if e.name().as_ref() == b"header" {
+                        let result = parse_header(&mut reader, &e, false);
+                        assert!(result.is_ok());
+                        let header = result.unwrap();
+                        let offset = header.offset().expect("offset should be present");
+                        assert!((offset.x - 123.0).abs() < 1e-6);
+                        assert!((offset.y - 456.0).abs() < 1e-6);
                         break;
                     }
                 }

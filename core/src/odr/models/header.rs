@@ -3,6 +3,23 @@ use std::fmt::Display;
 use wasm_bindgen::prelude::*;
 
 #[wasm_bindgen]
+#[derive(Clone, Copy, Debug, Default)]
+pub struct OdrOffset {
+    pub x: f64,
+    pub y: f64,
+    pub z: f64,
+    pub hdg: f64,
+}
+
+#[wasm_bindgen]
+impl OdrOffset {
+    #[wasm_bindgen(constructor)]
+    pub fn new(x: f64, y: f64, z: f64, hdg: f64) -> Self {
+        Self { x, y, z, hdg }
+    }
+}
+
+#[wasm_bindgen]
 #[derive(Clone, Debug)]
 pub struct OdrHeader {
     #[wasm_bindgen(js_name = "revMajor")]
@@ -27,6 +44,8 @@ pub struct OdrHeader {
     pub vendor: Option<String>,
     #[wasm_bindgen(js_name = "geoReference", getter_with_clone)]
     pub geo_reference: Option<String>,
+    // Offset 子元素
+    offset: Option<OdrOffset>,
 }
 
 #[wasm_bindgen]
@@ -44,6 +63,7 @@ impl OdrHeader {
         west: Option<f64>,
         vendor: Option<String>,
         geo_reference: Option<String>,
+        offset: Option<OdrOffset>,
     ) -> Self {
         Self {
             rev_major,
@@ -57,7 +77,13 @@ impl OdrHeader {
             west,
             vendor,
             geo_reference,
+            offset,
         }
+    }
+
+    #[wasm_bindgen(getter)]
+    pub fn offset(&self) -> Option<OdrOffset> {
+        self.offset
     }
 }
 

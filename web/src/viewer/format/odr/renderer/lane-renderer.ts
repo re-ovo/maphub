@@ -12,6 +12,7 @@ import { LaneMeshBuilder, OdrLane, RoadMarkMeshBuilder } from "@maphub/core";
 import { MapRenderer } from "@/viewer/types/renderer";
 import type { OdrLaneElement } from "../elements";
 import { scheduleIdleTask } from "@/utils/scheduler";
+import { RenderLayer } from "@/viewer/enums";
 
 export class OdrLaneRenderer extends MapRenderer<"opendrive", "lane"> {
   readonly node: OdrLaneElement;
@@ -225,6 +226,7 @@ export class OdrLaneRenderer extends MapRenderer<"opendrive", "lane"> {
 
       const line = new Line(geometry, material);
       line.renderOrder = 999;
+      line.layers.set(RenderLayer.Helper);
       this.boundaryLines.push(line);
       this.add(line);
     }

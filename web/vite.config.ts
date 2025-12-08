@@ -88,4 +88,16 @@ export default defineConfig({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  build: {
+    rolldownOptions: {
+      output: {
+        advancedChunks: {
+          groups: [
+            {name: 'react-vendor', test: /[\\/]node_modules[\\/](react|react-dom)[\\/]/ },
+            {name: 'three', test: /[\\/]node_modules[\\/](three)[\\/]/ },
+          ]
+        }
+      }
+    }
+  },
 });

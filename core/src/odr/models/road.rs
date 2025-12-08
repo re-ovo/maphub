@@ -325,6 +325,15 @@ impl OdrRoad {
             None => 0.0,
         }
     }
+
+    /// 判断道路是否有横向剖面（超高或横断面形状）
+    ///
+    /// # 返回值
+    /// 如果道路有 superelevation 或 shape 定义，返回 true
+    #[wasm_bindgen(js_name = "hasLateralProfile")]
+    pub fn has_lateral_profile(&self) -> bool {
+        !self.superelevations.is_empty() || !self.shapes.is_empty()
+    }
 }
 
 #[cfg(test)]

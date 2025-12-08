@@ -28,9 +28,9 @@ export function provideLaneHoverInfo(element: OdrLaneElement, pos: Vector3): Hov
   return {
     title: `Lane ${lane.id}`,
     icon: null,
-    description: [
-      <CrossSectionView road={road} section={section} s={currentS} highlightLaneId={lane.id} />,
-    ],
+    description: road.hasLateralProfile()
+      ? [<CrossSectionView road={road} section={section} s={currentS} highlightLaneId={lane.id} />]
+      : [],
     items: [
       { label: "Road", value: `${road.id}${road.name ? ` (${road.name})` : ""}` },
       { label: "Type", value: lane.type },

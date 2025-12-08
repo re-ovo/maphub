@@ -1,7 +1,10 @@
 use wasm_bindgen::prelude::*;
 
 use crate::{
-    math::{mesh::MeshData, vec3::Vec3},
+    math::{
+        mesh::{LineMeshData, MeshData},
+        vec3::Vec3,
+    },
     odr::models::{
         lane::{OdrLane, lane_geometry::OdrLaneWidth, lane_section::OdrLaneSection},
         road::OdrRoad,
@@ -129,6 +132,88 @@ impl LaneMeshBuilder {
         }
 
         result
+    }
+
+    /// 构建单个车道的边界线（闭合四边形）
+    ///
+    /// # 参数
+    /// - `road`: 道路对象
+    /// - `lane_section`: 车道段
+    /// - `lane`: 要构建边界的车道
+    /// - `s_start`: 车道段起始 s 坐标
+    /// - `s_end`: 车道段结束 s 坐标
+    ///
+    /// # 返回值
+    /// 闭合的四边形边界线顶点
+    #[wasm_bindgen(js_name = "buildLaneBoundary")]
+    pub fn build_lane_boundary(
+        &self,
+        road: &OdrRoad,
+        lane_section: &OdrLaneSection,
+        lane: &OdrLane,
+        s_start: f64,
+        s_end: f64,
+    ) -> LineMeshData {
+        // 中心线不渲染边界
+        if lane.id == 0 {
+            return LineMeshData::empty();
+        }
+
+        // 计算采样点数量
+        let length = s_end - s_start;
+        let num_samples = ((length / self.sample_step).ceil() as usize).max(2);
+
+        let mut inner_vertices = Vec::new();
+        let mut outer_vertices = Vec::new();
+
+        // 沿 s 方向采样，生成车道的内外边界顶点
+        for i in 0..num_samples {
+            let t = i as f64 / (num_samples - 1) as f64;
+            let s = s_start + t * length;
+
+            // 计算车道在当前 s 位置的横向边界
+            let (t_inner, t_outer) = self.get_lane_t_bounds(lane, lane_section, road, s);
+
+            // 计算高度偏移：考虑横断面形状 (shape)
+            let h_inner = road.eval_shape(s, t_inner);
+            let h_outer = road.eval_shape(s, t_outer);
+
+            // 转换为笛卡尔坐标
+            let inner_point = road.sth_to_xyz(s, t_inner, h_inner);
+            let outer_point = road.sth_to_xyz(s, t_outer, h_outer);
+
+            // 添加内边界顶点
+            // 坐标系转换：OpenDRIVE (x, y, z) -> WebGL (x, z, -y)
+            inner_vertices.push((inner_point.x - self.center.x) as f32);
+            inner_vertices.push((inner_point.z - self.center.z) as f32);
+            inner_vertices.push(-(inner_point.y - self.center.y) as f32);
+
+            // 添加外边界顶点
+            outer_vertices.push((outer_point.x - self.center.x) as f32);
+            outer_vertices.push((outer_point.z - self.center.z) as f32);
+            outer_vertices.push(-(outer_point.y - self.center.y) as f32);
+        }
+
+        // 构建闭合四边形：内边界 -> 外边界(反向) -> 回到起点
+        let mut vertices = Vec::with_capacity((num_samples * 2 + 1) * 3);
+
+        // 1. 内边界 (s_start -> s_end)
+        vertices.extend_from_slice(&inner_vertices);
+
+        // 2. 外边界 (s_end -> s_start，反向)
+        for i in (0..num_samples).rev() {
+            let idx = i * 3;
+            vertices.push(outer_vertices[idx]);
+            vertices.push(outer_vertices[idx + 1]);
+            vertices.push(outer_vertices[idx + 2]);
+        }
+
+        // 3. 回到起点闭合
+        vertices.push(inner_vertices[0]);
+        vertices.push(inner_vertices[1]);
+        vertices.push(inner_vertices[2]);
+
+        LineMeshData::new(vertices)
     }
 }
 

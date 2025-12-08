@@ -1,4 +1,12 @@
-import { BufferAttribute, BufferGeometry, DoubleSide, Mesh, MeshStandardMaterial } from "three";
+import {
+  BufferAttribute,
+  BufferGeometry,
+  DoubleSide,
+  Line,
+  LineBasicMaterial,
+  Mesh,
+  MeshStandardMaterial,
+} from "three";
 import type { OdrRoadMarkColor } from "@maphub/core";
 import { LaneMeshBuilder, OdrLane, RoadMarkMeshBuilder } from "@maphub/core";
 import { MapRenderer } from "@/viewer/types/renderer";
@@ -7,6 +15,7 @@ import { scheduleIdleTask } from "@/utils/scheduler";
 
 export class OdrLaneRenderer extends MapRenderer<"opendrive", "lane"> {
   readonly node: OdrLaneElement;
+  private boundaryLines: Line[] = [];
 
   constructor(node: OdrLaneElement) {
     super();
@@ -21,6 +30,10 @@ export class OdrLaneRenderer extends MapRenderer<"opendrive", "lane"> {
     scheduleIdleTask(() => {
       this.createRoadMarkMesh();
     });
+
+    // 监听 hover 事件
+    this.addEventListener("hoverOn", () => this.showBoundary());
+    this.addEventListener("hoverOff", () => this.hideBoundary());
   }
 
   private createMesh() {
@@ -186,5 +199,48 @@ export class OdrLaneRenderer extends MapRenderer<"opendrive", "lane"> {
       default:
         return 0xffffff;
     }
+  }
+
+  private showBoundary() {
+    // 如果已有边界线，不重复创建
+    if (this.boundaryLines.length > 0) return;
+
+    const { road, section, lane, sStart, sEnd } = this.node;
+
+    // 中心线不显示边界
+    if (lane.id === 0) return;
+
+    const meshBuilder = new LaneMeshBuilder(0.1, this.node.opendrive.center);
+    const boundary = meshBuilder.buildLaneBoundary(road, section, lane, sStart, sEnd);
+
+    if (boundary.vertices.length > 0) {
+      const material = new LineBasicMaterial({
+        color: 0x00ffff,
+        linewidth: 2,
+        depthTest: false,
+      });
+
+      const geometry = new BufferGeometry();
+      geometry.setAttribute("position", new BufferAttribute(boundary.vertices, 3));
+
+      const line = new Line(geometry, material);
+      line.renderOrder = 999;
+      this.boundaryLines.push(line);
+      this.add(line);
+    }
+
+    boundary.free();
+    meshBuilder.free();
+  }
+
+  private hideBoundary() {
+    for (const line of this.boundaryLines) {
+      this.remove(line);
+      line.geometry.dispose();
+      if (line.material instanceof LineBasicMaterial) {
+        line.material.dispose();
+      }
+    }
+    this.boundaryLines = [];
   }
 }

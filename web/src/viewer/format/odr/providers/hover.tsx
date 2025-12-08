@@ -34,11 +34,11 @@ export function provideLaneHoverInfo(element: OdrLaneElement, pos: Vector3): Hov
     items: [
       { label: "Road", value: `${road.id}${road.name ? ` (${road.name})` : ""}` },
       { label: "Type", value: lane.type },
-      { label: "Width", value: `${baseWidth.toFixed(2)} m` },
-      { label: "S Range", value: `${sStart.toFixed(1)} - ${sEnd.toFixed(1)} m` },
-      { label: "ST Coords", value: `s: ${sth.x.toFixed(2)} m, t: ${sth.y.toFixed(2)} m` },
+      { label: "Width", value: `${baseWidth.toFixed(2)}` },
+      { label: "S Range", value: `${sStart.toFixed(1)} - ${sEnd.toFixed(1)}` },
+      { label: "ST Coords", value: `s: ${sth.x.toFixed(2)}, t: ${sth.y.toFixed(2)}` },
       {
-        label: "OpenDrive Coords",
+        label: "XYZ Coords",
         value: `x: ${odrXyz.x.toFixed(2)}, y: ${odrXyz.y.toFixed(2)}, z: ${odrXyz.z.toFixed(2)}`,
       },
     ],

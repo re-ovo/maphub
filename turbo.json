@@ -12,6 +12,10 @@
     "lint": {
       "dependsOn": ["^build"]
     },
+    "fmt": {
+      "cache": false,
+      "persistent": false
+    },
     "publish": {
       "dependsOn": ["build"],
       "cache": false

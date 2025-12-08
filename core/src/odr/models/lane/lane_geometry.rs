@@ -141,3 +141,27 @@ impl OdrLaneHeight {
         }
     }
 }
+
+impl OdrLaneHeight {
+    /// 从 heights 列表中计算指定 ds 处的高度偏移
+    ///
+    /// # 参数
+    /// * `heights` - 高度定义列表
+    /// * `ds` - 相对于 LaneSection 起点的距离
+    ///
+    /// # 返回
+    /// (inner, outer) 高度偏移元组
+    pub fn eval_heights(heights: &[OdrLaneHeight], ds: f64) -> (f64, f64) {
+        if heights.is_empty() {
+            return (0.0, 0.0);
+        }
+
+        let height = heights
+            .iter()
+            .filter(|h| h.s_offset <= ds)
+            .last()
+            .unwrap_or_else(|| heights.first().unwrap());
+
+        (height.inner, height.outer)
+    }
+}

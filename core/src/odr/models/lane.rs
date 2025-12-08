@@ -1,5 +1,6 @@
 use wasm_bindgen::prelude::wasm_bindgen;
 
+use crate::math::vec2::Vec2;
 use crate::odr::models::lane::{
     lane_access::OdrLaneAccess,
     lane_geometry::{OdrLaneBorder, OdrLaneHeight, OdrLaneWidth},
@@ -106,5 +107,27 @@ impl OdrLane {
             material,
             road_marks,
         }
+    }
+
+    /// 计算车道在给定 ds 处的高度偏移
+    ///
+    /// # 参数
+    /// * `ds` - 相对于 LaneSection 起点的距离
+    ///
+    /// # 返回
+    /// Vec2，其中 x = inner（内侧边界高度），y = outer（外侧边界高度）
+    #[wasm_bindgen(js_name = "evalHeight")]
+    pub fn eval_height(&self, ds: f64) -> Vec2 {
+        let (inner, outer) = OdrLaneHeight::eval_heights(&self.height, ds);
+        Vec2::new(inner, outer)
+    }
+
+    /// 计算车道在给定 ds 处的宽度
+    ///
+    /// # 参数
+    /// * `ds` - 相对于 LaneSection 起点的距离
+    #[wasm_bindgen(js_name = "evalWidth")]
+    pub fn eval_width(&self, ds: f64) -> f64 {
+        OdrLaneWidth::eval_widths(&self.width, ds)
     }
 }

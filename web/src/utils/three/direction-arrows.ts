@@ -1,5 +1,13 @@
 import { RenderLayer } from "@/viewer/enums";
-import { ArrowHelper, Color, Group, Vector3 } from "three";
+import {
+  DoubleSide,
+  Group,
+  Mesh,
+  MeshBasicMaterial,
+  Shape,
+  ShapeGeometry,
+  Vector3,
+} from "three";
 
 export interface DirectionArrowsOptions {
   /** 箭头颜色 */
@@ -8,10 +16,8 @@ export interface DirectionArrowsOptions {
   spacing?: number;
   /** 箭头长度 */
   arrowLength?: number;
-  /** 箭头头部长度 */
-  headLength?: number;
-  /** 箭头头部宽度 */
-  headWidth?: number;
+  /** 箭头宽度 */
+  arrowWidth?: number;
   /** Y 轴偏移（悬浮高度） */
   offsetY?: number;
   /** 是否反向 */
@@ -20,11 +26,13 @@ export interface DirectionArrowsOptions {
 
 /**
  * 方向箭头工具类
- * 根据采样点生成沿路径的方向箭头
+ * 根据采样点生成沿路径的2D方向箭头
  */
 export class DirectionArrows extends Group {
-  private readonly arrows: ArrowHelper[] = [];
+  private readonly arrows: Mesh[] = [];
   private readonly options: Required<DirectionArrowsOptions>;
+  private readonly sharedGeometry: ShapeGeometry;
+  private readonly sharedMaterial: MeshBasicMaterial;
 
   constructor(points: Vector3[], options: DirectionArrowsOptions = {}) {
     super();
@@ -33,12 +41,22 @@ export class DirectionArrows extends Group {
     this.options = {
       color: options.color ?? 0xffff00,
       spacing: options.spacing ?? 10,
-      arrowLength: options.arrowLength ?? 2,
-      headLength: options.headLength ?? 0.8,
-      headWidth: options.headWidth ?? 0.5,
+      arrowLength: options.arrowLength ?? 1.5,
+      arrowWidth: options.arrowWidth ?? 0.8,
       offsetY: options.offsetY ?? 0.5,
       reverse: options.reverse ?? false,
     };
+
+    // 创建共享的箭头几何体（2D三角形）
+    this.sharedGeometry = this.createArrowGeometry();
+
+    // 创建共享材质
+    this.sharedMaterial = new MeshBasicMaterial({
+      color: this.options.color,
+      side: DoubleSide,
+      depthTest: false,
+      depthWrite: false,
+    });
 
     this.createArrows(points);
 
@@ -48,12 +66,28 @@ export class DirectionArrows extends Group {
   }
 
   /**
+   * 创建箭头形状的几何体
+   */
+  private createArrowGeometry(): ShapeGeometry {
+    const length = this.options.arrowLength;
+    const width = this.options.arrowWidth;
+
+    // 创建简单的三角形箭头，尖端朝向 +Z 方向
+    const shape = new Shape();
+    shape.moveTo(0, length / 2); // 顶点（前方）
+    shape.lineTo(-width / 2, -length / 2); // 左下角
+    shape.lineTo(width / 2, -length / 2); // 右下角
+    shape.closePath();
+
+    return new ShapeGeometry(shape);
+  }
+
+  /**
    * 根据采样点创建箭头
    */
   private createArrows(points: Vector3[]): void {
     if (points.length < 2) return;
 
-    const color = new Color(this.options.color);
     let accumulatedDistance = 0;
     let nextArrowDistance = 0;
 
@@ -84,15 +118,15 @@ export class DirectionArrows extends Group {
           direction.negate();
         }
 
-        // 创建箭头
-        const arrow = new ArrowHelper(
-          direction,
-          position,
-          this.options.arrowLength,
-          color.getHex(),
-          this.options.headLength,
-          this.options.headWidth,
-        );
+        // 创建箭头 mesh
+        const arrow = new Mesh(this.sharedGeometry, this.sharedMaterial);
+        arrow.position.copy(position);
+
+        // 设置箭头旋转，使其平躺在地面上并指向正确方向
+        // ShapeGeometry 默认在 XY 平面，需要旋转到 XZ 平面
+        arrow.rotation.x = -Math.PI / 2;
+        // 根据方向向量计算 Y 轴旋转角度
+        arrow.rotation.z = -Math.atan2(direction.z, direction.x) + Math.PI / 2;
 
         this.arrows.push(arrow);
         this.add(arrow);
@@ -109,10 +143,7 @@ export class DirectionArrows extends Group {
    * 更新箭头颜色
    */
   setColor(color: number): void {
-    const newColor = new Color(color);
-    for (const arrow of this.arrows) {
-      arrow.setColor(newColor);
-    }
+    this.sharedMaterial.color.set(color);
   }
 
   /**
@@ -123,16 +154,9 @@ export class DirectionArrows extends Group {
 
     this.options.reverse = reverse;
 
-    // 反转所有箭头的方向
+    // 反转所有箭头的方向（旋转180度）
     for (const arrow of this.arrows) {
-      const direction = arrow.line.geometry.getAttribute("position");
-      if (direction) {
-        // 获取箭头的方向向量并反转
-        const dir = new Vector3();
-        arrow.getWorldDirection(dir);
-        dir.negate();
-        arrow.setDirection(dir);
-      }
+      arrow.rotation.z += Math.PI;
     }
   }
 
@@ -141,9 +165,12 @@ export class DirectionArrows extends Group {
    */
   dispose(): void {
     for (const arrow of this.arrows) {
-      arrow.dispose();
       this.remove(arrow);
     }
     this.arrows.length = 0;
+
+    // 清理共享资源
+    this.sharedGeometry.dispose();
+    this.sharedMaterial.dispose();
   }
 }

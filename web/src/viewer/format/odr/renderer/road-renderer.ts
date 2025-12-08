@@ -56,8 +56,6 @@ export class OdrRoadRenderer extends MapRenderer<"opendrive", "road"> {
       color: 0xffaa00, // 橙色
       spacing: 10, // 每 10 米一个箭头
       arrowLength: 3,
-      headLength: 1.2,
-      headWidth: 0.8,
       offsetY: 0.5, // 悬浮 0.5 米
       reverse: false,
     });

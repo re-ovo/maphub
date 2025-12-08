@@ -1,13 +1,5 @@
 import { RenderLayer } from "@/viewer/enums";
-import {
-  DoubleSide,
-  Group,
-  Mesh,
-  MeshBasicMaterial,
-  Shape,
-  ShapeGeometry,
-  Vector3,
-} from "three";
+import { DoubleSide, Group, Mesh, MeshBasicMaterial, Shape, ShapeGeometry, Vector3 } from "three";
 
 export interface DirectionArrowsOptions {
   /** 箭头颜色 */

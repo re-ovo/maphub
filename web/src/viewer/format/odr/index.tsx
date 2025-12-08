@@ -167,7 +167,9 @@ function buildRoadsElement(opendrive: OpenDrive, parentId: Id, roads: OdrRoad[])
   const roadsId = generateId();
 
   // 构建道路子节点
-  const roadElements: OdrRoadElement[] = roads.map((road) => buildRoadElement(opendrive, roadsId, road));
+  const roadElements: OdrRoadElement[] = roads.map((road) =>
+    buildRoadElement(opendrive, roadsId, road),
+  );
 
   return {
     id: roadsId,

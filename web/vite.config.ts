@@ -93,11 +93,11 @@ export default defineConfig({
       output: {
         advancedChunks: {
           groups: [
-            {name: 'react-vendor', test: /[\\/]node_modules[\\/](react|react-dom)[\\/]/ },
-            {name: 'three', test: /[\\/]node_modules[\\/](three)[\\/]/ },
-          ]
-        }
-      }
-    }
+            { name: "react-vendor", test: /[\\/]node_modules[\\/](react|react-dom)[\\/]/ },
+            { name: "three", test: /[\\/]node_modules[\\/](three)[\\/]/ },
+          ],
+        },
+      },
+    },
   },
 });

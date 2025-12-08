@@ -7,12 +7,13 @@ import type {
 } from "../elements";
 import type { Vector3 } from "three";
 import { threePositionToOdr } from "../math";
+import { CrossSectionView } from "../components/cross-section-view";
 
 /**
  * 提供车道的 hover 信息
  */
 export function provideLaneHoverInfo(element: OdrLaneElement, pos: Vector3): HoverInfo {
-  const { lane, road, sStart, sEnd } = element;
+  const { lane, road, section, sStart, sEnd } = element;
 
   // 获取第一个宽度定义的 a 值作为基础宽度
   const baseWidth = lane.width.length > 0 ? lane.width[0].a : 0;
@@ -21,16 +22,25 @@ export function provideLaneHoverInfo(element: OdrLaneElement, pos: Vector3): Hov
   const odrXyz = threePositionToOdr(pos, element.opendrive.center);
   const sth = road.xyzToSth(odrXyz.x, odrXyz.y, odrXyz.z);
 
+  // 确保 s 坐标在有效范围内
+  const currentS = Math.max(sStart, Math.min(sEnd, sth.x));
+
   return {
     title: `Lane ${lane.id}`,
     icon: null,
-    description: [`Road: ${road.id}${road.name ? ` (${road.name})` : ""}`],
+    description: [
+      <CrossSectionView road={road} section={section} s={currentS} highlightLaneId={lane.id} />,
+    ],
     items: [
+      { label: "Road", value: `${road.id}${road.name ? ` (${road.name})` : ""}` },
       { label: "Type", value: lane.type },
       { label: "Width", value: `${baseWidth.toFixed(2)} m` },
       { label: "S Range", value: `${sStart.toFixed(1)} - ${sEnd.toFixed(1)} m` },
       { label: "ST Coords", value: `s: ${sth.x.toFixed(2)} m, t: ${sth.y.toFixed(2)} m` },
-      { label: "OpenDrive Coords", value: `x: ${odrXyz.x.toFixed(2)}, y: ${odrXyz.y.toFixed(2)}, z: ${odrXyz.z.toFixed(2)}` },
+      {
+        label: "OpenDrive Coords",
+        value: `x: ${odrXyz.x.toFixed(2)}, y: ${odrXyz.y.toFixed(2)}, z: ${odrXyz.z.toFixed(2)}`,
+      },
     ],
   };
 }

@@ -2,7 +2,7 @@ use wasm_bindgen::prelude::*;
 
 use crate::{
     math::vec3::Vec3,
-    odr::models::{header::OdrHeader, road::OdrRoad},
+    odr::models::{header::OdrHeader, junction::OdrJunction, road::OdrRoad},
 };
 
 #[wasm_bindgen]
@@ -12,17 +12,20 @@ pub struct OpenDrive {
     pub header: OdrHeader,
     #[wasm_bindgen(getter_with_clone)]
     pub roads: Vec<OdrRoad>,
+    #[wasm_bindgen(getter_with_clone)]
+    pub junctions: Vec<OdrJunction>,
     center: Vec3,
 }
 
 #[wasm_bindgen]
 impl OpenDrive {
     #[wasm_bindgen(constructor)]
-    pub fn new(header: OdrHeader, roads: Vec<OdrRoad>) -> Self {
+    pub fn new(header: OdrHeader, roads: Vec<OdrRoad>, junctions: Vec<OdrJunction>) -> Self {
         let center = Self::compute_center(&roads);
         Self {
             header,
             roads,
+            junctions,
             center,
         }
     }

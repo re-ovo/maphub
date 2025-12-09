@@ -1,4 +1,5 @@
 mod header;
+mod junction;
 mod lane;
 mod road;
 
@@ -8,6 +9,7 @@ use quick_xml::events::Event;
 use wasm_bindgen::prelude::*;
 
 pub use header::parse_header;
+pub use junction::parse_junction;
 pub use lane::parse_lanes;
 pub use road::parse_road;
 
@@ -45,6 +47,7 @@ fn parse_opendrive_internal(xml: &[u8]) -> Result<OpenDrive> {
 
     let mut header_opt = None;
     let mut roads = Vec::new();
+    let mut junctions = Vec::new();
     let mut buf = Vec::new();
 
     loop {
@@ -57,6 +60,10 @@ fn parse_opendrive_internal(xml: &[u8]) -> Result<OpenDrive> {
                     let road = road::parse_road(&mut reader, e, false)?;
                     roads.push(road);
                 }
+                b"junction" => {
+                    let junction = junction::parse_junction(&mut reader, e, false)?;
+                    junctions.push(junction);
+                }
                 _ => {}
             },
             Ok(Event::Empty(ref e)) => match e.name().as_ref() {
@@ -66,6 +73,10 @@ fn parse_opendrive_internal(xml: &[u8]) -> Result<OpenDrive> {
                 b"road" => {
                     let road = road::parse_road(&mut reader, e, true)?;
                     roads.push(road);
+                }
+                b"junction" => {
+                    let junction = junction::parse_junction(&mut reader, e, true)?;
+                    junctions.push(junction);
                 }
                 _ => {}
             },
@@ -78,5 +89,5 @@ fn parse_opendrive_internal(xml: &[u8]) -> Result<OpenDrive> {
 
     let header = header_opt.ok_or_else(|| anyhow!("未找到 header 元素"))?;
 
-    Ok(OpenDrive::new(header, roads))
+    Ok(OpenDrive::new(header, roads, junctions))
 }

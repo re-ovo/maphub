@@ -1,5 +1,5 @@
 import type { MapNode } from "@/viewer/types/map-node";
-import type { OdrLane, OdrLaneSection, OdrRoad, OpenDrive } from "@maphub/core";
+import type { OdrLane, OdrLaneSection, OdrRoad, OdrJunction, OdrConnection, OpenDrive } from "@maphub/core";
 
 export interface OdrMapElement extends MapNode<"opendrive", "map"> {
   opendrive: OpenDrive;
@@ -12,9 +12,24 @@ export interface OdrRoadsElement extends MapNode<"opendrive", "roads"> {
   children: OdrRoadElement[];
 }
 
-// export interface OdrJunctionsElement extends MapNode<"opendrive", "junctions"> {
-//   junctions: OdrJunction[];
-// }
+export interface OdrJunctionsElement extends MapNode<"opendrive", "junctions"> {
+  opendrive: OpenDrive;
+  junctions: OdrJunction[];
+  children: OdrJunctionElement[];
+}
+
+export interface OdrJunctionElement extends MapNode<"opendrive", "junction"> {
+  opendrive: OpenDrive;
+  junction: OdrJunction;
+  children: OdrJunctionConnectionElement[];
+}
+
+export interface OdrJunctionConnectionElement extends MapNode<"opendrive", "junction-connection"> {
+  opendrive: OpenDrive;
+  junction: OdrJunction;
+  connection: OdrConnection;
+  children: [];
+}
 
 export interface OdrRoadElement extends MapNode<"opendrive", "road"> {
   opendrive: OpenDrive;
@@ -45,6 +60,9 @@ export interface OdrLaneElement extends MapNode<"opendrive", "lane"> {
 export type OdrElement =
   | OdrMapElement
   | OdrRoadsElement
+  | OdrJunctionsElement
+  | OdrJunctionElement
+  | OdrJunctionConnectionElement
   | OdrRoadElement
   | OdrLaneSectionElement
   | OdrLaneElement;

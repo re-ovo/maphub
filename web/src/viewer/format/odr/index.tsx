@@ -8,12 +8,17 @@ import {
   type OdrRoad,
   type OdrLaneSection,
   type OdrLane,
+  type OdrJunction,
+  type OdrConnection,
 } from "@maphub/core";
 import type { Vector3 } from "three";
 import type {
   OdrElement,
   OdrMapElement,
   OdrRoadsElement,
+  OdrJunctionsElement,
+  OdrJunctionElement,
+  OdrJunctionConnectionElement,
   OdrRoadElement,
   OdrLaneSectionElement,
   OdrLaneElement,
@@ -185,6 +190,86 @@ function buildRoadsElement(opendrive: OpenDrive, parentId: Id, roads: OdrRoad[])
 }
 
 /**
+ * 构建单个 Junction Connection Element
+ */
+function buildJunctionConnectionElement(
+  opendrive: OpenDrive,
+  parentId: Id,
+  junction: OdrJunction,
+  connection: OdrConnection,
+): OdrJunctionConnectionElement {
+  const incomingInfo = connection.incomingRoad ? ` (from ${connection.incomingRoad})` : "";
+  return {
+    id: generateId(),
+    parentId,
+    children: [],
+    name: `Connection ${connection.id}${incomingInfo}`,
+    visible: true,
+    format: "opendrive",
+    type: "junction-connection",
+    opendrive,
+    junction,
+    connection,
+  };
+}
+
+/**
+ * 构建单个 Junction Element
+ */
+function buildJunctionElement(
+  opendrive: OpenDrive,
+  parentId: Id,
+  junction: OdrJunction,
+): OdrJunctionElement {
+  const junctionId = generateId();
+
+  // 构建 connection 子节点
+  const connectionElements: OdrJunctionConnectionElement[] = junction.connections.map((connection) =>
+    buildJunctionConnectionElement(opendrive, junctionId, junction, connection),
+  );
+
+  return {
+    id: junctionId,
+    parentId,
+    children: connectionElements,
+    name: `Junction ${junction.id}${junction.name ? ` (${junction.name})` : ""}`,
+    visible: true,
+    format: "opendrive",
+    type: "junction",
+    opendrive,
+    junction,
+  };
+}
+
+/**
+ * 构建 Junctions 容器 Element
+ */
+function buildJunctionsElement(
+  opendrive: OpenDrive,
+  parentId: Id,
+  junctions: OdrJunction[],
+): OdrJunctionsElement {
+  const junctionsId = generateId();
+
+  // 构建 junction 子节点
+  const junctionElements: OdrJunctionElement[] = junctions.map((junction) =>
+    buildJunctionElement(opendrive, junctionsId, junction),
+  );
+
+  return {
+    id: junctionsId,
+    parentId,
+    children: junctionElements,
+    name: "Junctions",
+    visible: true,
+    format: "opendrive",
+    type: "junctions",
+    opendrive,
+    junctions,
+  };
+}
+
+/**
  * 构建完整的 Map Element 树
  */
 function buildMapElement(opendrive: OpenDrive): OdrMapElement {
@@ -193,10 +278,19 @@ function buildMapElement(opendrive: OpenDrive): OdrMapElement {
   // 构建 roads 容器节点
   const roadsElement = buildRoadsElement(opendrive, mapId, opendrive.roads);
 
+  // 构建子节点列表
+  const children: OdrElement[] = [roadsElement];
+
+  // 如果有 junctions，构建 junctions 容器节点
+  if (opendrive.junctions.length > 0) {
+    const junctionsElement = buildJunctionsElement(opendrive, mapId, opendrive.junctions);
+    children.push(junctionsElement);
+  }
+
   return {
     id: mapId,
     parentId: null,
-    children: [roadsElement],
+    children,
     opendrive,
     name: opendrive.header.name || "OpenDRIVE Map",
     visible: true,

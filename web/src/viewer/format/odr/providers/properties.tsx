@@ -3,6 +3,9 @@ import type {
   OdrElement,
   OdrMapElement,
   OdrRoadsElement,
+  OdrJunctionsElement,
+  OdrJunctionElement,
+  OdrJunctionConnectionElement,
   OdrRoadElement,
   OdrLaneSectionElement,
   OdrLaneElement,
@@ -336,6 +339,133 @@ export function provideLaneProperties(element: OdrLaneElement): PropertiyGroup[]
 }
 
 /**
+ * 提供 Junctions 容器的属性面板信息
+ */
+export function provideJunctionsProperties(element: OdrJunctionsElement): PropertiyGroup[] {
+  const { junctions } = element;
+
+  // 统计 junction 类型
+  const junctionTypeCount = new Map<string, number>();
+  for (const junction of junctions) {
+    const type = junction.junctionType;
+    junctionTypeCount.set(type, (junctionTypeCount.get(type) || 0) + 1);
+  }
+
+  const groups: PropertiyGroup[] = [
+    {
+      label: "统计",
+      items: [{ label: "路口数量", value: String(junctions.length) }],
+    },
+  ];
+
+  // Junction 类型分布
+  if (junctionTypeCount.size > 0) {
+    const typeItems = Array.from(junctionTypeCount.entries())
+      .sort((a, b) => b[1] - a[1])
+      .map(([type, count]) => ({
+        label: type,
+        value: String(count),
+      }));
+    groups.push({ label: "类型分布", items: typeItems });
+  }
+
+  return groups;
+}
+
+/**
+ * 提供 Junction 的属性面板信息
+ */
+export function provideJunctionProperties(element: OdrJunctionElement): PropertiyGroup[] {
+  const { junction } = element;
+
+  const groups: PropertiyGroup[] = [];
+
+  // 基本信息
+  const basicItems = [
+    { label: "ID", value: junction.id },
+    { label: "类型", value: junction.junctionType },
+    { label: "连接数", value: String(junction.connections.length) },
+  ];
+  if (junction.name) {
+    basicItems.unshift({ label: "名称", value: junction.name });
+  }
+  groups.push({ label: "基本信息", items: basicItems });
+
+  // Virtual Junction 特有属性
+  if (junction.mainRoad) {
+    const virtualItems = [{ label: "主道路", value: junction.mainRoad }];
+    if (junction.sStart !== undefined) {
+      virtualItems.push({ label: "起始位置", value: `${junction.sStart.toFixed(2)} m` });
+    }
+    if (junction.sEnd !== undefined) {
+      virtualItems.push({ label: "结束位置", value: `${junction.sEnd.toFixed(2)} m` });
+    }
+    if (junction.orientation) {
+      virtualItems.push({ label: "方向", value: junction.orientation });
+    }
+    groups.push({ label: "Virtual Junction", items: virtualItems });
+  }
+
+  // 优先级
+  if (junction.priorities.length > 0) {
+    const priorityItems = junction.priorities.map((p) => ({
+      label: `高: ${p.high}`,
+      value: `低: ${p.low}`,
+    }));
+    groups.push({ label: "优先级规则", items: priorityItems });
+  }
+
+  return groups;
+}
+
+/**
+ * 提供 Junction Connection 的属性面板信息
+ */
+export function provideJunctionConnectionProperties(element: OdrJunctionConnectionElement): PropertiyGroup[] {
+  const { connection, junction } = element;
+
+  const groups: PropertiyGroup[] = [];
+
+  // 基本信息
+  const basicItems = [
+    { label: "ID", value: connection.id },
+    { label: "所属路口", value: junction.id },
+  ];
+  if (connection.incomingRoad) {
+    basicItems.push({ label: "进入道路", value: connection.incomingRoad });
+  }
+  if (connection.connectingRoad) {
+    basicItems.push({ label: "连接道路", value: connection.connectingRoad });
+  }
+  if (connection.linkedRoad) {
+    basicItems.push({ label: "链接道路", value: connection.linkedRoad });
+  }
+  if (connection.contactPoint) {
+    const contactStr = connection.contactPoint === "start" ? "起点" : "终点";
+    basicItems.push({ label: "接触点", value: contactStr });
+  }
+  groups.push({ label: "基本信息", items: basicItems });
+
+  // 车道连接
+  const laneLinkCount = connection.laneLinkCount();
+  if (laneLinkCount > 0) {
+    const laneLinkItems = [];
+    for (let i = 0; i < laneLinkCount; i++) {
+      const laneLink = connection.getLaneLink(i);
+      if (laneLink) {
+        laneLinkItems.push({
+          label: `Lane ${laneLink.from}`,
+          value: `→ Lane ${laneLink.to}`,
+        });
+      }
+    }
+    groups.push({ label: "车道连接", items: laneLinkItems });
+  }
+
+  return groups;
+}
+
+/**
  * 提供属性信息的统一入口
  */
 export function provideProperties(element: OdrElement): PropertiyGroup[] | null {
@@ -344,6 +474,12 @@ export function provideProperties(element: OdrElement): PropertiyGroup[] | null 
       return provideMapProperties(element);
     case "roads":
       return provideRoadsProperties(element);
+    case "junctions":
+      return provideJunctionsProperties(element);
+    case "junction":
+      return provideJunctionProperties(element);
+    case "junction-connection":
+      return provideJunctionConnectionProperties(element);
     case "road":
       return provideRoadProperties(element);
     case "lane-section":

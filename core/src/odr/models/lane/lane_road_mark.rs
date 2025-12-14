@@ -1,19 +1,6 @@
 use wasm_bindgen::prelude::*;
 
-#[wasm_bindgen]
-#[derive(Clone, Debug)]
-pub enum OdrRoadMarkColor {
-    Black = "black",
-    Blue = "blue",
-    Green = "green",
-    Orange = "orange",
-    Red = "red",
-    Standard = "standard",
-    /// equivalent to white
-    Violet = "violet",
-    White = "white",
-    Yellow = "yellow",
-}
+use crate::odr::models::enums::{OdrRoadMarkColor, OdrRoadMarkWeight};
 
 #[wasm_bindgen]
 #[derive(Clone, Debug)]
@@ -30,13 +17,6 @@ pub enum OdrRoadMarkType {
     SolidBroken = "solid broken",
     SolidSolid = "solid solid",
     Solid = "solid",
-}
-
-#[wasm_bindgen]
-#[derive(Clone, Debug)]
-pub enum OdrRoadMarkWeight {
-    Bold = "bold",
-    Standard = "standard",
 }
 
 #[wasm_bindgen]

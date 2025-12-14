@@ -2,7 +2,7 @@ use anyhow::{Context, Result};
 use quick_xml::Reader;
 use quick_xml::events::Event;
 
-use crate::odr::models::enums::OdrSpeedUnit;
+use crate::odr::models::enums::{OdrRoadMarkColor, OdrRoadMarkWeight, OdrSpeedUnit};
 use crate::odr::models::lane::OdrLane;
 use crate::odr::models::lane::lane_access::{OdrLaneAccess, OdrLaneAccessRule};
 use crate::odr::models::lane::lane_geometry::{OdrLaneBorder, OdrLaneHeight, OdrLaneWidth};
@@ -10,9 +10,9 @@ use crate::odr::models::lane::lane_link::OdrLaneLink;
 use crate::odr::models::lane::lane_material::OdrLaneMaterial;
 use crate::odr::models::lane::lane_offset::OdrLaneOffset;
 use crate::odr::models::lane::lane_road_mark::{
-    OdrRoadMark, OdrRoadMarkColor, OdrRoadMarkExplicit, OdrRoadMarkExplicitLine,
+    OdrRoadMark, OdrRoadMarkExplicit, OdrRoadMarkExplicitLine,
     OdrRoadMarkLaneChange, OdrRoadMarkRule, OdrRoadMarkSway, OdrRoadMarkType,
-    OdrRoadMarkTypeDetail, OdrRoadMarkTypeLine, OdrRoadMarkWeight,
+    OdrRoadMarkTypeDetail, OdrRoadMarkTypeLine,
 };
 use crate::odr::models::lane::lane_rule::OdrLaneRule;
 use crate::odr::models::lane::lane_section::OdrLaneSection;

@@ -3,13 +3,12 @@ use wasm_bindgen::prelude::*;
 use crate::{
     math::{mesh::MeshData, vec3::Vec3},
     odr::models::{
-        lane::{
+        enums::OdrRoadMarkColor, lane::{
             OdrLane,
             lane_geometry::OdrLaneWidth,
-            lane_road_mark::{OdrRoadMark, OdrRoadMarkColor, OdrRoadMarkSway, OdrRoadMarkType},
+            lane_road_mark::{OdrRoadMark, OdrRoadMarkSway, OdrRoadMarkType},
             lane_section::OdrLaneSection,
-        },
-        road::OdrRoad,
+        }, road::OdrRoad
     },
 };
 
@@ -569,7 +568,6 @@ impl RoadMarkMeshBuilder {
 mod tests {
     use super::*;
     use crate::odr::models::lane::lane_link::OdrLaneLink;
-    use crate::odr::models::lane::lane_road_mark::OdrRoadMarkColor;
 
     fn build_test_lane(id: i32, width: f64) -> OdrLane {
         OdrLane {

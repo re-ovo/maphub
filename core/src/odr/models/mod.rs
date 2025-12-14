@@ -4,3 +4,4 @@ pub mod lane;
 pub mod opendrive;
 pub mod road;
 pub mod junction;
+pub mod object;

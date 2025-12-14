@@ -9,8 +9,40 @@
  * - Three.js (x, y, z) -> OpenDRIVE (x, -z, y)
  */
 
-import { Vec3 } from "@maphub/core";
-import { Vector3 } from "three";
+import { Quat, Vec3 } from "@maphub/core";
+import { Quaternion, Vector3 } from "three";
+
+// OpenDRIVE -> Three.js 的坐标基变换：
+// (x, y, z) -> (x, z, -y)，等价于绕 X 轴旋转 -90°（右手系）
+const ODR_TO_THREE_BASIS_QUAT = new Quaternion(-Math.SQRT1_2, 0, 0, Math.SQRT1_2);
+const THREE_TO_ODR_BASIS_QUAT = new Quaternion(Math.SQRT1_2, 0, 0, Math.SQRT1_2);
+
+export function coreQuatToThreeQuat(q: Quat): Quaternion {
+  return new Quaternion(q.x, q.y, q.z, q.w);
+}
+
+export function threeQuatToCoreQuat(q: Quaternion): Quat {
+  return new Quat(q.x, q.y, q.z, q.w);
+}
+
+/**
+ * 将 OpenDRIVE 坐标系下的四元数转换为 Three.js 坐标系下的四元数
+ *
+ * 说明：该转换与 `odrPositionToThree()` 的坐标映射一致，本质是做基变换：
+ * R_three = M * R_odr * M^{-1}，其中 M 为 ODR->Three 的基变换（绕 X 轴 -90°）
+ */
+export function odrQuatToThree(q: Quat): Quaternion {
+  const threeQ = coreQuatToThreeQuat(q);
+  return ODR_TO_THREE_BASIS_QUAT.clone().multiply(threeQ).multiply(THREE_TO_ODR_BASIS_QUAT);
+}
+
+/**
+ * 将 Three.js 坐标系下的四元数转换为 OpenDRIVE 坐标系下的四元数
+ */
+export function threeQuatToOdr(q: Quaternion): Quat {
+  const odrQ = THREE_TO_ODR_BASIS_QUAT.clone().multiply(q).multiply(ODR_TO_THREE_BASIS_QUAT);
+  return threeQuatToCoreQuat(odrQ);
+}
 
 /**
  * 将 OpenDRIVE 坐标转换为 Three.js 坐标

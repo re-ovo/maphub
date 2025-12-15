@@ -9,7 +9,7 @@
 ## 功能
 
 - 支持多种地图格式
-- 多地图同时加载查看
+- 多地图同时加载
 - 模糊搜索地图元素
 - 完善的信息面板
 - 极速加载和渲染
@@ -18,9 +18,8 @@
 
 - Rust + WASM (wasm-pack)
 - React + TypeScript + shadcn/ui + Tailwind CSS
-- Zustand
-- React Mosaic Component
-- BabylonJS
+- ThreeJS
+- Turbo Repo
 
 ## 项目结构
 
@@ -33,15 +32,18 @@ maphub/
 
 ## 开发
 
+开发之前请先确保安装了 Rust 和 Bun
+
 ```bash
-# 构建 Rust WASM 核心库
-cd core && wasm-pack build
+# 配置rust工具链
+cargo install cargo-watch
+cargo install wasm-pack
 
-# 安装 web 前端依赖
-cd web && bun install
+# 安装前端依赖
+bun install
 
-# 启动 web 前端开发服务器
-cd web && bun run dev
+# 启动开发服务器
+bun dev
 ```
 
 ## 构建

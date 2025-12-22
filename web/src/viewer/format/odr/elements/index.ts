@@ -1,5 +1,12 @@
 import type { MapNode } from "@/viewer/types/map-node";
-import type { OdrLane, OdrLaneSection, OdrRoad, OdrJunction, OdrConnection, OpenDrive } from "@maphub/core";
+import type {
+  OdrLane,
+  OdrLaneSection,
+  OdrRoad,
+  OdrJunction,
+  OdrConnection,
+  OpenDrive,
+} from "@maphub/core";
 
 export interface OdrMapElement extends MapNode<"opendrive", "map"> {
   opendrive: OpenDrive;

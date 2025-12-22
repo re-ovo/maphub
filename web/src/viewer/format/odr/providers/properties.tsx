@@ -421,7 +421,9 @@ export function provideJunctionProperties(element: OdrJunctionElement): Properti
 /**
  * 提供 Junction Connection 的属性面板信息
  */
-export function provideJunctionConnectionProperties(element: OdrJunctionConnectionElement): PropertiyGroup[] {
+export function provideJunctionConnectionProperties(
+  element: OdrJunctionConnectionElement,
+): PropertiyGroup[] {
   const { connection, junction } = element;
 
   const groups: PropertiyGroup[] = [];

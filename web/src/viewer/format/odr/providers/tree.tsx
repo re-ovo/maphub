@@ -1,6 +1,14 @@
 import type { TreeInfo } from "@/viewer/types/format";
 import type { OdrElement } from "../elements";
-import { FolderOpen, Route, Layers, RectangleHorizontal, MapIcon, GitFork, Link } from "lucide-react";
+import {
+  FolderOpen,
+  Route,
+  Layers,
+  RectangleHorizontal,
+  MapIcon,
+  GitFork,
+  Link,
+} from "lucide-react";
 
 /**
  * 提供场景树信息

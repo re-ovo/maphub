@@ -37,7 +37,9 @@ export const OpenDriveFormat: MapFormat<"opendrive", OdrElement, "map"> = {
    * 解析 OpenDRIVE 文件并生成节点树
    */
   parse(files: Files): OdrMapElement[] {
+    console.time("parseOpendriveFromFiles");
     const opendrives: OpenDrive[] = parseOpendriveFromFiles(files);
+    console.timeEnd("parseOpendriveFromFiles");
     return opendrives.map(buildMapElement);
   },
 
@@ -224,8 +226,8 @@ function buildJunctionElement(
   const junctionId = generateId();
 
   // 构建 connection 子节点
-  const connectionElements: OdrJunctionConnectionElement[] = junction.connections.map((connection) =>
-    buildJunctionConnectionElement(opendrive, junctionId, junction, connection),
+  const connectionElements: OdrJunctionConnectionElement[] = junction.connections.map(
+    (connection) => buildJunctionConnectionElement(opendrive, junctionId, junction, connection),
   );
 
   return {

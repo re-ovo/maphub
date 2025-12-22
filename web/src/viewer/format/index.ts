@@ -9,5 +9,14 @@ export type MapFormatType = "opendrive";
 
 // 地图格式节点类型
 export interface MapFormatNodeType {
-  opendrive: "map" | "roads" | "junctions" | "road" | "lane-section" | "lane";
+  opendrive:
+    | "map"
+    | "roads"
+    | "junctions"
+    | "road"
+    | "lane-section"
+    | "lane"
+    | "junctions"
+    | "junction"
+    | "junction-connection";
 }

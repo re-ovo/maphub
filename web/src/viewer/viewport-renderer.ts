@@ -1,5 +1,6 @@
 import CameraControls from "camera-controls";
 import {
+  ACESFilmicToneMapping,
   AmbientLight,
   Box3,
   Clock,
@@ -15,6 +16,7 @@ import {
   Scene,
   Sphere,
   Spherical,
+  SRGBColorSpace,
   Texture,
   Vector2,
   Vector3,
@@ -87,6 +89,9 @@ export class ViewportRenderer {
       antialias: true,
       alpha: false,
     });
+    this.renderer.toneMapping = ACESFilmicToneMapping;
+    this.renderer.toneMappingExposure = 1.2;
+    this.renderer.outputColorSpace = SRGBColorSpace;
     this.renderer.setPixelRatio(window.devicePixelRatio);
     this.renderer.setClearColor(new Color(0x1a1a1a));
 
